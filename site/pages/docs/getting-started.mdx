@@ -264,12 +264,12 @@ public class MainApplication extends Application implements ReactApplication {
   中重新编译）才能生效。
 </Callout>
 
-### 禁用 android 的 crunch 优化
+### Disable crunchPngs on Android
 
-android 会在生成 apk 时自动对 png 图片进行压缩，此操作既耗时又影响增量补丁的生成。为了保证补丁能正常生成，您需要在`android/app/build.gradle`中关闭此操作：
+android will automatically compress png images when generating apk, this operation is time-consuming and affects the generation of incremental patches. To ensure that the patch can be generated normally, you need to disable this operation in `android/app/build.gradle`:
 
 ```groovy
-// 在 android/app/build.gradle 文件中
+// In the android/app/build.gradle file
 
 android {
     // ...
@@ -287,18 +287,18 @@ android {
 
 ```
 
-### 禁用 aab 包的资源分割（如果你需要在 Google Play 上架）
+### Disable resource splitting for AAB packages
 
-如果你需要打 aab 包以在 Google Play 上架，则需要禁用 aab 包的资源分割：
+If you need to build aab packages to publish on Google Play, you need to disable resource splitting:
 
 ```groovy
-// 在 android/app/build.gradle 文件中
+// In the android/app/build.gradle file
 
 android {
     bundle {
         density {
-            // 请禁用资源分割
-            // 否则热更后可能遇到图片无法显示的问题
+            // Disable resource splitting
+            // Otherwise, the image may not be displayed after the hot update
             enableSplit = false
         }
     }
