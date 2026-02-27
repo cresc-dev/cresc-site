@@ -5,24 +5,23 @@ on:
     branches:
       - main
 
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
-
-
-
-
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v6
         with:
-          version: latest
+          node-version: 24
 
       - name: Build
         run: |
-          cd site && pnpm i && pnpm build && cd -
+          cd site && bun i && bun build && cd -
           mv site/out ./
           cp CNAME out/
           mv policy out/policy
