@@ -1,0 +1,10 @@
+<svg width="108" height="108" viewBox="0 0 108 108" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cresc_grad" x1="10" y1="10" x2="90" y2="90" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#40D4EA"/>
+      <stop offset="1" stop-color="#4483ED"/>
+    </linearGradient>
+  </defs>
+  <path d="M 88 25 A 40 40 0 1 0 88 83" stroke="url(#cresc_grad)" stroke-width="18" stroke-linecap="round" />
+  <circle cx="88" cy="54" r="10" fill="url(#cresc_grad)" />
+</svg>

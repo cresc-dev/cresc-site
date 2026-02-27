@@ -1,179 +1,170 @@
 ---
 order: 23
-title: 常见问题
-type: 其他
+title: FAQ
+type: Misc
 ---
 
-import { Callout } from "nextra/components";
 
-如果本页面没能回答您的疑问，您可以去[issues 区](https://github.com/reactnativecn/react-native-update/issues)或 QQ 群 729013783 提问，或给我们发[邮件](mailto:hi@charmlot.com)。
 
-### 业务问题
+If this page does not answer your question, you can submit an issue on our [GitHub repository](https://github.com/reactnativecn/react-native-update/issues), join our QQ Group 729013783, or email us at [hi@charmlot.com](mailto:hi@charmlot.com).
 
-#### 热更新究竟能否上架？
+### Business Questions
 
-您可能听说过各种说法，但大量实践表明，热更新目前能够顺利上架 AppStore 和其他各种应用市场。唯一需要注意的是，在审核期间请不要发布热更新，不要让审核人员看到各种更新相关的提示和弹窗，即可顺利通过。
+#### Can hot-updated apps pass App Store reviews?
 
----
-
-#### 是否可以在海外使用？
-
-可以的，国内外都有高速 CDN 节点。
+You might have heard mixed information, but extensive practical experience shows that hot updates currently successfully pass App Store and other app market reviews. The only caveat: **do not publish hot updates while your app is under review**, and ensure reviewers do not see update pop-ups or download prompts. If you follow this rule, you will pass smoothly.
 
 ---
 
-#### 哪些修改可以热更新？哪些不能？
+#### Can it be used overseas?
 
-我们把对应用的修改分为两类：
-
-- 不可热更新 —— 原生修改，即所有需要`编译`后才能生效的修改：
-  - 任何在 iOS 或者 Android 目录中的修改、增删。
-  - 任何含有原生代码的第三方组件的更新、修改。
-- 可以热更新 —— 非原生修改，即所有`无需编译`，刷新即可生效的修改：
-
-  - js 代码修改，包括第三方纯 js 组件的更新、修改。
-  - 可以在 js 代码中 require/import 的资源文件，例如图片。
-
-需要注意的是，即便资源文件可以热更新，但这些热更新后的资源文件会以`file://`协议的形式提供访问，某些读取资源文件的第三方可能并不支持`file://`协议。
+Yes. We operate high-speed CDN nodes both domestically and internationally.
 
 ---
 
-#### 我是否可以搭建自己的热更新服务？
+#### What can be hot updated? What cannot?
 
-你可以单独使用本组件的原生部分(不包括 js 模块)和命令行工具中的`bundle`、`diff`、`diffFromIpa`、`diffFromApk`四个功能。
+App modifications fall into two categories:
 
-这些功能都不会使用我们的热更新服务，也无需注册或登录账号。但你可能要编写自己的 js 模块来与不同的热更新服务器通讯。
+- **Cannot be hot-updated** — Native modifications, i.e., changes requiring compilation to take effect:
+  - Any modifications, additions, or deletions inside the `ios/` or `android/` folders.
+  - Updating or modifying third-party native modules.
+- **Can be hot-updated** — Non-native modifications, i.e., changes requiring no compilation that take effect upon reload:
+  - JS code modifications, including pure-JS third-party libraries.
+  - Assets that can be `require/import`ed within JS code, such as images.
 
----
-
-#### 热更新成功完成，但是重启后又回滚了是怎么回事？
-
-可以正常更新，但是重启后回滚，一般有两种可能的情况：
-
-- 没有正确[配置 bundleUrl](/docs/getting-started#配置-bundle-url)
-- （仅有 v10 以下版本存在此可能性，v10 及更高版本不存在此情况）没有正确[调用 markSuccess](https://v9--pushy-site.netlify.app/docs/integration#%E9%A6%96%E6%AC%A1%E5%90%AF%E5%8A%A8%E5%9B%9E%E6%BB%9A)
-
-如果你确定上述两个步骤都正确无误，请在[issues 区](https://github.com/reactnativecn/react-native-update/issues)给我们留言反馈。
+*Note: Even though assets can be hot updated, downloaded update assets are served via the `file://` protocol. Certain third-party modules might not support reading from `file://` URIs.*
 
 ---
 
-#### 热更新报错：“热更新已暂停，原因：编译时间戳与服务器记录不一致。”
+#### The update downloads successfully, but after restarting it rolls back. What happened?
 
-当您每次编译产生一个原生包时，其中都会记录一个编译时间戳`buildTime`(可以使用`pushy parseIpa a.ipa`或是`pushy parseApk a.apk`命令来查看)。如果您需要把这个包发给客户并希望使用热更新功能，那么就需要使用 upload 命令来上传到我们的服务器，而服务器端会记录这个包的版本号和编译时间戳以便后续比对记录。
+If an update succeeds but rolls back on reboot, it usually means one of two things:
 
-举例来说，假如我已经上传了一个 1.0 版本原生包（`1A包`），但后来由于种种原因我又重新打包了（`1B包`）但没有上传，这两个包有相同的版本号，但会有不同的编译时间戳。此时有几种可能的情况：
+- You didn't correctly [configure bundleUrl](/docs/getting-started#configuring-bundle-url) during setup.
+- (Only on Cresc v9 or lower) You didn't correctly call `markSuccess()`. In v10+, the SDK handles this automatically.
 
-1. 我忘记上传过`1A包`，`1B包`没有实质更改且还没有客户安装。此时应当放弃`1B包`，只让客户下载安装`1A包`。
-2. 我忘记上传过`1A包`，又生成了`1B包`且已有客户安装。此时`1A包`客户可以获取热更新，`1B包`客户无法获取热更新。要使两批客户都能获取热更新，要么想办法通知`1B包`客户装回`1A包`，要么重新发布一个`高于1.0`版本的原生包且上传到 pushy 服务器，并删除`1.0`版本的记录，此时`1A包`和`1B包`的客户都会收到版本过期需要下载新版本的通知。
-3. 我知道上传过`1A包`，但我有原生方面的修改需要打了一个新的`1B包`。此时若将`1B包`上传到 pushy 服务器会提示版本验证错误，因为已经存在有相同的`1.0`版本。所以需要首先更改原生版本号再次打包，并`首先`将此新版本上传到服务器，`然后`分发给客户。这样`1.0版本`和`新版本`可以并存且都可以获得热更新。
-
-请谨记，任何时候生成原生包，请 1)先修改原生版本号，2)并上传到 pushy 服务器，才可以正常获得热更新。
-
-<Callout type="info">
-  如果您是`高级版`、`专业版`或`大客户VIP版`客户，也可以考虑在管理后台的应用设置中启用`忽略编译时间戳`。此选项仅对比版本号，不校验时间戳，可提供更宽容的热更策略，但可能消耗更多流量，适合需要管理多个分发渠道的客户。
-</Callout>
+If you are absolutely sure both steps were executed perfectly, please leave us feedback in our [Issues section](https://github.com/reactnativecn/react-native-update/issues).
 
 ---
 
-### 付费问题
+#### Error: "Hot update paused, reason: Build timestamp mismatch."
 
-#### 我应该选择哪个业务版本呢？
+Every time you compile a native package, a timestamp (`buildTime`) is injected into it (viewable using `cresc parseIpa` or `cresc parseApk`). If you distribute this package to users and want them to receive OTA updates, you must first upload the native package to the Cresc server. The server records this version number and build time for subsequent comparisons.
 
-其实完全无需考虑，先从最高配额的`专业版`开始体验（新用户注册验证通过后，将自动获得 7 天`专业版`试用），各个版本的使用流程完全一致！当试用时间到期后，若当前版本的配额不能满足需求，可随时补差价升级到更高配额的版本。升级自动按天数计算差价，绝无额外费用。
+For example, suppose I compile and upload `v1.0` (`Package 1A`). Later, for some reason, I rebuild without changing the version string (`Package 1B`), but I don't upload it. These two packages have the same version string but different build timestamps. Three scenarios might follow:
 
-目前仅有一项额外的付费专用功能，即`忽略编译时间戳`设置（在管理后台的应用设置中），此选项仅对比版本号，不校验时间戳，可提供更宽容的热更策略，但可能消耗更多流量，适合需要管理多个分发渠道的客户。此功能目前仅支持`高级版`、`专业版`和`大客户VIP版`。
+1. I forgot I uploaded `1A`, `1B` has no actual changes, and no users have installed it yet. Throw away `1B` and let users install `1A`.
+2. I distributed `1B` to some users without uploading it. Users on `1A` get updates, while `1B` users get paused updates due to a mismatch. To fix this, you either force `1B` users to reinstall `1A`, or publish a strictly higher version string (e.g. `1.1`), upload it to Cresc, and delete `v1.0` records. This causes both groups to receive a mandatory native upgrade prompt.
+3. I know I uploaded `1A`, but I made native changes and built `1B`. Uploading `1B` now triggers a version conflict because `1.0` already exists. Therefore, you must **increment the native version**, **upload** it to the server first, and **then** distribute it to users.
 
----
+Remember: Whenever compiling native releases: 1) increment the version string, 2) upload to Cresc servers. Only then can OTA updates function normally.
 
-#### 我可以试用付费版本先评估一下效果吗？
-
-新用户注册验证通过后，将自动获得 7 天`专业版`试用。如您需要更长的评估时间，可将注册用户名、邮箱、公司（或个人）名称发送至 hi@charmlot.com ，标题注明“pushy 评估试用延长”，我们会为您酌情延长评估时间。
-
----
-
-#### 配额具体如何计算？
-
-配额主要分为 4 种：
-
-1. 可创建的应用数量，注意 iOS 和 Android 版本记做不同的应用。
-2. 原生包数量及大小，不同应用分开计算。原生包指通过`pushy uploadIpa/uploadApk`命令上传到 Pushy 服务器上作为热更新起始版本的完整 apk/ipa 安装包。
-3. 热更包数量及大小，不同应用分开计算。热更包指通过`pushy bundle`所命令生成的 ppk 文件。注意这不是用户实际下载的更新文件，用户下载的是通过比对生成的增量 diff 文件（比 ppk 文件要小得多）。
-4. 每日总热更查询次数，所有应用累加计算。每次用户打开应用时，会向服务器查询是否有新的热更新。这个查询次数会被计入每日总热更查询次数。当日超过限额次数后，接口将不再返回新的热更新信息，直到次日重置。
-
-> 这里有一些对[包大小的优化建议](bestpractice#优化原生和热更包体积)可供参考。
-
-以上 2、3 条为账户下每个应用单独计算，第 4 条为账户下所有应用累加计算。具体配额和费用由于运营成本可能会有调整，请以[价格表](/pricing)页面为准。已购买的用户在续费前不受调整影响。
+:::info
+If you use the `Premium`, `Professional`, or `Enterprise VIP` plans, you can enable `"Ignore Build Timestamp"` in the dashboard's App Settings. This ignores timestamp comparisons entirely, checking only the version string. It opens more tolerant update flows, suitable for managing many distinct distribution channels, though it may consume extra traffic bandwidth.
+:::
 
 ---
 
-#### 达到配额后还可以正常使用吗？
+### Billing Questions
 
-当应用、原生包、热更包数量达到配额限制后，您将无法执行相应的新增操作。但用户端仍可正常检查更新，下载已发布的更新。您可选择升级到更高配额，或是通过删除已不再使用的应用、原生包、热更包来使数量降低到配额以内，以便继续执行新增操作。  
-若原生包、热更包大小超过限额，则会导致上传失败。您可以选择升级到更高配额，或是想办法进行[精简优化](bestpractice#优化原生和热更包体积)。
-若当日热更检查次数超过限额，则会导致接口返回空数据。您可以选择升级到更高配额，或是优化热更策略，减少用户端检查更新的频率。
+#### Which plan should I choose?
 
----
+There's no need to stress: start directly with a risk-free 7-day `Professional` trial upon verifying your registration. All plans use the same SDK and interface workflows. If your current limits don't meet your metrics later, you can seamlessly upgrade by paying only the prorated difference for the elapsed time period, without hidden fees.
 
-#### 我可以单独升级某项配额吗？
-
-我们暂时无法为某个单项配额提供升级选项，请选择更高版本的配额。如果`专业版`配额仍然不能满足需求，请通过邮件 hi@charmlot.com 与我们联系，我们将根据您的个性化需求为您定制方案。
+Currently, the only gated exclusive feature is `Ignore Build Timestamp`, which permits wider distribution channels but may increase DNS calls. It is exclusively available to `Premium`, `Professional`, and `Enterprise VIP` tiers.
 
 ---
 
-#### 付费业务到期后不续费，现有应用还能否正常使用？
+#### Can I trial a paid version first to evaluate its effectiveness?
 
-到期后按免费版额度执行。如您现有应用已超出配额，则必须通过删除操作降低到配额以内，方可执行新的操作（如创建应用，上传热更等），但不影响用户获取之前已发布的热更。
-
----
-
-#### 如何获取付费的专人技术支持？
-
-请将您的用户名和订单截图发送至 hi@charmlot.com ，同时提供您希望的技术联系方式（QQ、微信等），核实后会有技术专员添加您为好友。
+Upon account verification, you will automatically receive a 7-day `Professional` trial. If you require a longer evaluation window, send your username, email, and company/personal title to hi@charmlot.com with the subject "Cresc Trial Extension Request" and we will consider extending it.
+During the trial, you can either renew Professional or upgrade. To purchase lower tiers, wait until the trial expires or contact support.
 
 ---
 
-#### 如何开具发票？
+#### How are quotas calculated specifically?
 
-请将具体开票需求发送至 hi@charmlot.com ，并附上注册邮箱和订单截图。我们默认会回复普通电子发票到`注册邮箱`，类目为软件服务。如需指定接受邮箱或手机，请在`邮件正文`中注明。如需要邮寄纸质发票请注明邮寄地址，邮费为到付。
-如邮件发送后三个工作日内未收到回复，请联系 QQ 客服 34731408。
+Quotas measure four domains:
+
+1. Number of creatable Apps (iOS and Android count separately).
+2. Number and size of Native Packages (Calculated per app). Native packages refer to the baseline APK/IPA uploaded by `cresc uploadIpa/uploadApk`.
+3. Number and size of Update Packages (Calculated per app). Update packages refer to `.ppk` binaries generated via `cresc bundle`. *Note: this is not what users download. Users download incremental diffs, which are vastly smaller.*
+4. Total Daily Update Check Quota (Aggregated across ALL apps under your account). The system increments this metric every time a user opens your app and polls checking for updates. If this limit is exceeded during the day, the API stops returning updates until resetting at midnight.
+
+> Refer to [Best Practices](bestpractice#optimizing-native-and-hot-update-package-size) for advice on mitigating limits safely.
+
+Limits #2 and #3 apply to individual applications independently, while #4 aggregates under the account total. See our [Pricing Table](/pricing) for authoritative info subject to operational variations. Locked-in accounts avoid fluctuating costs upon timely renewal.
 
 ---
 
-#### 可以使用银行转账付款吗？
+#### If I hit my quota, does the system break?
 
-可以的。请对照[价格表](/pricing)，将对应版本的款项转账至：
+If you hit application, Native Package, or Update Package caps, you will be blocked from new creating/uploading actions. However, existing end-users will still request and download existing patches normally without any interruption. You must either upgrade your tier, or prune old apps/packages to free up storage slots.
+If Native/Update sizes exceed MB limit metrics, the upload will fail. Upgrade your tier, or practice strict asset [Optimization](bestpractice#optimizing-native-and-hot-update-package-size).
+If Total Daily Checks hit their cap, the API refuses queries and returns an empty payload response, leaving apps stuck on previous states until midnight resets quotas. Either upgrade tiers or adjust built-in update schedules.
 
-| 公司名称   | 武汉青罗网络科技有限公司 |
+---
+
+#### Can I upgrade just a single limit item independently?
+
+If you only need to raise one specific limit without adopting an entire larger tier (applicable for Premium + accounts only), reach out via hi@charmlot.com or QQ Support (34731408). Provide requirements to receive bespoke quotes.
+
+---
+
+#### After a paid plan expires unrenewed, do my existing apps continue functioning?
+
+After expiration, accounts degrade automatically into the Free Plan tier limitations. If preexisting data exceeds free caps, you won't be authorized to launch new updates or bind properties unless excess data is wiped out down below threshold limits. Users holding old patches won't mysteriously lose access, however.
+
+---
+
+#### How do I receive dedicated human technical support?
+
+Email screenshots of your completed billing invoice detailing your username directly to hi@charmlot.com while noting your primary IM contact preference (QQ, WeChat, etc.). Once matched against database records, an integration engineer will friend request you directly.
+
+---
+
+#### How do I claim Official Invoices (Fapiao)?
+
+Email explicit invoice requests detailing company details to hi@charmlot.com accompanying email registrations + billing receipt snapshots. Regular automated e-Invoices issue normally to registered emails categorizing 'Software Services'. Direct physical postage requests must supply an address; cost applies towards receiver Cash-On-Delivery policies.
+Ping QQ 34731408 if no action manifests 3 business days post-email transmission.
+
+---
+
+#### Can I execute manual wire transfers via Banking Networks?
+
+Yes. Refer to [Pricing Boards](/pricing), then wire required funds precisely toward:
+
+| Company Entity | Wuhan Qingluo Network Technologies Co., Ltd. |
 | ---------- | ------------------------ |
-| 账号       | 8888888048825564         |
-| 开户行名称 | 浙江网商银行             |
-| 开户地区   | 浙江省杭州市             |
-| 支行名称   | 浙江网商银行股份有限公司 |
-| 联行号     | 323331000001             |
+| Account Identifier | 8888888048825564 |
+| Bank Name | Zhejiang MYBank |
+| Region Zone | Hangzhou City, Zhejiang Province |
+| Branch Identifier | Zhejiang MYBank Co., Ltd |
+| Internal Transit Id | 323331000001 |
 
-转账完成后请截图发送至 hi@charmlot.com ，并写明注册邮箱，我们将在一个工作日内开通对应服务。
-
----
-
-#### 可以按月付款吗？
-
-需要月付的客户请联系 QQ 客服 34731408，月付价格为年付价格 / 8。如标准版当前价格为 800 元每年，则月付价格为 100 元每月。
-月付客户需累计支付满 500 元后才能开具发票。`大客户VIP版`不支持月付。
+Email screenshots validating completed successful transfer transactions alongside account registration email pointers explicitly referencing hi@charmlot.com . Funds processing clears within 1 operational business day.
 
 ---
 
-#### 大客户方案
+#### Is monthly-recurring payment structure available?
 
-如果您的应用有大规模的活跃用户，日均所有应用累计总查询次数超过 100 万次，则建议选择我们专门针对大规模应用优化的`大客户VIP版`。
-`大客户VIP版`在应用数量、原生包数量、热更包数量等方面配额与`专业版`相同。
+Users wanting monthly deductions must query QQ Support Rep 34731408 directly. Monthly tiers strictly cost Annual Rate / 8. Example: A tier costing 800 RMB yearly yields ~100 RMB monthly commitments. Monthly payers must eclipse 500 RMB threshold minimums to qualify for Official Invoices (Fapiao). `Enterprise VIP` tier prohibits monthly billing structures.
 
-当前价格如下表：
+---
 
-| 服务版本 | 日均总热更查询次数 | 价格（元/年） |
+#### Enterprise Placements
+
+Should your metrics scale past heavily populated DAU bases demanding over 1 Million daily queries consistently sweeping arrays of multi-channel deployments, we strongly endorse pivoting structures towards optimized `Enterprise VIP Placements`.
+`Enterprise` parallels fundamental constraints akin closely to Professional tier limits alongside significantly expanded Daily Aggregations thresholds.
+
+Prices follow:
+
+| Tier | Maximum Daily Aggregation Limit | Base Cost (RMB / Year) |
 | -------- | ------------------ | ------------- |
-| VIP1     | 1000 万次          | 30000         |
-| VIP2     | 5000 万次          | 60000         |
-| VIP3     | 1 亿次             | 120000        |
-| VIP4     | 1 亿次以上         | 请联系客服    |
+| VIP1 | 10 Million Calls | 30000 |
+| VIP2 | 50 Million Calls | 60000 |
+| VIP3 | 100 Million Calls | 120000 |
+| VIP4 | 100 Million+ Unlimited Scaling | Inquire Direct |
 
-具体试用和对接请联系 QQ 客服 34731408
+Execute queries & discussions handling integration frameworks connecting deeply toward backend interfaces by speaking against Sales @ QQ Support 34731408.

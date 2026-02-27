@@ -1,127 +1,137 @@
 ---
 order: 11
-title: API参考
-type: 开发指南
+title: API Reference
+type: Guide
 ---
 
-import { Callout } from "nextra/components";
 
-### JavaScript 方法
 
-#### new Pushy(options: PushyOptions)
+### JavaScript Methods
 
-创建 Pushy 热更新服务实例，其构造参数如下：
+#### new Cresc(options: CrescOptions)
+
+Creates a Cresc OTA service instance, with the following constructor parameters:
 
 ```ts
-interface PushyOptions {
-  // 必填，通过pushy createApp或selectApp命令，或在网页管理端获取
+interface CrescOptions {
+  // Required, obtained via cresc createApp/selectApp command or the admin panel
   appKey: string;
 
-  // 自定义日志输出，也可用于上报统计数据
+  // Custom log output, can also be used to report analytics
   logger?: ({ type, data }: { type: EventType; data: EventData }) => void;
 
-  // 触发自动检查更新的策略
+  // Strategy for automatically checking updates
   checkStrategy?:
-    | "onAppStart" // 仅在app启动时
-    | "onAppResume" // 仅在app从后台切换到前台时
-    | "both"; // 默认值，同时包含前两个场景
-    | null; // 不自动检查更新，必须手动调用checkUpdate方法，此选项需 v10.4.2+ 版本
+    | "onAppStart" // Only when app starts
+    | "onAppResume" // Only when app switches from background to foreground
+    | "both"; // Default, includes both scenarios
+    | null; // Do not check for updates automatically, must call checkUpdate manually. Requires v10.4.2+
 
-  // 自动下载和应用更新的策略
+  // Strategy for downloading and applying updates automatically
   updateStrategy?:
-    | "alwaysAlert" // 调试环境（__DEV__）默认值，使用系统默认的alert页面提示热更且会在有报错时弹出提示
-    | "alertUpdateAndIgnoreError" // 生产环境默认值，在有热更时使用系统默认的alert页面提示热更，但不弹出任何报错提示
-    | "silentAndNow" // 自动静默下载并立刻应用热更
-    | "silentAndLater"; // 自动静默下载，但仅在用户退出app后重启时应用更新
-    | null; // 不自动下载和应用更新，如需自定义热更界面请选择此项
+    | "alwaysAlert" // Default in __DEV__, uses system alert to prompt update and show errors
+    | "alertUpdateAndIgnoreError" // Default in production, prompts update using system alert, but suppresses error alerts
+    | "silentAndNow" // Automatically downloads silently and applies immediately
+    | "silentAndLater"; // Automatically downloads silently, but applies only after the user restarts the app
+    | null; // Do not download and apply automatically. Choose this if you need a custom UI.
 
-  // 是否在热更重启后自动标记为成功，默认为true
-  // 一般情况下不建议手动标记
+  // Whether to automatically mark as successful after rebooting from an update, default: true
+  // Manually marking is generally not recommended
   autoMarkSuccess?: boolean;
 
-  // 是否在若干ms后自动清除最后的报错，默认为不清除
+  // Whether to clear the last error after several ms, default: do not clear
   dismissErrorAfter?: number;
 
-  // 是否在开发环境中检查热更，默认为false。如需在开发环境中调试热更，请打开此选项。
-  // 但即便打开此选项，也仅能检查、下载热更，并不能实际应用热更。实际应用热更必须在release包中进行。
-  // 此选项需 v10.4.2+ 版本
+  // Whether to check for updates in the development environment, default: false. Enable this if you need to debug OTA in dev.
+  // Even if enabled, it can only check and download updates, but cannot actually apply them. Applying updates requires a release build.
+  // Requires v10.4.2+
   debug?: boolean;
 
-  // 是否在调用 checkUpdate 和 downloadUpdate 时抛出错误，默认为不抛出错误，通过 lastError 获取错误信息
-  // 启用后可以使用 try catch 语句 捕获错误，同时 lastError 也仍然可用
+  // Whether to throw an error when calling checkUpdate and downloadUpdate, default: false (get error info via lastError)
+  // When enabled, you can use try/catch blocks. lastError will still be available.
   // try {
   //   await checkUpdate();
   // } catch (e) {
   //   console.error(e);
   // }
-  // 此选项需 v10.15.2+ 版本
+  // Requires v10.15.2+
   throwError?: boolean;
 
-  // 在检查更新前执行，返回 false 则取消检查更新
-  // 此选项需 v10.12.0+ 版本
+  // Executed before checking for updates, returning false cancels the check
+  // Requires v10.12.0+
   beforeCheckUpdate?: () => Promise<boolean>;
 
-  // 在下载更新前执行，返回 false 则取消下载更新，可以配合自定义的 metaInfo 做一些条件控制
-  // 此选项需 v10.12.0+ 版本
+  // Executed before downloading updates, returning false cancels the download. Can be used with custom metaInfo for flow control.
+  // Requires v10.12.0+
   beforeDownloadUpdate?: (info: UpdateInfo) => Promise<boolean>;
+
+  // Executed after downloading updates, returning false stops the built-in strategy.
+  // Requires v10.27.0+
+  afterDownloadUpdate?: (info: UpdateInfo) => Promise<boolean>;
+
+  // Executed when the native package is expired, returning false stops the built-in strategy.
+  // Requires v10.28.2+
+  onPackageExpired?: (info: UpdateInfo) => Promise<boolean>;
 }
 
-// 日志事件类型
+// Log event types
 type EventType =
-  // 更新失败，重启后发生回滚
+  // Update failed, rolled back after reboot
   | "rollback"
-  // 检查更新时报错
+  // Error during check
   | "errorChecking"
-  // 正在发起检查
+  // Initiating check
   | "checking"
-  // 正在下载更新
+  // Downloading update
   | "downloading"
-  // 更新失败
+  // Download successful
+  | "downloadSuccess"
+  // Update failed
   | "errorUpdate"
-  // 更新成功
+  // Update success
   | "markSuccess"
-  // 下载apk
+  // Downloading APK
   | "downloadingApk"
-  // 下载apk前申请存储权限被用户拒绝
+  // User rejected storage permission before downloading APK
   | "rejectStoragePermission"
-  // 下载apk前申请存储权限发生错误
+  // Error requesting storage permission
   | "errorStoragePermission"
-  // 下载apk时发生错误
+  // Error while downloading/installing APK
   | "errorDownloadAndInstallApk";
 
-// 日志事件数据
+// Log event data
 interface EventData {
-  // 当前已完成的热更hash值，如尚未热更则为空字符串
+  // Hash of the current completed update, empty string if no update applied
   currentVersion: string;
-  // 客户端版本信息
+  // Client version info
   cInfo: {
-    rnu: string; // 当前 react-native-update 版本
-    rn: string; // 当前 react-native 版本
-    os: string; // 当前操作系统及版本
-    uuid: string; // 用户标识符
+    rnu: string; // react-native-update version
+    rn: string; // react-native version
+    os: string; // OS and version
+    uuid: string; // User identifier
   };
-  // 客户端原生版本号
+  // Native package version
   packageVersion: string;
-  // 编译时间戳
+  // Build timestamp
   buildTime: number;
-  // 报错相关的信息
+  // Error related info
   message?: string;
-  // 发生回滚的版本hash值
+  // Hash of the rolled-back version
   rolledBackVersion?: string;
-  // 更新失败的新版本hash值
+  // Hash of the failed new version
   newVersion?: string;
-  // 其他一些数据
+  // Additional data
   [key: string]: any;
 }
 ```
 
 #### useUpdate()
 
-热更相关的工具函数。此方法也可使用别名 `usePushy` 引入。
+Utility functions for OTA updates. This method can also be imported using the alias `useCresc`.
 
-<Callout type="info">
-注意，在使用 `<UpdateProvider>` 的当前组件（一般是根组件）中无法直接调用`useUpdate`，只有当前组件的子组件才能调用。
-</Callout>
+:::info
+Note that `useUpdate` cannot be called directly inside the component that uses `<UpdateProvider>` (typically the root component). It can only be called by its children.
+:::
 
 ```js
 const {
@@ -133,6 +143,7 @@ const {
   downloadUpdate,
   downloadAndInstallApk,
   getCurrentVersionInfo,
+  currentVersionInfo,
   parseTestQrCode,
   currentHash,
   packageVersion,
@@ -140,75 +151,84 @@ const {
   progress,
   updateInfo,
   lastError,
+  restartApp,
 } = useUpdate();
 ```
 
-其类型定义和功能如下：
+Types and functionality:
 
 ```ts
 interface UpdateContext {
-  // 检查更新（注意在 v10.26.0 版本之前，`checkUpdate`方法本身没有返回值，只能从`usePushy()`返回的`updateInfo`中获取）
+  // Checks for updates (Note: Before v10.26.0, `checkUpdate` had no return value, you had to get it from `updateInfo` returned by `useUpdate()`)
+  // We still recommend getting `updateInfo` via `useUpdate()` primarily
   checkUpdate: () => Promise<void | UpdateInfo>;
-  // 下载热更完成后调用，立即重启切换新版本
+  // Called after download completes to immediately restart and switch to the new version
   switchVersion: () => void;
-  // 下载热更完成后调用，用户手动重启app后切换新版本（静默更新）
+  // Called after download completes to switch to the new version on the next user-initiated restart (silent update)
   switchVersionLater: () => void;
-  // 热更完成重启后，手动标记热更完成
+  // Manually mark update as successful after a restart
   markSuccess: () => void;
-  // 清除最后的报错状态
+  // Clear the last error state
   dismissError: () => void;
-  // 下载热更, v10.16.0+ 版本返回值为`boolean`，表示是否下载成功
+  // Download the update. Returns `boolean` in v10.16.0+, indicating success.
   downloadUpdate: () => Promise<boolean | void>;
-  // 下载并安装apk
+  // Download and install an APK
   downloadAndInstallApk: (url: string) => Promise<void>;
-  // 获取当前已热更版本的信息
+  // Asynchronously get info about the currently applied update. Use `currentVersionInfo` instead after v10.31.2.
   getCurrentVersionInfo: () => Promise<{
     name?: string;
     description?: string;
     metaInfo?: string;
   }>;
-  // 解析测试二维码，此方法需 v10.11.2+ 版本
+  // Info about the currently applied update. Requires v10.31.2+.
+  currentVersionInfo: {
+    name?: string;
+    description?: string;
+    metaInfo?: string;
+  };
+  // Parse test QR code. Requires v10.11.2+
   parseTestQrCode: (qrCode: string) => void;
-  // 当前的版本hash
+  // Current version hash
   currentHash: string;
-  // 当前的原生版本号
+  // Current native package version
   packageVersion: string;
-  // 当前的pushy热更服务实例
-  client?: Pushy;
-  // 下载开始后的进度数据
+  // Current Cresc service instance
+  client?: Cresc;
+  // Progress data after download starts
   progress?: {
     hash: string;
-    // 已下载的字节数
+    // Bytes downloaded
     received: number;
-    // 待下载的总字节数
+    // Total bytes to download
     total: number;
   };
-  // 热更相关信息
+  // Update-related info
   updateInfo?: {
-    // 已是最新版本，无需热更
+    // Already up-to-date
     upToDate?: true;
-    // 当前原生版本已过期，需要下载新的原生版本
+    // Native package expired, requires downloading a new native build
     expired?: true;
-    // 在pushy网页管理端设置的原生版本下载地址
+    // Native package download URL set in the admin console
     downloadUrl?: string;
-    // 是否存在新的热更
+    // Is there a new update?
     update?: true;
-    // 新热更的版本名称
+    // New update version name
     name?: string;
-    // 新热更的hash值
+    // New update hash
     hash?: string;
-    // 新热更的更新说明
+    // Update description/changelog
     description?: string;
-    // 新热更携带的额外元数据
+    // Extra metadata payload
     metaInfo?: string;
-    // 当前热更是否已暂停
+    // Is the update currently paused?
     paused?:
-      | "app" // 当前应用所有原生版本暂停
-      | "package"; // 仅当前原生版本暂停
-    // 其他信息
+      | "app" // Paused for all native versions of the app
+      | "package" // Paused for this native version only
+      | "quota"; // Paused due to exceeding check quota
+    // Other messages
     message?: string;
   };
-  // 检查、下载、应用热更等过程中的最新一次报错
+  // The most recent error occurring during check, download, or apply
   lastError?: Error;
 }
 ```
@@ -217,9 +237,9 @@ interface UpdateContext {
 
 #### async function checkUpdate()
 
-触发更新检查，返回`updateInfo`（注意在 v10.26.0 版本之前，`checkUpdate`方法本身没有返回值，只能从`usePushy()`返回的`updateInfo`中获取），返回值有三种情形：
+Triggers an update check, returns `updateInfo` (Note: Before v10.26.0, `checkUpdate` had no return value. We still recommend prioritizing `updateInfo` from `useUpdate()`). There are three return scenarios:
 
-1. `{expired: true}`：该应用原生包已过期（三种情况：1. 主动设置为过期状态，2. 主动删除，3. 从未上传），需要引导用户下载或跳转到应用市场(需要在网页管理端设置中填写`downloadUrl`)。如需在应用内执行 apk 更新，还需配置[安装权限](/docs/api#async-function-downloadandinstallapkurl)。
+1. `{expired: true}`: The native package has expired (3 cases: 1. Manually set as expired, 2. Manually deleted, 3. Never uploaded). You should prompt the user to download a new native build or redirect to the app store (requires setting `downloadUrl` in the web console). To update an APK inside the app, configure [install permissions](/docs/api#async-function-downloadandinstallapkurl).
 
 ```js
 {
@@ -228,16 +248,16 @@ interface UpdateContext {
 }
 ```
 
-2. `{upToDate: true}`：当前已经更新到最新，无需进行更新。
+2. `{upToDate: true}`: The app is currently up-to-date.
 
-3. `{update: true}`：当前有新版本可以更新。`name`、`description`字段可以用于展示给用户版本号，更新内容等信息，而`metaInfo`字段则可以根据你的需求自定义一些标记(如是否静默更新、是否强制更新等等，自己根据标记的属性做一些条件流程控制)，具体用法可参考[场景实践](bestpractice#%E5%85%83%E4%BF%A1%E6%81%AFmeta-info%E7%9A%84%E4%BD%BF%E7%94%A8)。另外还有几个字段，包含了热更新文件的下载地址，
+3. `{update: true}`: A new version is available. `name` and `description` can be shown to the user. `metaInfo` can be used to set custom flags (like whether to update silently, or if it's a mandatory update). See [Best Practices](bestpractice#using-meta-info) for details. It also contains download URLs.
 
 ```js
 {
     update: true,
     name: '1.0.3-rc',
     hash: 'hash',
-    description: '添加聊天功能\n修复商城页面BUG',
+    description: 'Added Chat feature\nFixed store bugs',
     metaInfo: '{"silent":true}',
     pdiffUrl: 'http://update-packages.reactnative.cn/hash',
     diffUrl: 'http://update-packages.reactnative.cn/hash',
@@ -248,101 +268,114 @@ interface UpdateContext {
 
 #### async function downloadUpdate()
 
-下载热更包。仅当`update:true`时实际进行下载。会更新`progress`数据。v10.16.0+ 版本返回值为`boolean`，表示是否下载成功。
+Downloads the hot update package. Only proceeds if `update:true`. Updates `progress` state. In v10.16.0+, returns `boolean` indicating success.
 
 ---
 
 #### async function downloadAndInstallApk(url)
 
-下载更新的 apk 包并直接安装。`url`必须为可直接下载到 apk 文件的地址。
+Downloads and directly installs an APK. `url` must point directly to the APK file.
 
-注意要使用这个功能还需要在`AndroidManifest.xml`中手动添加安装权限，如果需要考虑 Android 7.0 以下的客户，则还需要添加外部存储权限。
+Due to external factors like system security constraints, this is not guaranteed to succeed perfectly. If download/install fails during the app lifecycle, subsequent calls won't retry and fail silently.
+
+Note: Requires manual permissions added to `AndroidManifest.xml`. If supporting pre-Android 7.0 devices, you also need external storage permissions.
 
 ```xml
 <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
-<!-- 如果需要考虑Android 7.0以下的客户，则还需要添加外部存储权限 -->
+<!-- For pre-Android 7.0 -->
 <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 ```
 
-注意某些应用市场可能会因为上述权限拒绝应用上架。去掉上述两个权限并不影响热更新功能。
+Note that some app stores might reject your app due to these permissions. Removing them does not affect OTA update functionality.
 
 ---
 
 #### function markSuccess()
 
-**一般情况下请勿手动调用此函数**。 调用此函数作为更新成功的标记（否则下次启动会默认失败自动回滚）。
+**Generally, do not call this manually**. Marks the update as successfully applied (otherwise, the next boot expects a crash and rolls back).
 
 ---
 
 #### async function getCurrentVersionInfo()
 
-获取当前已热更版本的信息（如尚未热更过则返回空对象）。
+Gets information about the currently active hot update (returns an empty object if no update was applied). Use `currentVersionInfo` instead after v10.31.2.
 
-返回值示例：
+Example return:
 
 ```js
 {
     name: '1.0.3-rc',
-    description: '添加聊天功能\n修复商城页面BUG',
+    description: 'Added Chat feature\nFixed store bugs',
     metaInfo: '{"silent":true}',
 }
 ```
 
 ---
 
+#### function restartApp()
+
+Immediately restarts the application. Available in v10.28.2+.
+
+---
+
 #### function switchVersion()
 
-立即重启应用，并加载已经下载完毕的版本。
+Immediately restarts the app and loads the newly downloaded version.
+
+> Warning! Do not rely solely on `progress` to determine download completion! Call this strictly after `await downloadUpdate()` finishes.
 
 ---
 
 #### function switchVersionLater()
 
-在下一次启动应用的时候加载已经下载完毕的版本。
+Loads the newly downloaded version on the next natural app restart.
+
+> Warning! Call this strictly after `await downloadUpdate()` finishes.
 
 ---
 
 #### function parseTestQrCode(qrCode: string)
 
-解析测试二维码，一般用于给 QA 人员测试热更新。如果在应用中已有扫码功能，则可以在应用中扫描 pushy 后台的测试二维码来测试任意版本的热更包。
+Parses test QR codes, typically used by QA to test OTA packages. If your app already has a scanning feature, scan Cresc QRs to preview arbitrary update versions.
+Note: If using custom update strategies, rely exclusively on `updateInfo` from `useUpdate()` because the QR code scan bypasses checkUpdate's return value.
 
 ![testqrcode](./assets/testqrcode.png)
 
-注意使用此方法，上述界面中的"使用 Deep Link"选项 <u><b>请不要</b></u> 勾选。
+When using this method, **do not** check the "Use Deep Link" option.
 
-代码示例：
+Example:
 
 ```js
 <Camera
   onReadCode={({ nativeEvent: { codeStringValue } }) => {
-    // 识别到二维码后先关闭相机
+    // Disable camera upon read
     setShowCamera(false);
-    // 先解析是否是pushy的测试二维码
+    // Parse test QR first
     if (parseTestQrCode(codeStringValue)) {
-      // 如果是pushy的测试二维码，则不再做其他业务扫码逻辑
+      // If it's a Cresc QR, stop processing
       return;
     }
-    // 如果不是，继续处理其他业务扫码逻辑
+    // Otherwise, process normal business logic
   }}
 />
 ```
 
 ---
 
-### Android 方法
+### Android Methods
 
 #### UpdateContext.setCustomInstanceManager(ReactInstanceManager instanceManager)
 
-如果是集成/混编 Android 方案，则可以使用此方法传入你自行创建的 ReactInstanceManager。自`v5.5.8`版本起可用。
+If integrating into an existing Android host app, pass your custom ReactInstanceManager here. Available since `v5.5.8`.
 
-示例：
+Example:
 
 ```java
 import cn.reactnative.modules.update.UpdateContext
 
 mReactInstanceManager = ReactInstanceManager.builder()
-                // ...各种setter，但注意不要调用setBundleAssetName
+                // ...other setters, but do NOT call setBundleAssetName
                 .setJSBundleFile(UpdateContext.getBundleUrl(mContext, "assets://index.android.bundle"))
                 .build();
 UpdateContext.setCustomInstanceManager(mReactInstanceManager);

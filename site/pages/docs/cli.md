@@ -1,177 +1,284 @@
 ---
 order: 12
-title: 命令行工具
-type: 开发指南
+title: CLI Tools (Built-in)
+type: Guide
 ---
 
-### 安装
+### Installation
 
-```
+```bash
 $ npm install -g react-native-update-cli
 ```
 
-### 命令
+### Commands
 
-#### pushy bundle
+#### cresc bundle
 
-生成资源包
+Generates a hot update resource package (ppk). Automatically detects if frameworks like Expo or Taro are used and runs their packagers respectively. If detection is inaccurate or errors occur, try using `--rncli` to specify the official React Native CLI.
 
-- platform: ios|android 对应的平台
-- entryFile: 入口脚本文件
-- intermediaDir: 临时文件输出目录
-- output: 最终 ppk 文件输出路径
-- dev: 是否打包开发版本
-- sourcemap: 是否生成 sourcemap(需 cli 版本 1.11.0+)
-- no-interactive: 不进行交互式提示
-- rncli: 指定使用官方命令行打包 (需 cli 版本 1.40.0+)
-- expo: 指定使用 expo 的命令行打包 (需 cli 版本 1.40.0+)
-- taro: 指定使用 taro 的命令行打包 (需 cli 版本 1.40.0+)
+- `platform`: `ios|android|harmony` The target platform.
+- `entryFile`: The entry script file.
+- `intermediaDir`: Temporary file output directory.
+- `output`: Final ppk file output path.
+- `dev`: Whether to bundle a dev version.
+- `sourcemap`: Whether to generate sourcemaps (requires CLI v1.11.0+).
+- `no-interactive`: Disable interactive prompts.
+- `rncli`: Force use of official RN CLI for bundling (requires CLI v1.40.0+).
+- `expo`: Force use of Expo CLI for bundling (requires CLI v1.40.0+).
+- `taro`: Force use of Taro CLI for bundling (requires CLI v1.40.0+).
 
----
+Since v1.44.2, direct publishing arguments have been added (equivalent to calling `cresc publish` right after bundling finishes):
 
-#### pushy parseIpa [ipaFile]
+- `name`: Target name for the hot update version (its own version number).
+- `description`: Update description/changelog shown to users.
+- `metaInfo`: Custom meta info for saving arbitrary state data. Refer to [Best Practices](bestpractice#using-meta-info).
 
-解析 ipa 文件并输出一些相关信息，如版本号，编译时间戳等。
+Since v1.46.1, alongside passing `name`, `description`, and `metaInfo`, you can stack the following arguments (equivalent to calling `cresc update` right after publishing):
 
----
+- `packageId`: The target native package ID to bind to (Choose one).
+- `packageVersion`: The target native package version to bind to (Choose one).
+- `minPackageVersion`: Minimum target native package version. Applies to all inclusive versions above it (Choose one).
+- `maxPackageVersion`: Maximum target native package version. Applies to all inclusive versions below it (Choose one).
+- `packageVersionRange`: Target native package version range (Choose one). Range format strictly follows Semantic Versioning (semver). See <https://devhints.io/semver>.
 
-#### pushy parseApk [apkFile]
+Example:
 
-解析 apk 文件并输出一些相关信息，如版本号，编译时间戳等。
-
----
-
-#### pushy diff [origin][next]
-
-提供两个 ppk 文件，生成从 origin 到 next 版本的差异更新包。
-
-- output: diff 文件输出路径
-
----
-
-#### pushy diffFromApk [apkFile][next]
-
-提供一个 apk 文件和一个 ppk 文件，生成从 apk 文件到 next 版本的差异更新包。
-
-如果使用热更新开放平台，你不需要自己执行此命令。
-
-- output: diff 文件输出路径
+```bash
+cresc bundle --platform android --name "1.0.0" --description "Hot update version 1.0.0" --metaInfo '{"key": "value"}' --packageVersionRange ">=1.0 <3.0"
+```
 
 ---
 
-#### pushy diffFromIpa [ipaFile][next]
+#### cresc parseIpa [ipaFile]
 
-提供一个 ipa 文件和一个 ppk 文件，生成从 ipa 文件到 next 版本的差异更新包。
-
-如果使用热更新开放平台，你不需要自己执行此命令。
-
-- output: diff 文件输出路径
+Parses an `.ipa` file and outputs associated data like version codes and build timestamps.
 
 ---
 
-#### pushy login [email][pwd]
+#### cresc parseApk [apkFile]
 
-登录热更新开放平台。你需要先登录才能使用下面的命令。
-
----
-
-#### pushy logout
-
-登出并清除本地的登录信息
+Parses an `.apk` file and outputs associated data like version codes and build timestamps.
 
 ---
 
-#### pushy me
+#### cresc parseApp [appFile]
 
-查看自己是否已经登录，以及昵称等信息。
-
----
-
-#### pushy createApp
-
-创建应用并立刻绑定到当前工程。这项操作也可以在网页管理端进行。
-
-- platform: ios|android 对应的平台
-- name: 应用名称
-- downloadUrl: 应用安装包的下载地址
+Parses an `.app` file and outputs associated data like version codes and build timestamps.
 
 ---
 
-#### pushy deleteApp [appId]
+#### cresc parseAab [aabFile]
 
-删除已有应用。所有已创建的应用包、热更新版本都会被同时删除。这项操作也可以在网页管理端进行。
-
-- platform: ios|android 对应的平台
+Parses an `.aab` file and outputs associated data like version codes and build timestamps.
 
 ---
 
-#### pushy apps
+#### cresc diff [origin][next]
 
-查看当前已创建的全部应用。这项操作也可以在网页管理端进行。
+Provide two `.ppk` files to generate a delta differential hot update package from the origin to next versions.
 
-- platform: ios|android 对应的平台
-
----
-
-#### pushy selectApp [appId]
-
-绑定应用到当前工程。
-
-- platform: ios|android 对应的平台
+- `output`: Diff file output path.
 
 ---
 
-#### pushy uploadIpa [ipaFile]
+#### cresc diffFromApk [apkFile][next]
 
-上传 ipa 文件到开放平台。
+Provide an `.apk` file and a `.ppk` file to generate a diff update package from the `.apk` baseline to the next version.
 
-- note: 备注（cli 需 1.24.0 +）
+No need to run this manually if you use the managed platform.
 
----
-
-#### pushy uploadApk [apkFile]
-
-上传 apk 文件到开放平台。
-
-- note: 备注（cli 需 1.24.0 +）
+- `output`: Diff file output path.
 
 ---
 
-#### pushy packages
+#### cresc diffFromApp [appFile][next]
 
-查看已经上传的原生包。这项操作也可以在网页管理端进行。
+Provide an `.app` file and a `.ppk` file to generate a diff update package.
 
-- platform: ios|android 对应的平台
+No need to run this manually if you use the managed platform.
 
----
-
-#### pushy publish [ppkFile]
-
-发布新的热更新版本（ppk 文件）。
-
-- platform: ios|android 对应的平台
-- name: 当前热更新版本的名字(版本号)
-- description: 当前热更新版本的描述信息，可以对用户进行展示
-- metaInfo: 当前热更新版本的元信息，可以用来保存一些额外信息，具体用法可参考[场景实践](bestpractice#%E5%85%83%E4%BF%A1%E6%81%AFmeta-info%E7%9A%84%E4%BD%BF%E7%94%A8)。
+- `output`: Diff file output path.
 
 ---
 
-#### pushy versions
+#### cresc diffFromIpa [ipaFile][next]
 
-分页列举可用的版本。这项操作也可以在网页管理端进行。
+Provide an `.ipa` file and a `.ppk` file to generate a diff update package.
 
-- platform: ios|android 对应的平台
+No need to run this manually if you use the managed platform.
+
+- `output`: Diff file output path.
 
 ---
 
-#### pushy update
+#### cresc login [email][pwd]
 
-为一个原生包版本绑定一个热更新版本。这项操作也可以在网页管理端进行。以下参数中`packageId`，`packageVersion`，`minPackageVersion`和`maxPackageVersion`四选一即可。
+Logs into the hot update platform. You must authenticate to execute most subsequent commands.
 
-- platform: ios|android 对应的平台
-- versionId: 要绑定的热更新版本 ID
-- packageId: 要绑定的原生包 ID （四选一）
-- packageVersion: 要绑定的原生包版本名（四选一，需 cli 版本 1.7.2+）
-- minPackageVersion: 要绑定的最低原生包版本，大于等于此版本的将逐个绑定（四选一，需 cli 版本 1.27.0+）
-- maxPackageVersion: 要绑定的最高原生包版本，小于等于此版本的将逐个绑定（四选一，需 cli 版本 1.27.0+）
-- rollout: 灰度发布范围（1-100），默认为 100 （需 cli 版本 1.31.0+）
+---
+
+#### cresc logout
+
+Logs out and clears local session cache.
+
+---
+
+#### cresc me
+
+Checks if you are currently logged in, and displays account details.
+
+---
+
+#### cresc createApp
+
+Creates a new remote app and instantly binds it to the current project directory. This action can also be completed via the web dashboard.
+
+- `platform`: `ios|android|harmony` The target platform.
+- `name`: The application name.
+- `downloadUrl`: The remote URL where users go to download native package upgrades.
+
+---
+
+#### cresc deleteApp [appId]
+
+Deletes an existing app entirely. All related native packages and hot versions will be permanently wiped. This action can also be completed via the web dashboard.
+
+- `appId`: The App ID to delete.
+
+---
+
+#### cresc apps
+
+List all established apps in your account. This action can also be completed via the web dashboard.
+
+- `platform`: `ios|android|harmony` The target platform filter.
+
+---
+
+#### cresc selectApp [appId]
+
+Locally binds an existing app configuration to the current project folder.
+
+- `platform`: `ios|android|harmony` The target platform.
+
+---
+
+#### cresc uploadIpa [ipaFile]
+
+Uploads an `.ipa` to the managed platform. (Requires CLI 1.24.0+)
+
+---
+
+#### cresc uploadApk [apkFile]
+
+Uploads an `.apk` to the managed platform. (Requires CLI 1.24.0+)
+
+---
+
+#### cresc uploadApp [appFile]
+
+Uploads an `.app` to the managed platform. (Requires CLI 1.24.0+)
+
+---
+
+#### cresc uploadAab [aabFile]
+
+Uploads an `.aab` to the managed platform. (Requires CLI 2.6.0+)
+
+---
+
+#### cresc extractApk [aabFile]
+
+Extracts an `.apk` file from an `.aab` build envelope. (Requires CLI 2.6.0+)
+
+---
+
+#### cresc packages
+
+View all natively uploaded packages. This action can also be completed via the web dashboard.
+
+- `platform`: `ios|android|harmony` The target platform filter.
+
+---
+
+#### cresc deletePackage
+
+Delete an uploaded native package baseline.
+
+- `appId`: The App ID that the native package belongs to.
+- `packageId`: The target Package ID to delete.
+
+---
+
+#### cresc publish [ppkFile]
+
+Uploads and publishes a new hot update package (`.ppk` file).
+
+- `platform`: `ios|android|harmony`
+- `name`: Target name for the hot update version (its own version code).
+- `description`: Update description/changelog shown to users.
+- `metaInfo`: Custom meta info payload. Refer to [Best Practices](bestpractice#using-meta-info).
+
+Since v1.46.1, alongside publishing, you can stack the following arguments (equivalent to calling `cresc update` right after publishing):
+
+- `packageId`: The target native package ID to bind to (Choose one).
+- `packageVersion`: The target native package version to bind to (Choose one).
+- `minPackageVersion`: Minimum target native package version. Applies to all inclusive versions above it (Choose one).
+- `maxPackageVersion`: Maximum target native package version. Applies to all inclusive versions below it (Choose one).
+- `packageVersionRange`: Target native package version range (Choose one). Range format strictly follows Semantic Versioning (semver). See <https://devhints.io/semver>.
+
+Example:
+
+```bash
+cresc publish .cresc/output/android.1750423283653.ppk --platform android --name "1.0.0" --description "Hot update 1.0.0" --metaInfo '{"key": "value"}' --packageVersionRange ">=1.0 <3.0"
+```
+
+---
+
+#### cresc versions
+
+Paginates and lists available hot update versions. This action can also be completed via the web dashboard.
+
+- `platform`: `ios|android|harmony`
+
+---
+
+#### cresc deleteVersion
+
+Delete a specific published hot update version.
+
+- `appId`: The App ID the target hot update version belongs to.
+- `versionId`: The Target update Version ID to delete.
+
+---
+
+#### cresc update
+
+Binds and applies an active hot update version to a native package baseline. This action can also be completed via the web dashboard. You must supply one of the package scope args: `packageId`, `packageVersion`, `minPackageVersion`, `maxPackageVersion`, or `packageVersionRange`.
+
+From CLI v2.4.0 onward, a full rollout and a canary rollout can coexist simultaneously. Prior to 2.4.0 they overwrote each other depending on which was set last.
+
+- `platform`: `ios|android|harmony`
+- `versionId`: The Version ID of the hot update.
+- `rollout`: Phased canary rollout percentage (Int between 1 - 100). Default is 100 (Requires CLI v1.31.0+).
+- `dryRun`: Dry run preview only, prevents applying actual bindings (Requires CLI v1.45.4+).
+- `packageId`: Target bind native package ID (Choose one).
+- `packageVersion`: Target bind native package version string (Choose one, CLI v1.7.2+).
+- `minPackageVersion`: Target minimum native package version (Choose one, CLI v1.27.0+).
+- `maxPackageVersion`: Target maximum native package version (Choose one, CLI v1.27.0+).
+- `packageVersionRange`: Target semantic version range string (Choose one, CLI v1.45.4+). Format follows SemVer.
+
+Example:
+
+```bash
+❯ cresc update --versionId 211343 --platform android --packageVersionRange ">=1.0 <3.0" --dryRun
+react-native-update-cli: 1.45.4 (Latest: 1.45.4)
+react-native-update: 10.28.11 (Latest: 10.28.11)
+The following is a dry-run simulation and no destructive changes will occur:
+Successfully bound update 211343 to native baseline 1.28.1 (id: 75219)
+Successfully bound update 211343 to native baseline 1.28 (id: 75184)
+Successfully bound update 211343 to native baseline 1.5 (id: 73396)
+Successfully bound update 211343 to native baseline 2.0 (id: 68219)
+Successfully bound update 211343 to native baseline 1.0 (id: 68158)
+Operation complete, 5 active native packages bound.
+```

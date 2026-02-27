@@ -1,0 +1,62 @@
+---
+order: 9
+title: Install & Use Skills
+type: Advanced Guide
+---
+
+This document explains how to install and use the `react-native-update` Skills to help you efficiently complete integration, configuration, and troubleshooting tasks inside AI programming tools.
+
+## Skill Information
+
+- Skill Name: `react-native-update`
+- Source Repo: `reactnativecn/react-native-update-skill`
+
+## Installation (Recommended)
+
+Install across all supported Agents in your current layout:
+
+```bash
+npx skills add reactnativecn/react-native-update-skill --skill react-native-update -a '*'
+```
+
+Install exclusively for Claude Code:
+
+```bash
+npx skills add reactnativecn/react-native-update-skill --skill react-native-update -a claude-code
+```
+
+## Update Skill
+
+```bash
+npx skills check
+npx skills update
+```
+
+## Usage Guidelines
+
+Following installation, you can assign requests directly to AI assistants, generating outcomes like:
+
+- "Integrate `react-native-update` inside my Expo project."
+- "Execute integration remodeling over the class component root node."
+- "Configure a controlled whitelist staged rollout mechanism."
+- "Diagnose why 'OTA updates aren't deploying correctly' issues."
+
+## Topics Covered by the Skill
+
+- RN CLI / Expo Integration flows
+- Checking `update.json` and `appKey` configuration parameters
+- Essential iOS / Android native intervention warnings
+- Polling update strategy recommendations (`checkStrategy` / `updateStrategy`)
+- Diagnostics tackling familiar conflicts (like `expo-updates`)
+- Examples combining class instances manipulating user whitelists
+
+## Relevant Links
+
+- Open-Source Repo:
+  <a href="https://github.com/reactnativecn/react-native-update-skill" target="_blank">
+    https://github.com/reactnativecn/react-native-update-skill
+  </a>
+- ClawHub Page (Optional):
+  <a href="https://clawhub.ai/skills/react-native-update" target="_blank">
+    https://clawhub.ai/skills/react-native-update
+  </a>

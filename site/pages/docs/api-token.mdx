@@ -1,0 +1,133 @@
+---
+order: 12
+title: API Token
+type: Guide
+---
+
+
+
+# API Token
+
+An API Token is an authentication method used to invoke the [Cresc API](https://update.reactnative.cn/api/openapi) within CI/CD pipelines or automated scripts. Compared to standard username/password logins, API Tokens are much more secure and easier to manage.
+
+## Use Cases
+
+- **Continuous Integration/Deployment (CI/CD)**: Automate OTA update publishing via GitHub Actions, GitLab CI, Jenkins, etc.
+- **Automation Scripts**: Write scripts to manage apps, versions, or native packages in bulk.
+- **Third-Party Integrations**: Wrap Cresc's workflows into external developer tools.
+
+## Creating an API Token
+
+1. Log into the [Cresc Dashboard](https://cresc-admin.reactnative.cn)
+2. Click on "API Token" in the left sidebar menu.
+3. Click the "Create Token" button.
+4. Enter a name for the Token (e.g., CI/CD Pipeline).
+5. Select the required permissions.
+6. (Optional) Set an expiration date.
+7. Click Create, and **copy the secret Token immediately**.
+
+:::warning
+The token string is only displayed once upon creation. You will not be able to view it again. Be sure to save it safely immediately!
+:::
+
+## Permissions
+
+| Permission | Description |
+|------|------|
+| **Read** | View app details, version info, and native package details |
+| **Write** | Create/Update apps, publish new versions, upload native packages |
+| **Delete** | Delete apps, versions, and packages |
+
+:::info
+You must select at least one permission when creating a Token. Applying the principle of least privilege is a best practice.
+:::
+
+## Using Tokens with API
+
+When calling the Cresc API, supply the token via the `x-api-token` HTTP header:
+
+```bash
+curl -X GET "https://update.reactnative.cn/api/app/list" \
+  -H "x-api-token: YOUR_API_TOKEN"
+```
+
+### Using in the CLI
+
+If you're using the `react-native-update-cli` tool (v2.7.0+), you can pass the Token via environment variables:
+
+```bash
+export CRESC_API_TOKEN=your_api_token_here
+cresc bundle --platform android
+```
+
+### Using in CI/CD Environments
+
+Here is an example configuring a GitHub Action:
+
+```yaml
+# .github/workflows/publish.yml
+name: Publish Hot Update
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm install && npm i -g react-native-update-cli
+        
+      - name: Publish update
+        env:
+          CRESC_API_TOKEN: ${{ secrets.CRESC_API_TOKEN }}
+        run: cresc bundle --platform android
+```
+
+:::tip
+In CI/CD pipelines, always store your tokens securely using the platform's Secret Manager (e.g., GitHub Secrets) rather than hardcoding them in your configuration scripts.
+:::
+
+## Managing Tokens
+
+### Viewing Token List
+
+On the "API Token" page, you can view all created tokens, including:
+- Token Name
+- Permissions
+- Expiration Time
+- Last Used Time
+- Status (Active/Expired/Revoked)
+
+### Revoking a Token
+
+If a token is leaked or no longer needed, you can revoke it at any time:
+
+1. Identify the token in the table list.
+2. Click the "Revoke" button.
+3. Confirm revocation.
+
+:::warning
+Revocations take effect immediately. Any API requests made using a revoked token will be instantly rejected. Ensure you update any dependent CI/CD setups before revoking.
+:::
+
+## Security Practices
+
+1. **Principle of Least Privilege**: Only grant the exact permissions required.
+2. **Set Expirations**: Try to use short-lived tokens or configure expirations for temporary integration projects.
+3. **Periodic Rotation**: Routinely revoke old tokens and cycle in new tokens for long-running workflows.
+4. **Secure Storage**: Never commit tokens directly to your repository source code.
+5. **Monitor Usage**: Check the 'Last Used Time' and delete idle tokens routinely.
+
+## Limits
+
+- Each user can create a maximum of **10** API Tokens.
+- To create additional tokens, you must first revoke existing unused tokens.

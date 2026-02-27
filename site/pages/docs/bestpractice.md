@@ -1,137 +1,146 @@
 ---
 order: 13
-title: 场景实践
-type: 开发指南
+title: Best Practices
+type: Guide
 ---
 
-#### 优化原生和热更包体积
+#### Optimizing Native and Hot Update Package Size
 
-##### iOS 原生包优化(ipa)
+##### iOS Native Package Optimization (ipa)
 
-对于同一份 archive（其版本号、编译时间和内置 bundle 已固定，不会受导出方式所影响），可以用不同选项多次导出 ipa，选择其中最小的上传到 pushy 服务器作为热更基准包。
+For the same archive (where version number, build time, and bundled js are fixed and unaffected by the export method), you can export the ipa multiple times with different options and choose the smallest one to upload to the Cresc server as your update baseline.
 
 ![bitcode](./assets/exportipa.png)
 
-##### Android 原生包优化(apk)
+##### Android Native Package Optimization (apk)
 
-apk 的优化主要考虑两个方向：
+APK optimization primarily focuses on two areas:
 
-- [启用 proguard 压缩混淆源码](https://reactnative.cn/docs/signed-apk-android#%E5%90%AF%E7%94%A8proguard%E6%9D%A5%E5%87%8F%E5%B0%91apk%E7%9A%84%E5%A4%A7%E5%B0%8F%EF%BC%88%E5%8F%AF%E9%80%89%EF%BC%89)。但这一步可能导致一些使用反射的代码运行时报错，启用后需要充分测试每个页面和功能，以及需要阅读一些第三方关于 proguard 的特别设置说明。
-- [分开编译不同的 cpu 架构](https://reactnative.cn/docs/signed-apk-android#%E9%92%88%E5%AF%B9%E4%B8%8D%E5%90%8C%E7%9A%84-cpu-%E6%9E%B6%E6%9E%84%E7%94%9F%E6%88%90-apk-%E4%BB%A5%E5%87%8F%E5%B0%8F-apk-%E6%96%87%E4%BB%B6%E7%9A%84%E5%A4%A7%E5%B0%8F)。找到`android/app/build.gradle`中的 cpu 架构部分，如下所示启用`enable`选项：
+- [Enable Proguard to obfuscate and shrink code](https://reactnative.dev/docs/signed-apk-android#enabling-proguard-to-reduce-the-size-of-the-apk-optional). Note that this step might cause runtime errors for code using reflection. Exhaustive testing is required after enabling, and you might need to add specific Proguard rules for third-party libraries.
+- [Build separate APKs for different CPU architectures](https://reactnative.dev/docs/signed-apk-android#building-separate-apks-for-different-cpu-architectures-optional). Find the CPU architecture section in `android/app/build.gradle` and enable the `enableSeparateBuildPerCPUArchitecture` option as shown below:
 
 ```diff
 splits {
     abi {
         reset()
 -       enable enableSeparateBuildPerCPUArchitecture
-+       enable true        // 启用单独的 cpu 架构编译
++       enable true        // Enable separate CPU architecture builds
         universalApk false  // If true, also generate a universal APK
     }
 }
 ```
 
-如此一来会在编译目录中输出多个 apk 文件，分发和上传到热更新服务时只需要使用`app-arm64-v8a-release.apk`文件，可以大幅减小 apk 的大小。
+This will output multiple APK files in the build directory. For distribution and uploading to the hot update service, you only need to use the `app-arm64-v8a-release.apk` file, which significantly reduces the APK size.
 
-##### 热更新包优化(ppk)
+##### Hot Update Package Optimization (ppk)
 
-热更新包的主要内容是 js 包和其所引用的静态资源（主要是图片）。
+The primary content of a hot update package is the JS bundle and its referenced static assets (mostly images).
 
-- js 包成分分析。可以借助一些第三方工具（如[react-native-bundle-visualizer](https://github.com/IjzerenHein/react-native-bundle-visualizer)）来分析 js 文件中哪些占比较大，是否可以用其他库替换等（如 dayjs 替换 moment，lodash-es 替换 lodash）。
-- 图片优化。
-  - 在保证体验的情况下，使用一些工具对图片进行裁剪压缩。
-  - 如不需要图片的透明像素，可以考虑将 png 格式转为 jpg 格式。
-  - 还可以进一步考虑压缩比更高的图片格式，例如 webp 格式（需要第三方原生插件例如[react-native-webp-format](https://github.com/Aleksefo/react-native-webp-format#readme)），heif 格式（iOS 11 和 Android 10 以上原生支持）等。这里有个图片格式对比可供参考 <https://compare.rokka.io/_compare/#heif=40&jpeg=80&webp=80&av1=40&width=800>。
+- **JS Bundle Analysis**: You can use third-party tools (like [react-native-bundle-visualizer](https://github.com/IjzerenHein/react-native-bundle-visualizer)) to analyze which modules consume the most space in your JS files, and see if they can be replaced with lighter alternatives (e.g., replacing `moment` with `dayjs`, or `lodash` with `lodash-es`).
+- **Image Optimization**:
+  - Use compression tools to crop and compress images without noticeable quality loss.
+  - If transparent pixels aren't needed, consider converting PNG formats to JPG.
+  - Consider image formats with higher compression ratios, such as WEBP (requires third-party native plugins like [react-native-webp-format](https://github.com/Aleksefo/react-native-webp-format#readme)) or HEIF (supported natively on iOS 11 and Android 10+). Here is an image format comparison for reference: <https://compare.rokka.io/_compare/#heif=40&jpeg=80&webp=80&av1=40&width=800>.
 
-#### 有很多渠道包需要热更，如何操作比较方便？
+#### Handling Multiple Channel APKs for Hot Updates
 
-1. 如果渠道包的`js代码和初始资源`有差别（无论多么细微的差别都会生成不同的 jsbundle），那么只能单独生成 apk，分别上传和绑定。可以考虑写一些脚本自动调用 cli 来执行批量操作。
-2. 如果渠道包的`js代码和初始资源`完全一致，可以考虑使用[Flavor 构建](https://developer.android.com/studio/build/build-variants?hl=zh-cn)，或其他一些动态生成渠道包的方案（比如[腾讯的 VasDolly](https://github.com/Tencent/VasDolly)，[美团的 walle](https://github.com/Meituan-Dianping/walle)等），这样所有的渠道包基于同一个基础 apk 生成（因而会有相同的编译时间戳和 jsbundle）。这样可以只用上传一个基础 apk，对此 apk 的热更操作可以对所有渠道包生效。
-3. 如果您是`高级版`、`专业版`或`大客户VIP版`客户，也可以考虑在管理后台的应用设置中启用`忽略编译时间戳`。此选项仅对比版本号，不校验时间戳，可提供更宽容的热更策略，但可能消耗更多流量。
+1. If the channel APKs have differences in their `JS code or initial assets` (no matter how slight, which results in different jsbundles), you must build separate APKs, upload, and bind them individually. You can write scripts to automate bulk operations using the CLI.
+2. If the `JS code and initial assets` across channel APKs are perfectly identical, consider using [Flavor builds](https://developer.android.com/studio/build/build-variants), or other dynamic channel generation tools (like [Tencent's VasDolly](https://github.com/Tencent/VasDolly) or [Meituan's walle](https://github.com/Meituan-Dianping/walle)). In this approach, all channel APKs are generated from a single base APK (thus sharing the same build timestamp and jsbundle). This means you only need to upload one base APK, and hot updates applied to it will take effect across all channel APKs.
+3. If you are on the `Premium`, `Professional`, or `Enterprise VIP` plans, you can enable `Ignore Build Timestamp` in your app settings in the admin dashboard. This option only checks the version number and ignores the timestamp, providing a wider tolerance for updates, but it may consume more CDN traffic.
 
-#### 如何支持 aab 格式的原生包？
+#### Supporting the AAB Format
 
-如果您需要使用 aab 格式的 android 原生包，那么可以在上传到 Google play 之后，在其控制台中下载转换后的 apk 格式（见下图），然后将这个 apk 包上传到热更新的后台，即可正常支持热更新。
+Update the `react-native-update-cli` to v2.6.0 or higher. You can then use the `cresc parseAab` and `cresc uploadAab` commands for `.aab` format support.
 
-![aab](./assets/aab.png)
+#### Testing and Rollbacks
 
-#### CI 的集成
-
-在开发环境中，每次 bundle 都会生成一个不同名字的 ppk 文件，这不利于持续集成(CI)系统的引入。
-
-要解决这个问题,你可以使用`--output`参数来指定输出 ppk 文件的名字和路径，便于进行自动发布。
-
-#### 测试、发布与回滚
-
-自 v10.11.2 版本开始，可以使用以下两种快捷扫码方案来测试热更，而无需提前进行绑定：
+Starting from version v10.11.2, you can use two quick QR code scanning methods to test hot updates without needing to bind them beforehand:
 
 ![testqrcode](./assets/testqrcode.png)
 
-- 若应用启用了 [DeepLink](https://reactnative.cn/docs/next/linking#%E5%90%AF%E7%94%A8-deep-links) 功能
+- **If your app has [Deep Linking](https://reactnative.dev/docs/linking#enabling-deep-links) enabled:**
 
-代码中无需任何改动，只需在上述界面中勾选“使用 Deep Link”，填入您应用的协议名，例如"pushy://"，然后使用系统相机或系统内置的扫一扫功能扫码（注意不能使用微信扫码），即可自动调起应用并触发更新。
+No code changes are required. Simply check "Use Deep Link" in the interface shown above, enter your app's scheme (e.g., `cresc://`), and scan the QR code using your system camera or built-in scanner (Do not use WeChat's scanner). The app will automatically open and trigger the update.
 
-- 若应用自带扫码功能
+- **If your app has a built-in barcode scanner:**
 
-请参考 [parseTestQrCode](api#function-parsetestqrcodeqrcode-string) 方法的说明。
+Please refer to the documentation for the [parseTestQrCode](api#function-parsetestqrcodeqrcode-string) method.
 
 <details>
-<summary>若您的应用不具有上述两项功能，或 pushy 版本低于 v10.11.2，则可以参考如下测试方式（不推荐）</summary>
+<summary>If your app doesn't have either feature, or your Cresc version is below v10.11.2, use this test setup (Not Recommended)</summary>
 
-先发布一个**测试包**，再发布一个除了版本号以外均完全相同的**正式包**。
+Publish an **internal test package**, and then publish a **production package** that is identical in every way except the version number.
 
-例如，假设我们有一个正式包，版本为`1.6.0`，那么可以修改版本号重新打包一个`1001.6.0`，以一个明显不太正常的版本号来标识它是一个测试版本，同时后几位相同，可以表明它和某个正式版本存在关联（内容/依赖一致）。
+For example, assuming your production package version is `1.6.0`, you can modify it to `1001.6.0` to clearly indicate it's a test version, while the matching ending digits indicate it is related to a specific production release (identical content/dependencies).
 
-在每次往发布包发起热更新之前，先对**测试包**`1001.6.0`进行更新操作，基本测试通过之后，再在网页后台上将热更包重新绑定到**正式包**`1.6.0`上。如果在测试包中发现了重大问题，你就可以先进行修复，更新测试确认通过后再部署到正式线上环境。这样，可以最大程度的避免发生线上事故。
+Before pushing any hot update to the production package, always perform the update operation targeting the **test package** `1001.6.0`. Once testing passes, you can then re-bind that hot update package to the **production package** `1.6.0` in the web console. If major issues are found in the test package, you can fix them, test again, and only deploy securely to production when ready. This maximally prevents live accidents.
 
 </details>
 
-万一确实发生线上事故需要回滚的话，先立即对原生包或者整个应用设置暂停热更，然后更改绑定到之前正常的版本，或者利用版本控制系统回滚代码到正常的状态，然后重新生成热更包并推送。
+If your testing native package already has a published hot update and its strategy is set to "Apply Immediately", this might conflict with QR code scanning (e.g., immediately overriding the QR code preview with the published version). To prevent this, you can use the `beforeCheckUpdate` callback to temporarily disable update checks after scanning a QR code until the next restart.
 
-#### 元信息(Meta Info)的使用
+```js
+// The isFirstTimeDebug flag is available in v10.37.0+, indicating the first boot after a QR OTA
+import { isFirstTimeDebug } from 'react-native-update/src/core';
 
-在发布热更新版本时，或者在网页端，你可以编辑版本的元信息。这是一段在检查更新时可以获得的字符串，你可以在其中按你所想的格式（一般建议用[JSON 格式](https://developer.mozilla.org/zh-CN/docs/Learn/JavaScript/Objects/JSON)）保存一些信息。
+const crescClient = new Cresc({
+  beforeCheckUpdate: async () => {
+    if (isFirstTimeDebug) {
+      // If this is the first boot after a QR test update, skip remote checks
+      return false;
+    }
+    return true;
+  },
+})
+```
 
-比如我们可以在元信息中约定字段标志`silent`，表示需要静默更新。当我们上传热更包填写 metainfo 时，以[JSON 格式](https://developer.mozilla.org/zh-CN/docs/Learn/JavaScript/Objects/JSON)输入：
+In the worst-case scenario where a production crash happens and requires a rollback, immediately set the native package or the whole app's hot update status to 'Paused', then re-bind it to a previously healthy version. Alternatively, use your VCS to revert code to a healthy state and generate and push a new hot update package.
+
+#### Using Meta Info
+
+When publishing a hot update version, or via the web console, you can edit the version's meta info. This is a customizable payload string obtained during the update check. You can format it however you like (we strongly recommend [JSON format](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/JSON)) to store additional payload data.
+
+For example, we might define a `silent` flag indicating whether an update should be completely silent. When uploading the hot update package, we put this in the meta info field in JSON format:
 
 ```json
 { "silent": true }
 ```
 
-> 请注意，我们并不对输入做任何格式校验和约束，请自行校验输入是否正确。
+> Note: We do not enforce any format validation or restrictions on this input. Please validate it yourself.
 
-此时在客户端检查更新时，能获取到我们刚刚输入的元信息，但它并不具备任何功能，只是一个字符串而已。所以我们其实需要**预先**在更新流程中加入对应的处理逻辑：
+When the client checks for updates, it receives this meta info chunk, but it doesn't automatically trigger any logic—it's just a payload string. Thus, we need to **preemptively** integrate handling logic into our update flow:
 
 ```js
-// 调用 checkUpdate 获取 updateInfo
+// Call useUpdate() to get updateInfo
 if (updateInfo.expired) {
-  // ... 原生包版本过期，下载或跳转下载页面
+  // ... Native package expired, download or prompt redirect 
 } else if (updateInfo.upToDate) {
-  // ... 没有更新，弹提示或忽略
+  // ... No updates
 } else {
-  // 有更新，一般来说我们在这里给用户弹窗提示，让用户选择是否更新
-  // 那么静默更新的本质其实就是不弹窗，直接执行，所以可以在这里加入额外的判断流程
+  // An update is available. Usually, we display an alert here to ask the user.
+  // A 'silent' update essentially means skipping the alert, so we inject logic here.
   // ...
 }
 ```
 
-我们在原有的更新流程中加入元信息的读取和判断：
+We can splice meta-info reading and conditional logic into the standard flow:
 
 ```js
 let metaInfo = {};
 try {
-  // 注意 JSON 输入有可能有错误，需要用 try 语句来避免应用被带崩
+  // JSON inputs might be malformed, always wrap in try-catch to avoid app crashes
   metaInfo = JSON.parse(updateInfo.metaInfo);
 } catch (e) {
-  // 异常处理，忽略或上报？
+  // Handle exceptions, ignore or report?
 }
 
 if (metaInfo.silent) {
-  // 如果热更包携带有 silent 字段，不询问用户，直接执行更新
+  // If the payload specifies silent: true, skip user prompts and apply directly
   switchVersion();
 } else {
-  // 否则还是走之前的询问流程
-  // Alert.alert('提示', '检查到新的版本.......
+  // Otherwise, use the traditional prompt workflow
+  // Alert.alert('Notice', 'A new version is available.......
 }
 ```
 
-又比如，可能某个版本包含一些重要的公告内容，所以还可以在上面插入一个公告字段等等。如何使用元信息，完全取决于您的想象力！
+As another example, a specific version might include major announcements, so you could insert an `announcement` field in the payload to render. How you use meta info is entirely constrained.

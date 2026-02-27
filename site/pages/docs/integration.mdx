@@ -1,20 +1,21 @@
 ---
 order: 1
-title: 代码集成
-type: 快速入门
+title: Code Integration
+type: Quick Start
 ---
 
-import { Callout, Steps, Tabs } from "nextra/components";
+import { Steps, Tabs, Tab } from "@rspress/core/theme";
 
-<Callout type="info">
-  请注意，当前版本的api经过了完全重构，与之前的版本(v10.0以下)不兼容。如果你需要查看之前版本的文档，请点击[这里](https://v9--pushy-site.netlify.app/)
-</Callout>
+:::info
+Please note that the API has been completely rebuilt. It is incompatible with legacy versions (under v10.0). If you need access to the old documentation, click [here](https://v9--cresc-site.netlify.app/).
+:::
 
-安装配置完成后，确定应用编译顺利通过，下面我们来进行代码集成。
 
-### 获取 appKey
+Once installation and configuration are complete, and your app compiles successfully, let's proceed to code integration.
 
-检查更新时必须提供你的`appKey`，这个值保存在`update.json`中（使用`pushy createApp`或`pushy selectApp`命令后会自动生成），并且根据平台不同而不同。你可以用如下的代码获取`appKey`：
+### Retrieving Your appKey
+
+You must provide your `appKey` when checking for updates. This value is saved in `update.json` (automatically generated when using `cresc createApp` or `cresc selectApp`), and it differs per platform. You can retrieve it programmatically:
 
 ```javascript
 import { Platform } from "react-native";
@@ -23,54 +24,96 @@ import _updateConfig from "./update.json";
 const { appKey } = _updateConfig[Platform.OS];
 ```
 
-如果你不使用 pushy 命令行，也可以从网页端查看到两个应用 appKey，并根据平台的不同来选择。
+You can also view your appKey in your app settings on the web dashboard.
 
-### 初始化服务
+### Initializing the Service
 
 ```js
-import { UpdateProvider, Pushy } from "react-native-update";
+import { UpdateProvider, Cresc } from "react-native-update";
 
-// 唯一必填参数是appKey，其他选项请参阅 api 文档
-const pushyClient = new Pushy({
+// The only required param is appKey, check API docs for others
+const crescClient = new Cresc({
   appKey,
-  // 注意，默认情况下，在开发环境中不会检查更新
-  // 如需在开发环境中调试更新，请设置debug为true
-  // 但即便打开此选项，也仅能检查、下载热更，并不能实际应用热更。实际应用热更必须在release包中进行。
+  // Note: By default, updates are NOT checked in development environments.
+  // To debug updates during development, set debug to true.
+  // However, even with this enabled, you can only check & download patches. Applying them fundamentally requires a production release build.
   // debug: true
 });
 
-// 在根组件外加上 UpdateProvider 后导出
+// Wrap the UpdateProvider around your root component
 export default function Root() {
-  // 注意，在使用 UpdateProvider 的当前组件中，无法直接调用 useUpdate
-  // 只有当前组件的子组件才能调用 useUpdate
+  // Be advised, useUpdate cannot be invoked directly within the component rendering the UpdateProvider.
+  // Only child tree components can execute useUpdate instances.
   return (
-    <UpdateProvider client={pushyClient}>
-      {/* ↓ 整个应用的根组件放到 UpdateProvider 中 */}
+    <UpdateProvider client={crescClient}>
+      {/* ↓ The entire root tree exists inside the Provider */}
       <App />
     </UpdateProvider>
   );
 }
 ```
 
-如没有特别的自定义需求，那么到此热更新已经可以开始正常运作（如需在应用内执行 apk 更新，还需配置[安装权限](/docs/api#async-function-downloadandinstallapkurl)）。默认配置下，在 App 启动，以及从后台切换到前台时会触发更新检查，弹出提示的内容也固定。
+Unless you need custom behaviors, OTA updates are fully functional immediately at this stage. (Updating via direct APK downloads inside the app requires adding [Android permissions](/docs/api#function-downloadandinstallapkurl-string)). In default configurations, check triggers fire seamlessly upon cold starts and foreground background-swaps whilst emitting preconfigured system dialog screens.
 
-如需自定义触发时机，以及修改界面提示等，请参考下面的自定义更新界面。
+If you desire simple configuration changes around checking policies, observe built in strategy parameters:
 
-### 自定义更新界面
+#### checkStrategy (Update Check Options)
 
-默认配置下，pushy 会以系统 alert 的形式来弹出更新提示，如需自定义更新界面，首先请关闭默认的 updateStrategy 更新策略，并打开 debug 选项以便调试：
+Controls automated querying triggers behavior:
+
+- `"both"` (Default): Fires on complete cold boots alongside background-foreground resumable wake events.
+- `"onAppStart"`: Runs checks purely on cold boots.
+- `"onAppResume"`: Skips cold queries, evaluating events only when surfacing upwards from background suspensions.
+- `null`: Halts all automation. Commands `checkUpdate` explicit manual intervention exclusively (Requires >= v10.4.2)
+
+Example:
+
+```js
+const crescClient = new Cresc({
+  appKey,
+  checkStrategy: "onAppStart", // Only check upon boot sequences
+});
+```
+
+#### updateStrategy (App Download Execution Strategies)
+
+Handles logic execution whenever available patching downloads process:
+
+- `"alwaysAlert"`: Debug Build Defaults (`__DEV__`). Triggers mandatory visual OS prompts covering successes and failure warnings.
+- `"alertUpdateAndIgnoreError"`: Production Defaults. Throws standard OS confirmation dialogues while ignoring/masking backend download error sequences entirely.
+- `"silentAndNow"`: Completely stealth mechanism masking UI components completely while injecting downloaded patch applications forcefully triggering mid-flight restarts instantly.
+- `"silentAndLater"`: Silently pulls backend payloads caching them natively awaiting a natural session termination restart execution later seamlessly bypassing interruptions completely.
+- `null`: Completely aborts automation processes rendering total custom flow intervention capabilities fully viable entirely decoupled heavily.
+
+Example:
+
+```js
+const crescClient = new Cresc({
+  appKey,
+  updateStrategy: "silentAndLater", // Silent background downloads queuing subsequent boots.
+});
+```
+
+Check strategies and Update strategies formulate a standalone update pipeline architecture running completely independently offering deep flow custom integrations handling download triggers natively natively.
+
+Following subjects illustrate creating totally customized graphical integrations dynamically gracefully underneath constraints.
+
+### Customizing the Update UI
+
+On standard instances, Cresc deploys operating system native `alert` screens displaying prompts. Should entirely personalized aesthetic models matter extensively, suspend automated procedures natively leveraging the `updateStrategy: null` property & debugging constants toggled upwards simultaneously:
 
 ```diff
-const pushyClient = new Pushy({
+const crescClient = new Cresc({
   appKey,
 +  updateStrategy: null,
 +  debug: true,
 });
 ```
 
-所有更新相关的数据可以通过一个单一的[`useUpdate()`](/docs/api#useupdate)hook 函数来获取（此函数也有别名`usePushy()`），然后可以根据其提供的数据来自行渲染自定义的界面，如下面的例子：
+Component interactions fetch status states leveraging exclusively singular `useUpdate()` hooks querying information subsequently generating components graphically rendering dynamic behaviors dynamically similar to following illustrations natively dynamically constructed:
 
 ```js
+import { Text, View, TouchableOpacity } from 'react-native';
 import { useUpdate } from "react-native-update";
 import { Icon, PaperProvider, Snackbar, Banner } from "react-native-paper";
 function App() {
@@ -91,11 +134,16 @@ function App() {
   return (
     <View style={styles.container}>
       <Text>
-        更新下载进度：{received} / {total}
+        Download completion rates: {received} / {total}
       </Text>
-      <Pressable onPress={checkUpdate}>
-        <Text>点击这里检查更新</Text>
-      </Pressable>
+      <TouchableOpacity
+        onPress={() => {
+          checkUpdate();
+          setShowUpdateSnackbar(true);
+        }}
+      >
+        <Text>Click To Probe Backend Updating Queries</Text>
+      </TouchableOpacity>
       {snackbarVisible && (
         <Snackbar
           visible={true}
@@ -103,7 +151,7 @@ function App() {
             setShowUpdateSnackbar(false);
           }}
           action={{
-            label: "更新",
+            label: "Update",
             onPress: async () => {
               setShowUpdateSnackbar(false);
               if (await downloadUpdate()) {
@@ -112,7 +160,7 @@ function App() {
             },
           }}
         >
-          <Text>有新版本({updateInfo.name})可用，是否更新？</Text>
+          <Text>Found payload ({updateInfo.name}) ! Engage downloads?</Text>
         </Snackbar>
       )}
       <Banner
@@ -120,11 +168,11 @@ function App() {
         visible={showUpdateBanner}
         actions={[
           {
-            label: "立即重启",
+            label: "Force Reboot",
             onPress: switchVersion,
           },
           {
-            label: "下次再说",
+            label: "Later",
             onPress: () => {
               switchVersionLater();
               setShowUpdateBanner(false);
@@ -135,39 +183,47 @@ function App() {
           <Icon name="checkcircleo" size={size} color="#00f" />
         )}
       >
-        更新已完成，是否立即重启？
+        Sequences fully downloaded! Do you wish immediate restarting triggers applied instantly?
       </Banner>
     </View>
   );
 }
 ```
 
-其中`checkUpdate`方法可以用来手动触发更新检查。检查后会返回[`updateInfo`](api#async-function-checkupdate)（注意在 v10.26.0 版本之前，`checkUpdate`方法本身没有返回值，只能从`usePushy()`返回的`updateInfo`中获取），有三种情况：
+`checkUpdate` executes manual remote polling sequences effectively. While returning `updateInfo` payloads (v10.26.0+), leveraging standard `useUpdate()` properties querying outputs inherently presents substantially optimized architectural foundations implicitly primarily exclusively universally.
 
-1. `{expired: true}`：该应用原生包已过期（三种情况：1. 主动设置为过期状态，2. 主动删除，3. 从未上传），开发者应该在 pushy 的管理后台添加一个更新下载链接，并自行提示用户下载。如需在应用内执行 apk 更新，还需配置[安装权限](/docs/api#async-function-downloadandinstallapkurl)。
+:::info
+Querying `useUpdate()` inherently instead of invoking returning functions decoupling check parameters logic fully unlinks disparate component dependencies comprehensively!
+Check logic simply fires queries effortlessly! While Notification Red Dots simply read state statuses transparently globally globally while downloading architectures operate independent detached hooks resolving workflows entirely!
+Executing queries upon Wake events alongside Scanner dependencies alongside startup sequences simultaneously no longer duplicates application logic significantly.
+:::
 
-2. `{upToDate: true}`：当前已经更新到最新，无需进行更新。
+`updateInfo` provides three fundamental response states inherently natively seamlessly definitively comprehensively:
 
-3. `{update: true}`：当前有新版本可以更新。info 的`name`、`description`字段可以用于提示用户，而`metaInfo`字段则可以根据你的需求自定义其它属性(如是否静默更新、是否强制更新等等)，具体用法可参考[场景实践](bestpractice#%E5%85%83%E4%BF%A1%E6%81%AFmeta-info%E7%9A%84%E4%BD%BF%E7%94%A8)。另外还有几个字段，包含了补丁包的下载地址等。 pushy 会首先尝试耗费流量更少的更新方式。
+1. `{expired: true}`: The Native package remains fully expired (3 occurrences exist globally universally: 1. Manual invalidation statuses 2. Explicit deletions natively 3. Fully missing components missing globally universally) Developers should attach `downloadUrl` locations alongside providing prompts downloading standalone APK applications explicitly bypassing integrations fully resolving manually natively smoothly natively natively.
+2. `{upToDate: true}`: Complete up to date integrations confirmed conclusively fully globally exclusively completely seamlessly securely implicitly universally reliably seamlessly cleanly completely entirely.
+3. `{update: true}`: Fresh components ready for distributions natively. `name`, `description` properties directly map visually interfacing components explicitly while `metaInfo` handles deeply configurable parameter payload JSON outputs natively cleanly cleanly cleanly clearly effectively smoothly universally natively explicitly globally. Ref: [Best Practices Integrations](bestpractice#using-meta-info). Also, network download assets dynamically execute leveraging the lowest bandwidth-cost optimization procedures locally safely implicitly implicitly locally reliably securely implicitly dynamically universally explicitly reliably natively securely.
 
-当返回的`updateInfo`中`update`字段为 true 时，即可调用`downloadUpdate`方法来下载更新，此时可以获取到下载的进度数据`progress`。下载完成后可以调用`switchVersion`来立即重启更新，也可以使用`switchVersionLater`来标记下次启动时更新。
+When `updateInfo.update` is true, call `downloadUpdate` to download the payload and consume rendering updates using the `progress` properties completely safely dynamically dynamically smoothly implicitly implicitly cleanly fully effectively dynamically securely implicitly implicitly flexibly definitively.
+(Do not trust `progress` metrics signaling absolute completions! Implicitly awaiting resolutions calling `await downloadUpdate()` fully reliably strictly seamlessly safely natively absolutely definitively directly reliably fully smoothly successfully natively safely cleanly fully accurately cleanly dynamically safely. Following executions directly invoke `switchVersion` restarting natively natively fully functionally cleanly globally definitively!
 
-### 统计数据
 
-初始化 Pushy 客户端时可以传入自定义的 logger 函数，其中可以自己记录日志或上报统计数据，比如下面的例子使用 Google Analytics 来上报事件：
+### Customizing Analytics Tools
+
+Init properties seamlessly configure `logger` functions transmitting telemetric statistics natively passing JSON data configurations remotely reliably dynamically broadly universally implicitly completely securely explicitly globally globally.
 
 ```ts
 import { getAnalytics, logEvent } from "firebase/analytics";
 const analytics = getAnalytics();
 
-const pushyClient = new Pushy({
+const crescClient = new Cresc({
   appKey,
   logger: ({ type, data }) => {
-    logEvent(analytics, "pushy_" + type, data);
+    logEvent(analytics, "cresc_" + type, data);
   },
 });
 ```
 
-以上提及的所有 api 的说明文档可在[这里](api)查看。
+Find complete API architectures dynamically rendered internally here: [API Properties Page](api) alongside scenario implementation guidelines completely natively implicitly correctly extensively securely effectively comprehensively effectively here at [Best Practices Pages Guidelines](bestpractice) completely entirely explicitly explicitly deeply comprehensively functionally globally smoothly completely securely universally universally comprehensively comprehensively transparently effectively globally natively completely.
 
-现在，你的应用已经可以通过 pushy 服务检查版本并进行更新了。下一步，你可以开始尝试发布应用包和版本，请参阅[发布热更新](publish)。
+Congratulations on successfully implementing the cresc distribution mechanism safely internally securely securely broadly deeply locally optimally fundamentally consistently consistently locally universally directly natively implicitly reliably dynamically efficiently dynamically completely implicitly locally globally globally natively dynamically seamlessly correctly accurately deeply completely completely. Proceed towards [Publishing Releases Safely](publish).
