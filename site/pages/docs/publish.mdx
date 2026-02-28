@@ -47,7 +47,7 @@ Follow the standard flow to archive the `.ipa` file:
 4. Run the following command to upload it:
 
 ```bash
-$ cresc uploadIpa [my_ipa_file.ipa]
+$ cresc uploadIpa <my_ipa_file.ipa>
 ```
 
 The `CFBundleShortVersionString` in `ios/[project]/Info.plist` will be recorded as the `packageVersion`.
@@ -103,7 +103,7 @@ import "expo-router/entry";
 ```bash
 $ cresc bundle --platform android
 Bundling with React Native version:  0.22.2
-[various progress output]
+<various progress output>
 Bundled saved to: build/output/android.1459850548545.ppk
 Would you like to publish it?(Y/N)
 ```
@@ -112,8 +112,8 @@ Input Y to upload immediately, or run `cresc publish --platform android build/ou
 
 ```
   Uploading [========================================================] 100% 0.0s
-Enter version name: [Enter hot update name, e.g., 1.0.0-rc]
-Enter description: [Enter details]
+Enter version name: <Enter hot update name, e.g., 1.0.0-rc>
+Enter description: <Enter details>
 Enter meta info: {"ok":1}
 Ok.
 Would you like to bind packages to this version?(Y/N)
