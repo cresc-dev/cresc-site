@@ -10,7 +10,7 @@ An API Token is an authentication method used to invoke the [Cresc API](https://
 
 ## Creating an API Token
 
-1. Log into the [Cresc Dashboard](https://cresc-admin.reactnative.cn)
+1. Log into the [Cresc Dashboard](https://admin.cresc.dev)
 2. Click on "API Token" in the left sidebar menu.
 3. Click the "Create Token" button.
 4. Enter a name for the Token (e.g., CI/CD Pipeline).
