@@ -1,4 +1,4 @@
-import GitHubButton from "react-github-button";
+import GitHubButton from "./GitHubButton";
 import logo from "../../pages/public/images/logo.svg";
 import ParticleNetwork from "./ParticleNetwork";
 
