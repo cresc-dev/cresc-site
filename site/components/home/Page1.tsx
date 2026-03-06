@@ -1,202 +1,332 @@
-import type { ReactNode } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+} from "react";
 
-interface Feature {
-  eyebrow: string;
-  title: string;
-  desc: string;
-  bullets: string[];
-  icon: ReactNode;
-  span?: string;
+const movements = [
+  {
+    label: "Movement I",
+    title: "Set the full base package",
+    desc: "The first release carries the full picture the device needs before later over-the-air changes begin to arrive.",
+  },
+  {
+    label: "Movement II",
+    title: "Send only the new detail",
+    desc: "When the app changes, Cresc prepares a smaller patch instead of shipping the entire bundle again.",
+  },
+  {
+    label: "Movement III",
+    title: "Complete the picture on device",
+    desc: "The client combines what it already has with the new patch, so the finished release appears with much less transfer.",
+  },
+];
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(Math.max(value, min), max);
+
+function PortraitFigure({ progress }: { progress: number }) {
+  const pearlProgress = clamp((progress - 0.28) / 0.72, 0, 1);
+  const pearlTranslateX = (1 - pearlProgress) * 78;
+  const pearlTranslateY = (1 - pearlProgress) * 104;
+  const hookOpacity = clamp((progress - 0.55) / 0.32, 0, 1);
+  const haloOpacity = 0.08 + pearlProgress * 0.24;
+  const guideOpacity = 0.18 + pearlProgress * 0.32;
+
+  return (
+    <svg
+      viewBox="0 0 520 640"
+      className="h-full w-full"
+      aria-hidden="true"
+      role="presentation"
+    >
+      <defs>
+        <linearGradient id="cresc-stage-bg" x1="80" y1="50" x2="430" y2="610">
+          <stop stopColor="#231812" />
+          <stop offset="1" stopColor="#17100d" />
+        </linearGradient>
+        <linearGradient
+          id="cresc-headscarf-blue"
+          x1="150"
+          y1="125"
+          x2="340"
+          y2="270"
+        >
+          <stop stopColor="#739EDD" />
+          <stop offset="1" stopColor="#345FA8" />
+        </linearGradient>
+        <linearGradient id="cresc-gold-cloth" x1="280" y1="70" x2="430" y2="400">
+          <stop stopColor="#F0C65B" />
+          <stop offset="1" stopColor="#D29C34" />
+        </linearGradient>
+        <linearGradient id="cresc-coat" x1="145" y1="330" x2="320" y2="470">
+          <stop stopColor="#B9773D" />
+          <stop offset="1" stopColor="#8C5834" />
+        </linearGradient>
+        <linearGradient id="cresc-coat-shadow" x1="320" y1="280" x2="395" y2="470">
+          <stop stopColor="#785239" />
+          <stop offset="1" stopColor="#5D4030" />
+        </linearGradient>
+        <linearGradient id="cresc-skin" x1="174" y1="150" x2="300" y2="330">
+          <stop stopColor="#E4C295" />
+          <stop offset="1" stopColor="#D2A77F" />
+        </linearGradient>
+        <linearGradient id="cresc-neck" x1="240" y1="180" x2="340" y2="320">
+          <stop stopColor="#B89282" />
+          <stop offset="1" stopColor="#9B7260" />
+        </linearGradient>
+        <radialGradient id="cresc-pearl-fill" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(326 290) rotate(57.5) scale(30)">
+          <stop stopColor="#FFFDF9" />
+          <stop offset="0.56" stopColor="#F2E7D7" />
+          <stop offset="1" stopColor="#C8A778" />
+        </radialGradient>
+        <radialGradient id="cresc-pearl-halo" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(324 292) rotate(90) scale(44)">
+          <stop stopColor="#F4E7BD" />
+          <stop offset="1" stopColor="#F4E7BD" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      <rect x="20" y="20" width="480" height="600" rx="48" fill="url(#cresc-stage-bg)" />
+      <rect
+        x="20"
+        y="20"
+        width="480"
+        height="600"
+        rx="48"
+        stroke="#4D362A"
+        strokeOpacity="0.75"
+        strokeWidth="2"
+      />
+
+      {[88, 110, 132, 154, 176, 392, 414, 436, 458, 480].map((y) => (
+        <line
+          key={y}
+          x1="48"
+          x2="472"
+          y1={y}
+          y2={y}
+          stroke="#5D4436"
+          strokeOpacity="0.45"
+          strokeWidth="1.5"
+        />
+      ))}
+
+      <path
+        d="M121 477C182 447 258 443 410 478"
+        stroke="#6A4B38"
+        strokeOpacity="0.42"
+        strokeWidth="10"
+        strokeLinecap="round"
+      />
+
+      <polygon points="272,82 344,78 438,343 381,397" fill="url(#cresc-gold-cloth)" />
+      <polygon points="190,150 272,82 341,201 246,152" fill="url(#cresc-headscarf-blue)" />
+      <polygon points="272,82 355,132 343,231 341,201" fill="#345FA8" />
+      <polygon points="176,171 246,171 274,322 208,319" fill="url(#cresc-skin)" />
+      <polygon points="246,171 343,231 274,322" fill="url(#cresc-neck)" />
+      <polygon points="124,483 206,334 310,286 353,483" fill="url(#cresc-coat)" />
+      <polygon points="310,286 353,483 396,482 343,270" fill="url(#cresc-coat-shadow)" />
+
+      <circle
+        cx="325"
+        cy="292"
+        r="44"
+        fill="url(#cresc-pearl-halo)"
+        opacity={haloOpacity}
+      />
+
+      <path
+        d="M403 394C388 357 363 323 333 293"
+        fill="none"
+        stroke="#D8C19C"
+        strokeOpacity={guideOpacity}
+        strokeWidth="3"
+        strokeDasharray="8 11"
+        strokeLinecap="round"
+        strokeDashoffset={64 - pearlProgress * 64}
+      />
+
+      <path
+        d="M318 245C325 255 329 266 329 278"
+        fill="none"
+        stroke="#C49A62"
+        strokeOpacity={hookOpacity}
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+      <line
+        x1="329"
+        y1="278"
+        x2="329"
+        y2="285"
+        stroke="#C49A62"
+        strokeOpacity={hookOpacity}
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+
+      <g
+        transform={`translate(${pearlTranslateX} ${pearlTranslateY})`}
+        opacity={0.22 + pearlProgress * 0.78}
+      >
+        <ellipse
+          cx="329"
+          cy="298"
+          rx="15"
+          ry="18"
+          fill="url(#cresc-pearl-fill)"
+          stroke="#B98E5B"
+          strokeWidth="1.4"
+        />
+        <circle cx="323" cy="291" r="4.5" fill="#FFFFFF" fillOpacity="0.9" />
+      </g>
+    </svg>
+  );
 }
 
-const features: Feature[] = [
-  {
-    eyebrow: "Compression Core",
-    title: "Delta-engineered payloads",
-    desc: "Generate ultra-light OTA packages so users pull only what actually changed.",
-    bullets: [
-      "Native package and hot update flows live in one platform.",
-      "Engineered for high-frequency JS and asset iteration.",
-    ],
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="1.8">
-        <path d="M5 7h7l-3 5h10l-7 5 3-5H5l7-5Z" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    eyebrow: "Release Pipeline",
-    title: "CLI to dashboard in one straight line",
-    desc: "Move from build output to live rollout without stitching together separate delivery systems.",
-    bullets: [
-      "API Token workflows fit naturally into CI/CD pipelines.",
-      "Promote releases with version and channel awareness.",
-    ],
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="1.8">
-        <path d="M4 8h16M4 16h10M16 16l4-4-4-4" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    eyebrow: "Production Safety",
-    title: "Guard rails for live production traffic",
-    desc: "Keep releases under control with rollback strategy, dashboard visibility, and operational traceability.",
-    bullets: [
-      "Progressive activation is easier when the console owns the lifecycle.",
-      "Observability is built around real release operations, not demos.",
-    ],
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="1.8">
-        <path d="m12 3 7 4v5c0 4.5-2.7 7.8-7 9-4.3-1.2-7-4.5-7-9V7l7-4Z" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="m9.5 12 1.8 1.8 3.2-3.6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-    span: "md:col-span-2",
-  },
-];
-
-const signalRows = [
-  { label: "Global edge availability", value: "24 / 7", progress: 96 },
-  { label: "Automation coverage", value: "CI ready", progress: 88 },
-  { label: "Rollback confidence", value: "High", progress: 91 },
-  { label: "Patch payload efficiency", value: "Tiny", progress: 94 },
-];
-
-const tags = [
-  "Global CDN",
-  "API Token",
-  "Gray rollout ready",
-  "Self-host friendly",
-  "Native package registry",
-  "Fast rollback posture",
-];
-
 function Page1() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const [progress, setProgress] = useState(0);
+
+  const updateProgress = useEffectEvent(() => {
+    const section = sectionRef.current;
+
+    if (!section) {
+      return;
+    }
+
+    const rect = section.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const travelled = viewportHeight * 0.68 - rect.top;
+    const total = rect.height + viewportHeight * 0.18;
+    const nextProgress = clamp(travelled / total, 0, 1);
+
+    setProgress((current) =>
+      Math.abs(current - nextProgress) > 0.003 ? nextProgress : current,
+    );
+  });
+
+  useEffect(() => {
+    let rafId = 0;
+
+    const scheduleUpdate = () => {
+      cancelAnimationFrame(rafId);
+      rafId = window.requestAnimationFrame(() => {
+        updateProgress();
+      });
+    };
+
+    scheduleUpdate();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+    };
+  }, []);
+
+  const thresholds = [0, 0.36, 0.72];
+  const activeIndex = progress < thresholds[1] ? 0 : progress < thresholds[2] ? 1 : 2;
+  const completion = `${Math.round(progress * 100)}%`;
+  const meterWidth = `${16 + progress * 84}%`;
+  const status =
+    progress < thresholds[1]
+      ? "Base package present"
+      : progress < thresholds[2]
+        ? "Incremental patch in motion"
+        : "Portrait completed on device";
+
   return (
-    <section className="relative overflow-hidden bg-[#eef7ff] py-24">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.12),transparent_26%),radial-gradient(circle_at_bottom_right,rgba(14,165,233,0.14),transparent_32%)]" />
+    <section
+      ref={sectionRef}
+      className="cresc-section relative overflow-hidden py-24"
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(168,132,84,0.12),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(122,59,46,0.08),transparent_30%)]" />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl">
-          <p className="text-sm uppercase tracking-[0.4em] text-sky-700/85">
-            Core Capabilities
+      <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-sm uppercase tracking-[0.4em] text-[#8b5a3c]">
+            Incremental Delivery
           </p>
-          <h2 className="cresc-display mt-5 text-4xl text-slate-950 sm:text-5xl">
-            An OTA platform built for real production pressure.
+          <h2 className="cresc-display mt-5 text-4xl text-[#2d1d15] sm:text-5xl">
+            Add the missing detail, not the whole canvas.
           </h2>
-          <p className="mt-6 text-lg leading-8 text-slate-700">
-            Every layer is tuned for teams that need to ship fast without
-            surrendering control. Cresc keeps delivery lean, visible, and easy
-            to automate.
+          <p className="mt-6 text-lg leading-8 text-[#5f483c]">
+            Like a variation added to an existing score, each Cresc update
+            arrives as a measured addition to what the device already holds.
           </p>
         </div>
 
-        <div className="mt-14 grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-          <div className="grid gap-6 md:grid-cols-2">
-            {features.map((feature) => (
-              <div
-                key={feature.title}
-                className={`group rounded-[28px] border border-sky-100 bg-white/94 p-7 backdrop-blur-xl shadow-[0_14px_32px_rgba(148,163,184,0.12)] transition duration-300 hover:-translate-y-1 hover:border-sky-300 ${feature.span ?? ""}`}
-              >
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-sky-200 bg-sky-50 text-sky-600">
-                  {feature.icon}
-                </div>
-
-                <p className="mt-6 text-xs uppercase tracking-[0.35em] text-slate-500">
-                  {feature.eyebrow}
-                </p>
-                <h3 className="mt-3 text-2xl font-semibold text-slate-950">
-                  {feature.title}
-                </h3>
-                <p className="mt-4 text-base leading-7 text-slate-700">
-                  {feature.desc}
-                </p>
-
-                <div className="mt-6 space-y-3">
-                  {feature.bullets.map((bullet) => (
-                    <div
-                      key={bullet}
-                      className="flex items-start gap-3 text-sm leading-6 text-slate-600"
-                    >
-                      <span className="mt-2 h-2 w-2 rounded-full bg-sky-500 shadow-[0_0_14px_rgba(14,165,233,0.35)]" />
-                      <span>{bullet}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="cresc-panel rounded-[28px] p-6 sm:p-7">
-            <p className="text-xs uppercase tracking-[0.35em] text-sky-700/85">
-              Platform Metrics
-            </p>
-            <h3 className="cresc-display mt-4 text-3xl text-slate-950">
-              Release metrics
-            </h3>
-            <p className="mt-4 text-sm leading-7 text-slate-600">
-              The platform posture stays readable even when release cadence
-              increases: packaging, distribution, activation, and fallback all
-              remain in one view.
-            </p>
-
-            <div className="mt-8 space-y-5">
-              {signalRows.map((row) => (
-                <div key={row.label}>
-                  <div className="mb-2 flex items-center justify-between text-sm text-slate-700">
-                    <span>{row.label}</span>
-                    <span className="cresc-display text-sky-700">{row.value}</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-sky-100">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-sky-300 via-sky-400 to-blue-500"
-                      style={{ width: `${row.progress}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-              <div className="rounded-[22px] border border-sky-100 bg-white/88 p-5">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                  Query ceiling
-                </p>
-                <p className="mt-3 cresc-display text-2xl text-slate-950">
-                  1M / day
-                </p>
-                <p className="mt-3 text-sm leading-6 text-slate-600">
-                  High-throughput plans are available for heavier client update
-                  traffic.
-                </p>
+        <div className="mt-16 grid gap-12 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)]">
+          <div className="self-start lg:sticky lg:top-28">
+            <div className="cresc-frame cresc-score-lines rounded-[38px] p-5 sm:p-6">
+              <div className="cresc-stage-panel relative overflow-hidden rounded-[30px] p-4 sm:p-6">
+                <PortraitFigure progress={progress} />
               </div>
 
-              <div className="rounded-[22px] border border-sky-100 bg-white/88 p-5">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                  Operation mode
-                </p>
-                <p className="mt-3 cresc-display text-2xl text-slate-950">
-                  Human + CI
-                </p>
-                <p className="mt-3 text-sm leading-6 text-slate-600">
-                  Use the admin console for oversight and the CLI for repeatable
-                  automation.
+              <div className="mt-6 rounded-[24px] border border-[#ddcdb3] bg-[#fffaf4] p-5 sm:p-6">
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.35em] text-[#8b5a3c]">
+                      Current state
+                    </p>
+                    <p className="mt-2 text-lg text-[#5f483c]">{status}</p>
+                  </div>
+                  <p className="cresc-display text-4xl text-[#7a3b2e]">
+                    {completion}
+                  </p>
+                </div>
+
+                <div className="mt-5 h-2 rounded-full bg-[#eadcc7]">
+                  <span
+                    className="block h-full rounded-full bg-[linear-gradient(90deg,#c9a36e,#7a3b2e)] transition-[width] duration-300"
+                    style={{ width: meterWidth }}
+                  />
+                </div>
+
+                <p className="mt-4 text-sm leading-7 text-[#6a5245]">
+                  The device already holds the full portrait. The scroll only
+                  introduces the pearl, mirroring how Cresc sends the missing
+                  patch instead of re-sending the whole release.
                 </p>
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="mt-10 flex flex-wrap gap-3">
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full border border-sky-100 bg-white/92 px-4 py-2 text-sm text-slate-700"
-            >
-              {tag}
-            </span>
-          ))}
+          <div className="space-y-8 lg:space-y-16">
+            {movements.map((movement, index) => {
+              const isActive = activeIndex === index;
+              const isReached = progress >= thresholds[index];
+
+              return (
+                <article
+                  key={movement.label}
+                  className={`cresc-score-card flex min-h-[20rem] items-center rounded-[32px] border px-7 py-8 sm:px-8 lg:min-h-[24rem] ${
+                    isActive
+                      ? "border-[#c89a6a] bg-[#fff9f1] shadow-[0_22px_48px_rgba(113,88,67,0.1)]"
+                      : isReached
+                        ? "border-[#ddcdb3] bg-[#fffaf4]"
+                        : "border-[#e7dbc9] bg-[#fcf7f0]"
+                  }`}
+                >
+                  <div className="max-w-lg">
+                    <p className="text-xs uppercase tracking-[0.36em] text-[#8b5a3c]">
+                      {movement.label}
+                    </p>
+                    <h3 className="cresc-display mt-5 text-4xl text-[#2d1d15]">
+                      {movement.title}
+                    </h3>
+                    <p className="mt-5 text-lg leading-8 text-[#5f483c]">
+                      {movement.desc}
+                    </p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>
