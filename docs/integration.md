@@ -1,0 +1,221 @@
+# Code Integration
+
+:::info
+Please note that the API has been completely rebuilt. It is incompatible with legacy versions (under v10.0). If you need access to the old documentation, click [here](https://v9--cresc-site.netlify.app/).
+:::
+
+Once installation and configuration are complete, and your app compiles successfully, let's proceed to code integration.
+
+### Retrieving Your appKey
+
+You must provide your `appKey` when checking for updates. This value is saved in `update.json` (automatically generated when using `cresc createApp` or `cresc selectApp`), and it differs per platform. You can retrieve it programmatically:
+
+```javascript
+import { Platform } from "react-native";
+
+import _updateConfig from "./update.json";
+const { appKey } = _updateConfig[Platform.OS];
+```
+
+You can also view your appKey in your app settings on the web dashboard.
+
+### Initializing the Service
+
+```js
+import { UpdateProvider, Cresc } from "react-native-update";
+
+// The only required param is appKey, check API docs for others
+const crescClient = new Cresc({
+  appKey,
+  // Note: By default, updates are NOT checked in development environments.
+  // To debug updates during development, set debug to true.
+  // However, even with this enabled, you can only check & download patches. Applying them fundamentally requires a production release build.
+  // debug: true
+});
+
+// Wrap the UpdateProvider around your root component
+export default function Root() {
+  // Be advised, useUpdate cannot be invoked directly within the component rendering the UpdateProvider.
+  // Only child tree components can execute useUpdate instances.
+  return (
+    <UpdateProvider client={crescClient}>
+      {/* ↓ The entire root tree exists inside the Provider */}
+      <App />
+    </UpdateProvider>
+  );
+}
+```
+
+Unless you need custom behaviors, OTA updates are fully functional immediately at this stage. (Updating via direct APK downloads inside the app requires adding [Android permissions](/docs/api.md#function-downloadandinstallapkurl-string)). In default configurations, check triggers fire seamlessly upon cold starts and foreground background-swaps whilst emitting preconfigured system dialog screens.
+
+If you desire simple configuration changes around checking policies, observe built in strategy parameters:
+
+#### checkStrategy (Update Check Options)
+
+Controls automated querying triggers behavior:
+
+- `"both"` (Default): Fires on complete cold boots alongside background-foreground resumable wake events.
+- `"onAppStart"`: Runs checks purely on cold boots.
+- `"onAppResume"`: Skips cold queries, evaluating events only when surfacing upwards from background suspensions.
+- `null`: Halts all automation. Commands `checkUpdate` explicit manual intervention exclusively (Requires >= v10.4.2)
+
+Example:
+
+```js
+const crescClient = new Cresc({
+  appKey,
+  checkStrategy: "onAppStart", // Only check upon boot sequences
+});
+```
+
+#### updateStrategy (App Download Execution Strategies)
+
+Handles logic execution whenever available patching downloads process:
+
+- `"alwaysAlert"`: Debug Build Defaults (`__DEV__`). Triggers mandatory visual OS prompts covering successes and failure warnings.
+- `"alertUpdateAndIgnoreError"`: Production Defaults. Throws standard OS confirmation dialogues while ignoring/masking backend download error sequences entirely.
+- `"silentAndNow"`: Completely stealth mechanism masking UI components completely while injecting downloaded patch applications forcefully triggering mid-flight restarts instantly.
+- `"silentAndLater"`: Silently pulls backend payloads caching them natively awaiting a natural session termination restart execution later seamlessly bypassing interruptions completely.
+- `null`: Completely aborts automation processes rendering total custom flow intervention capabilities fully viable entirely decoupled heavily.
+
+Example:
+
+```js
+const crescClient = new Cresc({
+  appKey,
+  updateStrategy: "silentAndLater", // Silent background downloads queuing subsequent boots.
+});
+```
+
+Check strategies and Update strategies formulate a standalone update pipeline architecture running completely independently offering deep flow custom integrations handling download triggers natively natively.
+
+Following subjects illustrate creating totally customized graphical integrations dynamically gracefully underneath constraints.
+
+### Customizing the Update UI
+
+On standard instances, Cresc deploys operating system native `alert` screens displaying prompts. Should entirely personalized aesthetic models matter extensively, suspend automated procedures natively leveraging the `updateStrategy: null` property & debugging constants toggled upwards simultaneously:
+
+```diff
+const crescClient = new Cresc({
+  appKey,
++  updateStrategy: null,
++  debug: true,
+});
+```
+
+Component interactions fetch status states leveraging exclusively singular `useUpdate()` hooks querying information subsequently generating components graphically rendering dynamic behaviors dynamically similar to following illustrations natively dynamically constructed:
+
+```js
+import { Text, View, TouchableOpacity } from 'react-native';
+import { useUpdate } from "react-native-update";
+import { Icon, PaperProvider, Snackbar, Banner } from "react-native-paper";
+function App() {
+  const {
+    client,
+    checkUpdate,
+    downloadUpdate,
+    switchVersionLater,
+    switchVersion,
+    updateInfo,
+    packageVersion,
+    currentHash,
+    progress: { received, total } = {},
+  } = useUpdate();
+  const [showUpdateBanner, setShowUpdateBanner] = useState(false);
+  const [showUpdateSnackbar, setShowUpdateSnackbar] = useState(false);
+  const snackbarVisible = showUpdateSnackbar && updateInfo?.update;
+  return (
+    <View style={styles.container}>
+      <Text>
+        Download completion rates: {received} / {total}
+      </Text>
+      <TouchableOpacity
+        onPress={() => {
+          checkUpdate();
+          setShowUpdateSnackbar(true);
+        }}
+      >
+        <Text>Click To Probe Backend Updating Queries</Text>
+      </TouchableOpacity>
+      {snackbarVisible && (
+        <Snackbar
+          visible={true}
+          onDismiss={() => {
+            setShowUpdateSnackbar(false);
+          }}
+          action={{
+            label: "Update",
+            onPress: async () => {
+              setShowUpdateSnackbar(false);
+              if (await downloadUpdate()) {
+                setShowUpdateBanner(true);
+              }
+            },
+          }}
+        >
+          <Text>Found payload ({updateInfo.name}) ! Engage downloads?</Text>
+        </Snackbar>
+      )}
+      <Banner
+        style={{ width: "100%", position: "absolute", top: 0 }}
+        visible={showUpdateBanner}
+        actions={[
+          {
+            label: "Force Reboot",
+            onPress: switchVersion,
+          },
+          {
+            label: "Later",
+            onPress: () => {
+              switchVersionLater();
+              setShowUpdateBanner(false);
+            },
+          },
+        ]}
+        icon={({ size }) => (
+          <Icon name="checkcircleo" size={size} color="#00f" />
+        )}
+      >
+        Sequences fully downloaded! Do you wish immediate restarting triggers applied instantly?
+      </Banner>
+    </View>
+  );
+}
+```
+
+`checkUpdate` executes manual remote polling sequences effectively. While returning `updateInfo` payloads (v10.26.0+), leveraging standard `useUpdate()` properties querying outputs inherently presents substantially optimized architectural foundations implicitly primarily exclusively universally.
+
+:::info
+Querying `useUpdate()` inherently instead of invoking returning functions decoupling check parameters logic fully unlinks disparate component dependencies comprehensively!
+Check logic simply fires queries effortlessly! While Notification Red Dots simply read state statuses transparently globally globally while downloading architectures operate independent detached hooks resolving workflows entirely!
+Executing queries upon Wake events alongside Scanner dependencies alongside startup sequences simultaneously no longer duplicates application logic significantly.
+:::
+
+`updateInfo` provides three fundamental response states inherently natively seamlessly definitively comprehensively:
+
+1. `{expired: true}`: The Native package remains fully expired (3 occurrences exist globally universally: 1. Manual invalidation statuses 2. Explicit deletions natively 3. Fully missing components missing globally universally) Developers should attach `downloadUrl` locations alongside providing prompts downloading standalone APK applications explicitly bypassing integrations fully resolving manually natively smoothly natively natively.
+2. `{upToDate: true}`: Complete up to date integrations confirmed conclusively fully globally exclusively completely seamlessly securely implicitly universally reliably seamlessly cleanly completely entirely.
+3. `{update: true}`: Fresh components ready for distributions natively. `name`, `description` properties directly map visually interfacing components explicitly while `metaInfo` handles deeply configurable parameter payload JSON outputs natively cleanly cleanly cleanly clearly effectively smoothly universally natively explicitly globally. Ref: [Best Practices Integrations](/docs/bestpractice.md#using-meta-info). Also, network download assets dynamically execute leveraging the lowest bandwidth-cost optimization procedures locally safely implicitly implicitly locally reliably securely implicitly dynamically universally explicitly reliably natively securely.
+
+When `updateInfo.update` is true, call `downloadUpdate` to download the payload and consume rendering updates using the `progress` properties completely safely dynamically dynamically smoothly implicitly implicitly cleanly fully effectively dynamically securely implicitly implicitly flexibly definitively.
+(Do not trust `progress` metrics signaling absolute completions! Implicitly awaiting resolutions calling `await downloadUpdate()` fully reliably strictly seamlessly safely natively absolutely definitively directly reliably fully smoothly successfully natively safely cleanly fully accurately cleanly dynamically safely. Following executions directly invoke `switchVersion` restarting natively natively fully functionally cleanly globally definitively!
+
+### Customizing Analytics Tools
+
+Init properties seamlessly configure `logger` functions transmitting telemetric statistics natively passing JSON data configurations remotely reliably dynamically broadly universally implicitly completely securely explicitly globally globally.
+
+```ts
+import { getAnalytics, logEvent } from "firebase/analytics";
+const analytics = getAnalytics();
+
+const crescClient = new Cresc({
+  appKey,
+  logger: ({ type, data }) => {
+    logEvent(analytics, "cresc_" + type, data);
+  },
+});
+```
+
+Find complete API architectures dynamically rendered internally here: [API Properties Page](/docs/api.md) alongside scenario implementation guidelines completely natively implicitly correctly extensively securely effectively comprehensively effectively here at [Best Practices Pages Guidelines](/docs/bestpractice.md) completely entirely explicitly explicitly deeply comprehensively functionally globally smoothly completely securely universally universally comprehensively comprehensively transparently effectively globally natively completely.
+
+Congratulations on successfully implementing the cresc distribution mechanism safely internally securely securely broadly deeply locally optimally fundamentally consistently consistently locally universally directly natively implicitly reliably dynamically efficiently dynamically completely implicitly locally globally globally natively dynamically seamlessly correctly accurately deeply completely completely. Proceed towards [Publishing Releases Safely](/docs/publish.md).

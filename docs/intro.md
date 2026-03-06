@@ -1,0 +1,83 @@
+# Cresc - Professional Over-the-Air Update Solution
+
+:::info
+**Now fully supports HarmonyOS and the React Native New Architecture!**
+:::
+
+Cresc (npm package: [`react-native-update`](https://www.npmjs.com/package/react-native-update)
+ [![npm version](https://badge.fury.io/js/react-native-update.svg)](https://www.npmjs.com/package/react-native-update)) is a **professional Over-the-Air (OTA) update service**
+ for React Native targeting global developers, exclusively developed and maintained by the [React Native Chinese Site](https://reactnative.cn)
+ team. We are committed to providing the fastest, most stable, and most economical hot update experience for React Native developers worldwide.
+## 🚀 Why Choose Cresc?
+
+### Ultimate Update Experience
+
+- **🎯 Ultra-small update packages**: Incremental updates based on bsdiff/hdiff limits size to **tens to hundreds of KB**, saving 99%+ bandwidth compared to full-size updates.
+- **⚡️ Lightning Fast Distribution**: High-speed AliCloud CDN locally and intelligent Cloudflare routing globally ensure best-in-class coverage and a **99.9%+** update success rate.
+- **🛡️ Secure and Reliable**: Built-in crash rollback mechanism automatically reverts failing patches, guaranteeing stability.
+- **🌐 Full Platform Support**: Flawless support for <span style={{whiteSpace: 'nowrap'}}><AppleOutlined style={{fontSize: '16px', color: '#555', marginRight: '6px'}} /> **iOS**</span> and <span style={{whiteSpace: 'nowrap'}}><AndroidOutlined style={{fontSize: '16px', color: '#3DDC84', marginRight: '6px'}} /> **Android**</span>, plus exclusive first-party support for <span style={{whiteSpace: 'nowrap'}}><HarmonyOSOutlined style={{fontSize: '16px', color: '#000', marginRight: '6px'}} /> **HarmonyOS**</span>.
+- **🔍 Deep React Native Integration**:
+  - ✅ **Expo** - Seamless integration
+  - ✅ **New Architecture** - Immediate support
+  - ✅ **Hermes** - Full bytecode translation
+- **📖 Open Source Ecosystem**: The client SDK, CLI tools, and admin UI are [fully open source](https://github.com/reactnativecn). Transparent and auditable logic means you can host your own servers without vendor lock-in.
+- **🔒 Data Security**: Intercept and handle data analytics yourself. You retain full control.
+- **💬 Professional Support**: Dedicated technical support to troubleshoot issues and keep your app stable.
+- **🏆 Proven Track Record**: Running reliably since 2016, powering numerous well-known apps and enterprises.
+
+## 💰 Unbeatable Value
+
+Compared to other alternatives, Cresc is more powerful yet highly affordable:
+
+| Feature              | Cresc                   | Expo Updates                  |
+| -------------------- | ----------------------- | ----------------------------- |
+| **Starting Price**   | ¥66/mo (or Free plan)   | \~$30/mo                      |
+| **Bandwidth Limits** | Built-in, no extra fees | Extra costs apply over limits |
+| **Package Size**     | KB scale (Incremental)  | MB scale (Full bundle)        |
+| **Speed in China**   | ⭐⭐⭐⭐⭐ Lightning Fast    | ⭐⭐ Slower                     |
+| **HarmonyOS**        | ✅ Supported             | ❌ Not Supported               |
+
+:::warning
+**Note**: Microsoft App Center (Code Push) officially shut down on March 31, 2025. If you are using Code Push, now is the best time to migrate to Cresc!
+:::
+
+With Cresc, your team gains:
+
+- ✅ **90%+ reduction in CDN bandwidth costs**
+- ✅ **10x faster iteration speeds** (bypass app store review times)
+- ✅ **Minute-level emergency bug fixes**
+- ✅ **99%+ user update adoption rates**
+- ✅ **Flexibility in development cycles**
+
+### Simple to Use
+
+```js
+// Integrate in 3 lines of code
+import { UpdateProvider, Cresc } from "react-native-update";
+
+const crescClient = new Cresc({ appKey });
+
+<UpdateProvider client={crescClient}>
+  <App />
+</UpdateProvider>
+```
+
+Built-in policies available out of the box:
+
+- 🔕 **Silent Updates** - Background downloads, completely transparent to users
+- 💬 **Prompted Updates** - Friendly system alerts for available patches
+- ⚙️ **Custom Strategies** - Fully API-driven flow control
+
+## 🚦 Get Started
+
+Only 3 steps to unlock instant OTA capabilities for your React Native app:
+
+1. **[Installation & Config](/docs/getting-started.md)** - Basic setup takes only 5 mins
+2. **[Code Integration](/docs/integration.md)** - A few lines of wrapper code
+3. **[Publish Updates](/docs/publish.md)** - One CLI command to push new versions
+
+:::info
+Not sure if this fits your project? Check our [FAQ](/docs/faq.md) or visit our [issues page](https://github.com/reactnativecn/react-native-update/issues). You can also join our QQ Group 729013783 or email us at [hi@charmlot.com](mailto:hi@charmlot.com).
+:::
+
+Start using Cresc today, and bring a professional OTA update workflow to your React Native app!

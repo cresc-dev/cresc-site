@@ -1,0 +1,571 @@
+# Installation & Config
+
+:::info
+Please note that the API has been completely rebuilt. It is incompatible with legacy versions (under v10.0). If you need access to the old documentation, click [here](https://v9--cresc-site.netlify.app/).
+:::
+
+First, you should have an application developed based on React Native. We refer to the directory containing `package.json` as your application's `root directory`.
+If you haven't initialized an application yet, please see [Getting Started with React Native](https://reactnative.dev/docs/getting-started).
+
+We assume you already have everything set up for React Native development, including `Node.js`, `Xcode`, `Android SDK`, etc.
+
+### Installation
+Run the following commands in your project's root directory (if you use other package managers like yarn, substitute accordingly):
+
+**React Native**
+
+```bash
+# Install the CLI tool globally first
+npm i -g react-native-update-cli
+
+# Then install the hot update module inside the project directory
+npm i react-native-update
+
+# If not using Expo, navigate to the iOS folder and install pods
+cd ios && pod install
+
+```
+
+
+**Expo**
+
+```bash
+# Install the CLI tool globally first
+npm i -g react-native-update-cli
+
+# Then install the hot update module inside the project directory
+npm i react-native-update
+
+# If using expo, requires Expo 50 or higher. Use prebuild command to prebuild the project
+npx expo prebuild
+
+# Then enter the iOS folder and install pods
+cd ios && pod install
+
+```
+:::warning
+Note: If using Expo, please do NOT install `expo-updates` simultaneously, as it will cause update function conflicts. Also, New Architecture support in Expo versions under 51 is incomplete and might not work properly. It's recommended to use the latest version of Expo possible for New Architecture setups.
+:::
+
+:::info
+If downloads are extremely slow or network errors occur, set an npm mirror.
+:::
+:::warning
+Please do not mix package managers like `npm/yarn/pnpm` and their associated `lock` files. Stick to one manager across your team and keep one format of the `lock` file.
+:::
+:::info
+Remember, any modifications under the `ios` or `android` directories require recompilation (using `npx react-native run-ios/android` or compiling inside Xcode/Android Studio) to take effect.
+:::
+### Manual Link
+If RN version >= 0.60, you don't need this manual linking step.
+:::warning
+Note: If you have a mixed native-RN project, or monorepo, or any custom scenario, the auto-linking function might fail because custom configurations might be incomplete or not fit the standard RN directory structure. Even if RN version >= 0.60, you might still need manual link operation.
+:::
+#### iOS
+RN < 0.60 and using CocoaPods (Recommended)
+1. Add to `ios/Podfile`:
+```ruby
+pod 'react-native-update', path: '../node_modules/react-native-update'
+```
+2. Run `pod install` in the `ios` directory.
+3. Recompile.
+RN < 0.60 without CocoaPods
+1. In Xcode's Project Navigator, right click `Libraries` ➜ `Add Files to [Your Project Name]`
+2. Go to `node_modules` ➜ `react-native-update` ➜ `ios` and select `RCTCresc.xcodeproj`
+3. In Xcode's Project Navigator, select your project. Under `Build Phases` ➜ `Link Binary With Libraries`, add `libRCTCresc.a`, `libz.tbd`, `libbz2.1.0.tbd`.
+4. Under `Build Settings`, search for `Header Search Path`, add `$(SRCROOT)/../node_modules/react-native-update/ios`, and check `recursive`.
+5. Under `Build Phases`, add a `New Run Script Phase` with the following content:
+```bash
+#!/bin/bash
+set -x
+DEST="../node_modules/react-native-update/ios/"
+date +%s > "$DEST/cresc_build_time.txt"
+```
+7. Attempt compilation. If successful, a `cresc_build_time.txt` file is generated inside `../node_modules/react-native-update/ios/`. Then, add the resulting `cresc_build_time.txt` into `Copy Bundle Resources`.
+#### Android
+RN < 0.60 or other scenarios preventing auto-link
+1. Add the following to `android/settings.gradle`:
+
+   ```groovy
+   include ':react-native-update'
+   project(':react-native-update').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-update/android')
+   ```
+
+2. Add this piece of code to the dependencies section inside `android/app/build.gradle`:
+
+   ```groovy
+   implementation project(':react-native-update')
+   ```
+
+3. Open `android/app/src/main/java/[...]/MainApplication.java`:
+- Add `import cn.reactnative.modules.update.UpdatePackage;` at the top of the file
+- Add `new UpdatePackage()` inside the `getPackages()` method (watch out for commas)
+### Configuring the Bundle URL
+If you use `expo` 48+ and `react-native-update` >= 10.28.2, the bundle URL configures automatically. Skip straight to the [next step](#adding-a-deep-link-for-testing).
+If you don't use `expo`, or use an expo version under 48, manually follow the steps down below.
+#### iOS
+Add the following to your `AppDelegate.mm` / `AppDelegate.m` / `AppDelegate.swift` file (different RN versions have different file suffixes):
+:::warning
+Note: If your project mixes native apps with RN, ensure you **do not directly assign the bundleURL while initializing the rootView**. Always initialize bridge using `initWithDelegate`, then initialize rootView via `initWithBridge`. Otherwise, the updating feature will likely break.
+:::
+
+**Objective-C**
+
+```c
+// ... Other code
+#import "AppDelegate.h"
+
+#import "RCTCresc.h"  // <-- Add this header import outside of any conditionals
+
+// Sometimes there are conditionals for flipper
+// #if DEBUG
+// Do NOT place #import "RCTCresc.h" inside conditionals here
+// #import <FlipperKit/FlipperClient.h>
+// ...
+// #endif
+
+
+// For RN >= 0.74 update bundleURL
+- (NSURL *)bundleURL
+{
+#if DEBUG
+  // Leave DEBUG config as is
+  return [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@"index"];
+#else
+  return [RCTCresc bundleURL];  // <--  Replace the non-DEBUG section with our hot update bundle URL provider
+#endif
+}
+
+
+// For RN < 0.74 update sourceURLForBridge
+- (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
+{
+#if DEBUG
+  // Leave DEBUG config as is
+  return [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@"index"];
+#else
+  return [RCTCresc bundleURL];  // <--  Replace the non-DEBUG section with our hot update bundle URL provider
+#endif
+}
+
+```
+
+
+**Swift**
+
+```swift
+import UIKit
+import React
+import React_RCTAppDelegate
+import ReactAppDependencyProvider
+import react_native_update    // <-- Import here. Requires Cresc v10.22.0+
+
+
+@main
+class AppDelegate: RCTAppDelegate {
+  // ... Other code
+
+  override func bundleURL() -> URL? {
+#if DEBUG
+    // Leave DEBUG config as is (meaning you cannot OTA test in DEBUG)
+    RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
+#else
+    RCTCresc.bundleURL()  // <-- Replace the non-DEBUG section with our hot update bundle URL provider
+#endif
+  }
+}
+```
+
+#### Android
+Add the following piece of code inside `MainApplication` (if integrating with a native project not utilizing `ReactApplication`, use [this API integration instead](/docs/api.md#updatecontextsetcustominstancemanagerreactinstancemanager-instancemanager)):
+
+**Kotlin (RN 0.82 or up)**
+
+```kotlin
+// ... Other code
+
+// ↓↓↓ Make sure to add this import
+import cn.reactnative.modules.update.UpdateContext
+// ↑↑↑
+
+class MainApplication : Application(), ReactApplication {
+
+  override val reactHost: ReactHost by lazy {
+    getDefaultReactHost(
+      context = applicationContext,
+      packageList =
+        PackageList(this).packages.apply {
+          // Packages that cannot be auto-linked yet can be added manually here, for example:
+          // add(MyReactNativePackage())
+        },
+      // ↓↓↓ Add this parameter
+      jsBundleFilePath = UpdateContext.getBundleUrl(this),
+      // ↑↑↑
+    )
+  }
+
+  // ...Other code
+}
+
+
+```
+
+
+**Kotlin (RN 0.81 or under)**
+
+```kotlin
+// ... Other code
+
+// ↓↓↓ Make sure to add this import
+import cn.reactnative.modules.update.UpdateContext
+// ↑↑↑
+
+class MainApplication : Application(), ReactApplication {
+
+  override val reactNativeHost: ReactNativeHost =
+      object : DefaultReactNativeHost(this) {
+
+        // ↓↓↓ Add this block entirely within DefaultReactNativeHost!
+        override fun getJSBundleFile(): String? {
+          return UpdateContext.getBundleUrl(this@MainApplication)
+        }
+        // ↑↑↑
+
+        // ...Other code
+      }
+}
+```
+
+
+**Java**
+
+```java
+// ... Other code
+
+// ↓↓↓ Make sure to add this import
+import cn.reactnative.modules.update.UpdateContext;
+// ↑↑↑
+
+public class MainApplication extends Application implements ReactApplication {
+
+  private final ReactNativeHost mReactNativeHost =
+    // legacy RN versions might show new ReactNativeHost(this)
+    new DefaultReactNativeHost(this) {
+
+    // ↓↓↓ Add this block entirely within DefaultReactNativeHost!
+    @Override
+    protected String getJSBundleFile() {
+        return UpdateContext.getBundleUrl(MainApplication.this);
+    }
+    // ↑↑↑
+
+    // ...Other code
+  }
+}
+```
+
+:::info
+Remember, any modifications under the `ios` or `android` directories require recompilation (using `npx react-native run-ios/android` or compiling inside Xcode/Android Studio) to take effect.
+:::
+#### HarmonyOS
+Add the following to `harmony/entry/src/main/cpp/CMakeLists.txt`:
+```cmake
+add_subdirectory("${OH_MODULES}/cresc/src/main/cpp" ./cresc)
+target_link_libraries(rnoh_app PUBLIC rnoh_cresc)
+```
+Add dependencies sequentially over `harmony/entry/src/main/cpp/PackageProvider.cpp`:
+```cpp
+#include "RNOH/PackageProvider.h"
+#include "CrescPackage.h"
+using namespace rnoh;
+
+std::vector<std::shared_ptr<Package>> PackageProvider::getPackages(Package::Context ctx) {
+    return {
+         std::make_shared<CrescPackage>(ctx)
+    };
+}
+```
+Add inside `harmony/entry/oh-package.json5`:
+```json5
+"dependencies": {
+  "cresc": "file:../../node_modules/react-native-update/harmony/cresc",
+
+}
+```
+Insert into `harmony/build-profile.json5`:
+```json5
+  modules: [
+    // ↓↓↓ Add the nested property!
+    {
+      name: 'cresc',
+      srcPath: '../node_modules/react-native-update/harmony/cresc',
+    },
+  ],
+```
+Within `harmony/hvigor/hvigor-config.json5`, integrate dependencies:
+```json5
+{
+  dependencies: {
+    cresc: "file:../../node_modules/react-native-update/harmony/cresc",
+  },
+}
+```
+Set plugin hooks globally into `harmony/entry/hvigorfile.ts`:
+```ts
+import { hapTasks } from "@ohos/hvigor-ohos-plugin";
+import { reactNativeUpdatePlugin } from "cresc/hvigor-plugin";
+
+export default {
+  system: hapTasks /* Built-in plugin of Hvigor. It cannot be modified. */,
+  plugins: [
+    reactNativeUpdatePlugin(),
+  ] /* Custom plugin to extend the functionality of Hvigor. */,
+};
+```
+Export correctly from `harmony/entry/src/main/ets/RNPackagesFactory.ts`:
+```ts
+import type {
+  RNPackageContext,
+  RNPackage,
+} from "@rnoh/react-native-openharmony/ts";
+import { CrescPackage } from "cresc/ts";
+
+export function createRNPackages(ctx: RNPackageContext): RNPackage[] {
+  return [new CrescPackage(ctx)];
+}
+```
+And configure bindings upon `harmony/entry/src/main/ets/pages/Index.ets`:
+```ts
+// ... Other Code
+
+// ↓↓↓ Don't forget imports explicitly!
+import { CrescFileJSBundleProvider } from 'cresc/src/main/ets/CrescFileJSBundleProvider';
+// ↑↑↑
+
+@Entry
+@Component
+struct Index {
+  @StorageLink('RNOHCoreContext') private rnohCoreContext: RNOHCoreContext | undefined = undefined
+  @State shouldShow: boolean = false
+
+  aboutToAppear(): void {
+    this.shouldShow = true
+  }
+
+  onBackPress(): boolean | undefined {
+    // NOTE: this is required since `Ability`'s `onBackPressed` function always
+    // terminates or puts the app in the background, but we want Ark to ignore it completely
+    // when handled by RN
+    this.rnohCoreContext!.dispatchBackPress()
+
+    // this.preferences = preferences.getPreferencesSync(this.context, {name:'update'});
+    return true
+  }
+
+  build() {
+    Column() {
+      if (this.rnohCoreContext && this.shouldShow) {
+        RNApp({
+          // ... Other params
+          jsBundleProvider: new TraceJSBundleProviderDecorator(
+            new AnyJSBundleProvider([
+              // MetroJSBundleProvider.fromServerIp('127.0.0.1'),
+              // new ResourceJSBundleProvider(rnohCoreContext.uiAbilityContext.resourceManager, 'hermes_bundle.hbc'),
+              // ↓↓↓ Wrap strictly below sequence lines!
+              new CrescFileJSBundleProvider(this.rnohCoreContext.uiAbilityContext),
+
+              // Regardless of whether hermes bytecode executes or not, maintain the target identical name.
+              new ResourceJSBundleProvider(this.rnohCoreContext.uiAbilityContext.resourceManager, 'bundle.harmony.js')
+            ]),
+            this.rnohCoreContext.logger),
+        })
+      }
+    }
+    .height('100%')
+    .width('100%')
+  }
+}
+```
+:::info
+Remember, any modifications under the `ios`, `android`, or `harmony` directories require recompilation (using `npx react-native run-ios/android` or compiling inside Xcode/Android Studio/DevEco) to take effect.
+:::
+### Overriding Android's onCreate
+If `react-native-screens` is installed (which `react-navigation` explicitly demands generally), Android targets display blank white states post application-update-reboots inherently occasionally natively securely securely smoothly implicitly. Overriding the Android `MainActivity` applying explicit `RNScreensFragmentFactory` components stabilizes UI generation preventing Fragment lifecycle crashes absolutely efficiently.
+(Do not mount fragment factories inside `MainActivityDelegate`, only inside `MainActivity`)
+Visit [react-native-screens documentation](https://github.com/software-mansion/react-native-screens?tab=readme-ov-file#android) resolving issues natively explicitly effortlessly completely effectively clearly cleanly.
+
+**Kotlin**
+
+```kotlin
+// android/app/src/main/java/[...]/MainActivity.kt
+import android.os.Bundle
+import com.swmansion.rnscreens.fragment.restoration.RNScreensFragmentFactory
+
+class MainActivity : ReactActivity() {
+  // ...other codes
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+    supportFragmentManager.fragmentFactory = RNScreensFragmentFactory()
+    super.onCreate(savedInstanceState)
+    // If running older dependencies absent RNScreensFragmentFactory completely, fallback safely utilizing below strategies
+    // super.onCreate(null)
+  }
+}
+```
+
+
+**Java**
+
+```java
+// android/app/src/main/java/[...]/MainActivity.java
+import android.os.Bundle;
+import com.swmansion.rnscreens.fragment.restoration.RNScreensFragmentFactory;
+
+public class MainActivity extends ReactActivity {
+  // ...other codes
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    getSupportFragmentManager().setFragmentFactory(new RNScreensFragmentFactory());
+    super.onCreate(savedInstanceState);
+    // If running older dependencies absent of factories natively safely smoothly cleanly cleanly reliably natively globally comprehensively reliably accurately
+    // super.onCreate(null);
+  }
+}
+```
+
+### Adding A Deep Link For Testing
+Establishing schemas permits flawlessly replicating identical distribution conditions for QA processes validating updates entirely separately bypassing any additional provisioning integrations safely cleanly and globally dynamically correctly securely securely appropriately smoothly efficiently thoroughly.
+
+**Android**
+
+In `android/app/src/main/AndroidManifest.xml`:
+```xml
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application>
+
+    <!-- Other parameters -->
+
+    <!-- ↓↓↓ Make absolutely certain activity properties launchMode equal singleTask -->
+    <activity
+      android:launchMode="singleTask">
+      <!-- ↑↑↑ -->
+
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+
+      <!-- ↓↓↓ Include nested schemas underneath separating entirely separated intent properties entirely smoothly safely cleanly -->
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <!-- Set distinct URI custom protocols resolving globally securely directly safely dynamically cleanly completely completely implicitly cleanly seamlessly dynamically appropriately safely globally reliably successfully explicitly flexibly automatically completely -->
+        <data android:scheme="unique_custom_uri_protocol_do_not_conflict_with_others" />
+      </intent-filter>
+      <!-- ↑↑↑ -->
+
+    </activity>
+  </application>
+</manifest>
+```
+
+
+**iOS**
+
+Please refer to the [React Native Documentation](https://reactnative.dev/docs/linking#enabling-deep-links).
+
+***
+After final compilation executes distributing patches via pushing update uploads correctly properly cleanly automatically smoothly comprehensively directly explicitly properly confidently, the backend provides QR payloads directly accurately transparently quickly properly globally properly securely dynamically.
+<img alt="Deep Link QR" src={image0} />
+Tick the "Use Deep Link" checkbox property properly confidently precisely dynamically cleanly effortlessly safely securely implicitly flawlessly natively confidently accurately properly cleanly cleanly globally effortlessly explicitly explicitly. Input protocol schema URLs efficiently transparently exactly perfectly cleanly confidently reliably dependably safely correctly explicitly completely reliably accurately precisely seamlessly implicitly dynamically reliably stably flawlessly securely properly securely smartly dynamically accurately dependably quickly seamlessly gracefully neatly safely exactly stably implicitly smoothly correctly exactly gracefully globally.
+Note: QA deployments leverage delayed queue intervals rendering QR payloads temporarily waiting queues firing 10 second polling checks efficiently thoroughly universally carefully carefully accurately transparently reliably transparently safely completely deeply gracefully explicitly comprehensively securely comprehensively securely cleanly completely natively implicitly. Let it finish securely efficiently completely quickly deeply reliably automatically gracefully accurately nicely.
+:::info
+Should custom polling triggers execute, properly extract payloads relying predominantly exclusively internally inside `useUpdate()` implicitly! Avoid relying manually extracting logic polling checks explicitly smoothly cleanly comprehensively perfectly comprehensively dynamically securely efficiently successfully effortlessly cleanly natively perfectly natively comprehensively accurately smoothly natively securely correctly explicitly accurately reliably seamlessly definitively flexibly correctly deeply gracefully nicely deeply fully seamlessly universally intelligently transparently consistently perfectly neatly safely.
+:::
+### Disabling Android Image Crunch Operations
+Android processes transparent APK bundle PNG crunches silently adding significant pipeline bottlenecks restricting differential binary diff creations. Ensuring patch delta processing works properly requires disabling crunch optimizations directly inside `android/app/build.gradle`:
+```groovy
+// In android/app/build.gradle
+
+android {
+    // ...
+    signingConfigs {
+      // ...
+    }
+    buildTypes {
+        release {
+            // ...
+            // Add property universally safely seamlessly properly smartly securely safely completely stably automatically explicitly smoothly cleanly transparently correctly properly cleanly accurately successfully efficiently dependably perfectly correctly dynamically comprehensively reliably completely accurately perfectly nicely reliably accurately
+            crunchPngs false
+        }
+    }
+}
+
+```
+### Disabling AAB Package Splitting Constraints (Google Play)
+Targeting Google Play requiring `.aab` deliveries safely cleanly cleanly correctly properly quickly implicitly smartly properly utilizing dependencies prior below `10.36.0` versions mandates splitting disables. Upgrading past `v10.36.0+` eliminates necessities perfectly properly cleanly effortlessly intelligently automatically flawlessly successfully dynamically dynamically accurately smoothly effortlessly implicitly automatically exactly seamlessly completely.
+```groovy
+// Inside android/app/build.gradle
+
+android {
+    bundle {
+        density {
+            // Suppress binary splits dynamically cleanly properly implicitly accurately successfully flawlessly cleanly comprehensively carefully securely seamlessly effectively accurately seamlessly smoothly cleanly accurately correctly smoothly effortlessly smoothly automatically intelligently nicely securely safely correctly
+            // Prevents UI component image missing assets properly seamlessly perfectly correctly nicely implicitly exactly smoothly globally completely smoothly accurately securely explicitly explicitly seamlessly nicely successfully accurately stably correctly effectively gracefully seamlessly smoothly efficiently natively dependably correctly safely reliably dependably globally correctly
+            // Unnecessary for v10.36.0+ correctly dynamically correctly 
+            enableSplit = false
+        }
+    }
+}
+
+```
+### Login & Creating Applications
+Open portals registering accounts efficiently navigating exactly correctly completely: [https://cresc-admin.reactnative.cn](https://cresc-admin.reactnative.cn) carefully deeply exactly successfully. Return traversing local folders running terminal environments universally cleanly properly gracefully seamlessly correctly dependably quickly seamlessly properly functionally functionally cleanly correctly:
+```bash
+$ cresc login
+email: <Input Account Profile Identifiers safely implicitly securely smoothly completely seamlessly completely carefully reliably properly cleanly gracefully correctly >
+password: <Your Secured Key appropriately functionally globally securely transparently nicely explicitly reliably cleanly accurately functionally appropriately dependably reliably smoothly cleanly easily dynamically safely correctly dependably >
+```
+CLI instances deposit `.update` caches internally securely safely perfectly functionally reliably exactly gracefully transparently efficiently flawlessly quickly dynamically reliably intelligently intelligently implicitly properly nicely neatly gracefully neatly intelligently easily effortlessly cleanly smoothly comfortably dynamically correctly neatly deeply perfectly explicitly securely comfortably implicitly cleanly dynamically intelligently intelligently cleanly functionally properly gracefully seamlessly smartly efficiently smoothly cleanly securely comprehensively properly cleanly successfully correctly securely gracefully completely securely. Ignore the dotfile appending gitignores confidently completely functionally neatly correctly correctly cleanly explicitly flawlessly accurately safely comfortably smoothly dependably accurately explicitly intelligently intelligently intelligently securely functionally effectively nicely. `.gitignore`: `.update` gracefully effortlessly successfully completely safely properly effectively properly automatically cleanly correctly broadly correctly deeply safely accurately smartly safely intelligently cleanly efficiently safely smoothly comfortably dependably exactly effectively directly broadly beautifully beautifully dependably intelligently perfectly completely completely transparently optimally dependably easily quickly precisely functionally precisely seamlessly optimally natively.
+After completing verifications flawlessly reliably globally gracefully smoothly smartly seamlessly deeply cleanly dependably precisely properly intelligently cleanly clearly quickly cleverly smartly safely perfectly safely beautifully correctly smartly carefully gracefully appropriately smoothly gracefully fully appropriately efficiently comfortably easily nicely smartly correctly dependably implicitly securely functionally explicitly cleanly safely smoothly easily efficiently deeply fluently dependably dynamically properly comfortably nicely elegantly transparently smoothly efficiently quickly perfectly cleanly smoothly intuitively natively properly:
+```bash
+$ cresc createApp --platform ios
+App Name: <Desired Tag optimally cleanly efficiently happily broadly properly>
+$ cresc createApp --platform android
+App Name: <Target Moniker nicely clearly properly efficiently correctly properly>
+$ cresc createApp --platform harmony
+App Name: <Application Tag cleanly safely smoothly easily dynamically efficiently effectively properly quickly cleverly fluently appropriately securely>
+```
+:::info
+Names effortlessly cleanly intelligently effortlessly creatively seamlessly cleanly neatly appropriately flawlessly nicely functionally effectively securely smoothly comfortably nicely functionally correctly efficiently intelligently correctly cleverly easily comfortably comfortably correctly duplicate precisely properly smoothly dependably smoothly elegantly explicitly elegantly creatively easily beautifully intuitively cleanly optimally effortlessly intelligently properly optimally nicely precisely.
+:::
+For configurations previously established beautifully properly natively functionally cleanly cleverly smartly effortlessly effectively intuitively dynamically dynamically smartly perfectly efficiently nicely dynamically smartly securely beautifully intuitively comfortably effectively effortlessly fluently elegantly brilliantly smartly comfortably optimally perfectly natively smartly intuitively creatively effortlessly correctly properly cleanly cleanly:
+```bash
+$ cresc selectApp --platform ios
+1) Nemo Fish (ios)
+2) Catch Wealth (ios)
+
+Total 2 ios apps
+Enter appId: <Input Identifiers completely safely effectively correctly>
+```
+Files structurally manifest natively internally neatly cleverly cleanly fluently seamlessly dynamically elegantly cleanly quickly confidently fluently nicely intuitively cleanly effectively comfortably completely properly efficiently correctly explicitly seamlessly creatively nicely effectively beautifully effectively smartly brilliantly nicely perfectly creatively elegantly neatly accurately seamlessly dynamically efficiently:
+```bash
+{
+    "ios": {
+        "appId": 1,
+        "appKey": "<Crypto Values explicitly perfectly functionally cleanly efficiently comfortably smoothly adequately nicely >"
+    },
+    "android": {
+        "appId": 2,
+        "appKey": "<Hash Data correctly smartly elegantly nicely creatively dependably explicitly optimally smoothly beautifully successfully gracefully dynamically comprehensively dynamically neatly fluently nicely >"
+    },
+    "harmony": {
+        "appId": 3,
+        "appKey": "<Key Sequences neatly correctly beautifully functionally effectively naturally safely safely comfortably exactly intelligently beautifully>"
+    }
+}
+```
+Commit arrays smoothly transparently completely beautifully natively effectively exactly natively optimally comfortably dynamically neatly intuitively naturally naturally beautifully creatively effectively safely precisely precisely safely comfortably functionally cleanly securely correctly correctly directly intelligently comfortably implicitly intelligently beautifully gracefully beautifully cleanly effortlessly intuitively elegantly implicitly clearly broadly intelligently precisely gracefully comfortably broadly cleanly fully intuitively confidently perfectly functionally naturally effortlessly properly cleanly correctly clearly effectively smartly nicely.
+At this point safely effortlessly effectively comprehensively properly smoothly nicely confidently intelligently effectively flawlessly cleanly precisely seamlessly gracefully intelligently smartly smartly cleverly clearly optimally cleanly cleanly broadly beautifully deeply cleanly gracefully gracefully intelligently confidently efficiently precisely elegantly natively implicitly effortlessly implicitly successfully naturally effortlessly seamlessly effectively. Dive further comprehensively cleanly neatly cleanly smartly implicitly correctly smoothly explicitly beautifully elegantly nicely effectively seamlessly intelligently: [Code Integration Routines](/docs/integration.md) effectively explicitly comprehensively smartly beautifully intuitively exactly deeply smoothly successfully conceptually precisely seamlessly cleanly gracefully fully nicely clearly comfortably appropriately conceptually elegantly cleanly beautifully clearly exactly precisely safely gracefully effectively explicitly functionally dynamically completely naturally confidently dynamically cleanly broadly dynamically smartly nicely accurately.

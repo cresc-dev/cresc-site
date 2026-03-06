@@ -1,0 +1,183 @@
+# Publishing Hot Updates
+
+Now that your app can detect updates, let's learn how to publish and update it. See the flow below:
+
+```mermaid
+flowchart TD
+    codebase["🖥️&nbsp;&nbsp;Code Source Repository"]
+    subgraph Publishing Native Baseline Version
+    tagNativeVersion["🏷️&nbsp;&nbsp;Tag Native Version (in git)"]
+    newNativeVersion["🗂️&nbsp;&nbsp;New Native Baseline Version"]
+    nativePackage["📦&nbsp;&nbsp;Native Full Package (apk or ipa)"]
+    tagNativeVersion--"🔨&nbsp;&nbsp;Compile"-->nativePackage
+    nativePackage--"⬆️&nbsp;&nbsp;Upload using<br/>cresc uploadApk/uploadIpa"-->newNativeVersion
+    end
+    subgraph Publishing Hot Update Version
+    tagBundleVersion["🏷️&nbsp;&nbsp;Tag Hot Update Version (in git)"]
+    bundlePackage["🎁&nbsp;&nbsp;JS Code and Assets (.ppk file)"]
+    tagBundleVersion--"🔨&nbsp;&nbsp;Generate and Upload using<br/>cresc bundle"-->bundlePackage
+    someNativeVersions["🗂️&nbsp;&nbsp;One or more Native Baseline Versions"]
+    bundlePackage--"🖇️&nbsp;&nbsp;Bind"-->someNativeVersions
+    end
+    user["👨‍👩‍👧‍👦&nbsp;&nbsp;Users with corresponding native baseline version installed"]
+    codebase--"✏️&nbsp;&nbsp;Modify JS code,<br/>add/update JS components,<br/>or add/update assets referenced in JS"-->Publishing Hot Update Version
+    codebase--"🖊️&nbsp;&nbsp;Modify Native code/settings,<br/>add/update Native components,<br/>or add/update assets referenced in Native code"-->Publishing Native Baseline Version
+    Publishing Hot Update Version--"📲&nbsp;&nbsp;Push Incremental Hot Update (.diff file)"-->user
+```
+
+1. We first need to build a native release version. Before building, ensure `react-native-update` is integrated, tested, and works correctly. For Android, [disable `crunchPngs`](/docs/getting-started.md#disabling-android-image-crunch-operations). See documentation for [iOS Build](https://reactnative.dev/docs/publishing-to-app-store) and [Android Build](https://reactnative.dev/docs/signed-apk-android). After building, run `cresc uploadIpa` or `cresc uploadApk` to upload the package to Cresc servers to serve as the baseline for delta comparisons. Keep a copy of this installation package; the package distributed to users `must be strictly identical` to the uploaded one. We recommend using git tags for native versioning (e.g., `v1.0.0`).
+2. Iterate on your business logic over the baseline (add/remove JS code, static assets). Run `cresc bundle` to generate and publish a hot update without recompiling the native app. We recommend using git tags for hot update versioning (e.g., `v1.0.1`).
+3. If there are native changes during iteration, you must publish and upload a new native baseline version (repeat step 1, but set a different native version number). You can maintain just one native baseline or multiple versions concurrently.
+
+## Publishing Native Baseline Version
+
+### iOS
+
+Refer to [Running On Device](https://reactnative.dev/docs/running-on-device) to ensure you are using the offline bundle.
+
+Follow the standard flow to archive the `.ipa` file:
+
+1. In Xcode, select a real device or Generic iOS Device.
+2. Go to Product - Archive.
+3. After Archiving, select `Export` to generate the .ipa file.
+4. Run the following command to upload it:
+
+```bash
+$ cresc uploadIpa <my_ipa_file.ipa>
+```
+
+The `CFBundleShortVersionString` in `ios/[project]/Info.plist` will be recorded as the `packageVersion`.
+
+You can now upload this version to the App Store, or test it on devices via TestFlight. Note: Testing hot updates directly via Xcode is not supported yet.
+
+If you re-archive later (e.g., modifying native code/configs), you must **change the version number**, and `uploadIpa` again. Otherwise, identically versioned native packages will [fail to receive hot updates due to mismatched build timestamps](/docs/faq.md#error-hot-update-paused-reason-build-timestamp-mismatch).
+
+### Android
+
+Set up signing per [Android Signed APK](https://reactnative.dev/docs/signed-apk-android). Run `./gradlew assembleRelease` or `./gradlew aR` in the `android` folder. The APK will be under `android/app/build/outputs/apk/release/app-release.apk`.
+
+Upload it via:
+
+```bash
+$ cresc uploadApk android/app/build/outputs/apk/release/app-release.apk
+# If you build an .aab package, use:
+# cresc uploadAab android/app/build/outputs/bundle/release/app-release.aab
+```
+
+The `versionName` in `android/app/build.gradle` is recorded as the `packageVersion`.
+
+You can now publish this version to app markets or install it directly for testing.
+
+If you rebuild native code later, you must **change the version number**, and `uploadApk` again. Otherwise, [hot updates will fail due to build timestamp mismatches](/docs/faq.md#error-hot-update-paused-reason-build-timestamp-mismatch).
+
+### Harmony
+
+Use DevEco-Studio and go to Build => Build Hap(s)/App(s) => Build App(s). The package will be in `harmony/build/outputs/default/harmony-default-unsigned.app`.
+
+Run:
+
+```bash
+$ cresc uploadApp harmony/build/outputs/default/harmony-default-unsigned.app
+```
+
+The App's `versionName` in `harmony/AppScope/app.json5` is recorded as the `packageVersion`.
+
+Publish to the Huawei AppGallery, or test on device via `hdc shell`. Rebuilds require version increments to [prevent build timestamp mismatches](/docs/faq.md#error-hot-update-paused-reason-build-timestamp-mismatch).
+
+## Publishing Hot Update Version
+
+Modify a line of code, and run `cresc bundle --platform <ios|android|harmony>` to generate a new hot update version.
+
+:::info
+If you use frameworks without `index.js` like modern `expo`, the `bundle` command will fail. Manually create an `index.js` file importing the framework's entry file, referring to `main` in `package.json`. For `expo`, `index.js` looks like:
+
+```js
+import "expo-router/entry";
+```
+
+:::
+
+```bash
+$ cresc bundle --platform android
+Bundling with React Native version:  0.22.2
+<various progress output>
+Bundled saved to: build/output/android.1459850548545.ppk
+Would you like to publish it?(Y/N)
+```
+
+Input Y to upload immediately, or run `cresc publish --platform android build/output/android.1459850548545.ppk` later.
+
+```
+  Uploading [========================================================] 100% 0.0s
+Enter version name: <Enter hot update name, e.g., 1.0.0-rc>
+Enter description: <Enter details>
+Enter meta info: {"ok":1}
+Ok.
+Would you like to bind packages to this version?(Y/N)
+```
+
+The version is stored on the server, but users cannot see it until you bind native packages to it.
+Input Y to bind immediately, or run `cresc update --platform <ios|android|harmony>` later to bind previously uploaded versions. You can also drag and drop native versions to matching hot updates on the web dashboard.
+
+```
+┌────────────┬──────────────────────────────────────┐
+│ Package Id │               Version                │
+├────────────┼──────────────────────────────────────┤
+│   46272    │ 2.0(normal)                          │
+├────────────┼──────────────────────────────────────┤
+│   45577    │ 1.0(normal)                          │
+└────────────┴──────────────────────────────────────┘
+Total 2 packages
+Enter package id: 46272
+```
+
+After binding, the server takes a few seconds to generate diff patches, and clients will receive updates.
+To publish new updates thereafter, repeatedly run `cresc bundle` without recompiling native code.
+Congratulations! You have completed the hot update integration.
+
+## Canary Release (Gradual Rollout)
+
+Canary releases mitigate risk by gradually expanding the update scope to test stability.
+
+### What is a Canary Release?
+
+Before pushing updates globally, you push them to a small subset (e.g., 5%, 10%) of users, observe their metrics, and gradually widen the scope to 100%.
+
+### Benefits
+
+- **Lower Risk**: Bugs only affect small subsets, enabling swift rollbacks.
+- **Verify Stability**: Observe performance across varied real-world networking environments.
+- **Smooth Transitions**: Prevents severe server CPU usage spikes during mass updates.
+- **Fast Recovery**: Halts rollouts immediately minimizing global impact.
+
+### How it Works
+
+When you configure a canary percentage (e.g., 10%), update queries calculate a hash using the device's UUID:
+
+- Users within the bucket receive the newest updates.
+- Users outside receive the previous full version or no update.
+- The hash remains stable; multiple checks won't flip a user's bucket state.
+
+### Usage
+
+#### Web Dashboard
+
+1. Log into the Cresc Dashboard.
+2. Select App and Native Version.
+3. Click "Publish".
+4. Adjust the rollout percentage.
+
+#### Command Line
+
+Review the [rollout parameter in the CLI docs](/docs/cli.md#cresc-update).
+
+### Notes
+
+:::warning
+**Important**: Canary versions form independent bindings with Native packages.
+:::
+
+- **One Canary Version At A Time**: Each Native Version can bind to one Canary update (\<100%) and one Full update concurrently.
+- **Priority**: Users inside the canary bucket receive the canary update. Others receive the Full update.
+- **Promoting to Full**: Bumping the percentage to 100% promotes the canary to a full release automatically, replacing any older full releases.
+- **Client Requirements**: Features require `react-native-update` >= 10.32.0.

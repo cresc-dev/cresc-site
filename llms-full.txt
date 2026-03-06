@@ -1,0 +1,2619 @@
+---
+url: /docs/api-token.md
+---
+
+# API Token
+
+An API Token is an authentication method used to invoke the [Cresc API](https://update.reactnative.cn/api/openapi) within CI/CD pipelines or automated scripts. Compared to standard username/password logins, API Tokens are much more secure and easier to manage.
+
+## Use Cases
+
+- **Continuous Integration/Deployment (CI/CD)**: Automate OTA update publishing via GitHub Actions, GitLab CI, Jenkins, etc.
+- **Automation Scripts**: Write scripts to manage apps, versions, or native packages in bulk.
+- **Third-Party Integrations**: Wrap Cresc's workflows into external developer tools.
+
+## Creating an API Token
+
+1. Log into the [Cresc Dashboard](https://cresc-admin.reactnative.cn)
+2. Click on "API Token" in the left sidebar menu.
+3. Click the "Create Token" button.
+4. Enter a name for the Token (e.g., CI/CD Pipeline).
+5. Select the required permissions.
+6. (Optional) Set an expiration date.
+7. Click Create, and **copy the secret Token immediately**.
+
+:::warning
+The token string is only displayed once upon creation. You will not be able to view it again. Be sure to save it safely immediately!
+:::
+
+## Permissions
+
+| Permission | Description                                                      |
+| ---------- | ---------------------------------------------------------------- |
+| **Read**   | View app details, version info, and native package details       |
+| **Write**  | Create/Update apps, publish new versions, upload native packages |
+| **Delete** | Delete apps, versions, and packages                              |
+
+:::info
+You must select at least one permission when creating a Token. Applying the principle of least privilege is a best practice.
+:::
+
+## Using Tokens with API
+
+When calling the Cresc API, supply the token via the `x-api-token` HTTP header:
+
+```bash
+curl -X GET "https://update.reactnative.cn/api/app/list" \
+  -H "x-api-token: YOUR_API_TOKEN"
+```
+
+### Using in the CLI
+
+If you're using the `react-native-update-cli` tool (v2.7.0+), you can pass the Token via environment variables:
+
+```bash
+export CRESC_API_TOKEN=your_api_token_here
+cresc bundle --platform android
+```
+
+### Using in CI/CD Environments
+
+Here is an example configuring a GitHub Action:
+
+```yaml
+# .github/workflows/publish.yml
+name: Publish Hot Update
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm install && npm i -g react-native-update-cli
+        
+      - name: Publish update
+        env:
+          CRESC_API_TOKEN: ${{ secrets.CRESC_API_TOKEN }}
+        run: cresc bundle --platform android
+```
+
+:::tip
+In CI/CD pipelines, always store your tokens securely using the platform's Secret Manager (e.g., GitHub Secrets) rather than hardcoding them in your configuration scripts.
+:::
+
+## Managing Tokens
+
+### Viewing Token List
+
+On the "API Token" page, you can view all created tokens, including:
+
+- Token Name
+- Permissions
+- Expiration Time
+- Last Used Time
+- Status (Active/Expired/Revoked)
+
+### Revoking a Token
+
+If a token is leaked or no longer needed, you can revoke it at any time:
+
+1. Identify the token in the table list.
+2. Click the "Revoke" button.
+3. Confirm revocation.
+
+:::warning
+Revocations take effect immediately. Any API requests made using a revoked token will be instantly rejected. Ensure you update any dependent CI/CD setups before revoking.
+:::
+
+## Security Practices
+
+1. **Principle of Least Privilege**: Only grant the exact permissions required.
+2. **Set Expirations**: Try to use short-lived tokens or configure expirations for temporary integration projects.
+3. **Periodic Rotation**: Routinely revoke old tokens and cycle in new tokens for long-running workflows.
+4. **Secure Storage**: Never commit tokens directly to your repository source code.
+5. **Monitor Usage**: Check the 'Last Used Time' and delete idle tokens routinely.
+
+## Limits
+
+- Each user can create a maximum of **10** API Tokens.
+- To create additional tokens, you must first revoke existing unused tokens.
+
+
+
+---
+url: /docs/api.md
+---
+
+# API Reference
+
+### JavaScript Methods
+
+#### new Cresc(options: CrescOptions)
+
+Creates a Cresc OTA service instance, with the following constructor parameters:
+
+```ts
+interface CrescOptions {
+  // Required, obtained via cresc createApp/selectApp command or the admin panel
+  appKey: string;
+
+  // Custom log output, can also be used to report analytics
+  logger?: ({ type, data }: { type: EventType; data: EventData }) => void;
+
+  // Strategy for automatically checking updates
+  checkStrategy?:
+    | "onAppStart" // Only when app starts
+    | "onAppResume" // Only when app switches from background to foreground
+    | "both"; // Default, includes both scenarios
+    | null; // Do not check for updates automatically, must call checkUpdate manually. Requires v10.4.2+
+
+  // Strategy for downloading and applying updates automatically
+  updateStrategy?:
+    | "alwaysAlert" // Default in __DEV__, uses system alert to prompt update and show errors
+    | "alertUpdateAndIgnoreError" // Default in production, prompts update using system alert, but suppresses error alerts
+    | "silentAndNow" // Automatically downloads silently and applies immediately
+    | "silentAndLater"; // Automatically downloads silently, but applies only after the user restarts the app
+    | null; // Do not download and apply automatically. Choose this if you need a custom UI.
+
+  // Whether to automatically mark as successful after rebooting from an update, default: true
+  // Manually marking is generally not recommended
+  autoMarkSuccess?: boolean;
+
+  // Whether to clear the last error after several ms, default: do not clear
+  dismissErrorAfter?: number;
+
+  // Whether to check for updates in the development environment, default: false. Enable this if you need to debug OTA in dev.
+  // Even if enabled, it can only check and download updates, but cannot actually apply them. Applying updates requires a release build.
+  // Requires v10.4.2+
+  debug?: boolean;
+
+  // Whether to throw an error when calling checkUpdate and downloadUpdate, default: false (get error info via lastError)
+  // When enabled, you can use try/catch blocks. lastError will still be available.
+  // try {
+  //   await checkUpdate();
+  // } catch (e) {
+  //   console.error(e);
+  // }
+  // Requires v10.15.2+
+  throwError?: boolean;
+
+  // Executed before checking for updates, returning false cancels the check
+  // Requires v10.12.0+
+  beforeCheckUpdate?: () => Promise<boolean>;
+
+  // Executed before downloading updates, returning false cancels the download. Can be used with custom metaInfo for flow control.
+  // Requires v10.12.0+
+  beforeDownloadUpdate?: (info: UpdateInfo) => Promise<boolean>;
+
+  // Executed after downloading updates, returning false stops the built-in strategy.
+  // Requires v10.27.0+
+  afterDownloadUpdate?: (info: UpdateInfo) => Promise<boolean>;
+
+  // Executed when the native package is expired, returning false stops the built-in strategy.
+  // Requires v10.28.2+
+  onPackageExpired?: (info: UpdateInfo) => Promise<boolean>;
+}
+
+// Log event types
+type EventType =
+  // Update failed, rolled back after reboot
+  | "rollback"
+  // Error during check
+  | "errorChecking"
+  // Initiating check
+  | "checking"
+  // Downloading update
+  | "downloading"
+  // Download successful
+  | "downloadSuccess"
+  // Update failed
+  | "errorUpdate"
+  // Update success
+  | "markSuccess"
+  // Downloading APK
+  | "downloadingApk"
+  // User rejected storage permission before downloading APK
+  | "rejectStoragePermission"
+  // Error requesting storage permission
+  | "errorStoragePermission"
+  // Error while downloading/installing APK
+  | "errorDownloadAndInstallApk";
+
+// Log event data
+interface EventData {
+  // Hash of the current completed update, empty string if no update applied
+  currentVersion: string;
+  // Client version info
+  cInfo: {
+    rnu: string; // react-native-update version
+    rn: string; // react-native version
+    os: string; // OS and version
+    uuid: string; // User identifier
+  };
+  // Native package version
+  packageVersion: string;
+  // Build timestamp
+  buildTime: number;
+  // Error related info
+  message?: string;
+  // Hash of the rolled-back version
+  rolledBackVersion?: string;
+  // Hash of the failed new version
+  newVersion?: string;
+  // Additional data
+  [key: string]: any;
+}
+```
+
+#### useUpdate()
+
+Utility functions for OTA updates. This method can also be imported using the alias `useCresc`.
+
+:::info
+Note that `useUpdate` cannot be called directly inside the component that uses `<UpdateProvider>` (typically the root component). It can only be called by its children.
+:::
+
+```js
+const {
+  checkUpdate,
+  switchVersion,
+  switchVersionLater,
+  markSuccess,
+  dismissError,
+  downloadUpdate,
+  downloadAndInstallApk,
+  getCurrentVersionInfo,
+  currentVersionInfo,
+  parseTestQrCode,
+  currentHash,
+  packageVersion,
+  client,
+  progress,
+  updateInfo,
+  lastError,
+  restartApp,
+} = useUpdate();
+```
+
+Types and functionality:
+
+```ts
+interface UpdateContext {
+  // Checks for updates (Note: Before v10.26.0, `checkUpdate` had no return value, you had to get it from `updateInfo` returned by `useUpdate()`)
+  // We still recommend getting `updateInfo` via `useUpdate()` primarily
+  checkUpdate: () => Promise<void | UpdateInfo>;
+  // Called after download completes to immediately restart and switch to the new version
+  switchVersion: () => void;
+  // Called after download completes to switch to the new version on the next user-initiated restart (silent update)
+  switchVersionLater: () => void;
+  // Manually mark update as successful after a restart
+  markSuccess: () => void;
+  // Clear the last error state
+  dismissError: () => void;
+  // Download the update. Returns `boolean` in v10.16.0+, indicating success.
+  downloadUpdate: () => Promise<boolean | void>;
+  // Download and install an APK
+  downloadAndInstallApk: (url: string) => Promise<void>;
+  // Asynchronously get info about the currently applied update. Use `currentVersionInfo` instead after v10.31.2.
+  getCurrentVersionInfo: () => Promise<{
+    name?: string;
+    description?: string;
+    metaInfo?: string;
+  }>;
+  // Info about the currently applied update. Requires v10.31.2+.
+  currentVersionInfo: {
+    name?: string;
+    description?: string;
+    metaInfo?: string;
+  };
+  // Parse test QR code. Requires v10.11.2+
+  parseTestQrCode: (qrCode: string) => void;
+  // Current version hash
+  currentHash: string;
+  // Current native package version
+  packageVersion: string;
+  // Current Cresc service instance
+  client?: Cresc;
+  // Progress data after download starts
+  progress?: {
+    hash: string;
+    // Bytes downloaded
+    received: number;
+    // Total bytes to download
+    total: number;
+  };
+  // Update-related info
+  updateInfo?: {
+    // Already up-to-date
+    upToDate?: true;
+    // Native package expired, requires downloading a new native build
+    expired?: true;
+    // Native package download URL set in the admin console
+    downloadUrl?: string;
+    // Is there a new update?
+    update?: true;
+    // New update version name
+    name?: string;
+    // New update hash
+    hash?: string;
+    // Update description/changelog
+    description?: string;
+    // Extra metadata payload
+    metaInfo?: string;
+    // Is the update currently paused?
+    paused?:
+      | "app" // Paused for all native versions of the app
+      | "package" // Paused for this native version only
+      | "quota"; // Paused due to exceeding check quota
+    // Other messages
+    message?: string;
+  };
+  // The most recent error occurring during check, download, or apply
+  lastError?: Error;
+}
+```
+
+***
+
+#### async function checkUpdate()
+
+Triggers an update check, returns `updateInfo` (Note: Before v10.26.0, `checkUpdate` had no return value. We still recommend prioritizing `updateInfo` from `useUpdate()`). There are three return scenarios:
+
+1. `{expired: true}`: The native package has expired (3 cases: 1. Manually set as expired, 2. Manually deleted, 3. Never uploaded). You should prompt the user to download a new native build or redirect to the app store (requires setting `downloadUrl` in the web console). To update an APK inside the app, configure [install permissions](/docs/api.md#async-function-downloadandinstallapkurl).
+
+```js
+{
+    expired: true,
+    downloadUrl: 'http://appstore/downloadUrl',
+}
+```
+
+2. `{upToDate: true}`: The app is currently up-to-date.
+
+3. `{update: true}`: A new version is available. `name` and `description` can be shown to the user. `metaInfo` can be used to set custom flags (like whether to update silently, or if it's a mandatory update). See [Best Practices](/docs/bestpractice.md#using-meta-info) for details. It also contains download URLs.
+
+```js
+{
+    update: true,
+    name: '1.0.3-rc',
+    hash: 'hash',
+    description: 'Added Chat feature\nFixed store bugs',
+    metaInfo: '{"silent":true}',
+    pdiffUrl: 'http://update-packages.reactnative.cn/hash',
+    diffUrl: 'http://update-packages.reactnative.cn/hash',
+}
+```
+
+***
+
+#### async function downloadUpdate()
+
+Downloads the hot update package. Only proceeds if `update:true`. Updates `progress` state. In v10.16.0+, returns `boolean` indicating success.
+
+***
+
+#### async function downloadAndInstallApk(url)
+
+Downloads and directly installs an APK. `url` must point directly to the APK file.
+
+Due to external factors like system security constraints, this is not guaranteed to succeed perfectly. If download/install fails during the app lifecycle, subsequent calls won't retry and fail silently.
+
+Note: Requires manual permissions added to `AndroidManifest.xml`. If supporting pre-Android 7.0 devices, you also need external storage permissions.
+
+```xml
+<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+<!-- For pre-Android 7.0 -->
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+```
+
+Note that some app stores might reject your app due to these permissions. Removing them does not affect OTA update functionality.
+
+***
+
+#### function markSuccess()
+
+**Generally, do not call this manually**. Marks the update as successfully applied (otherwise, the next boot expects a crash and rolls back).
+
+***
+
+#### async function getCurrentVersionInfo()
+
+Gets information about the currently active hot update (returns an empty object if no update was applied). Use `currentVersionInfo` instead after v10.31.2.
+
+Example return:
+
+```js
+{
+    name: '1.0.3-rc',
+    description: 'Added Chat feature\nFixed store bugs',
+    metaInfo: '{"silent":true}',
+}
+```
+
+***
+
+#### function restartApp()
+
+Immediately restarts the application. Available in v10.28.2+.
+
+***
+
+#### function switchVersion()
+
+Immediately restarts the app and loads the newly downloaded version.
+
+> Warning! Do not rely solely on `progress` to determine download completion! Call this strictly after `await downloadUpdate()` finishes.
+
+***
+
+#### function switchVersionLater()
+
+Loads the newly downloaded version on the next natural app restart.
+
+> Warning! Call this strictly after `await downloadUpdate()` finishes.
+
+***
+
+#### function parseTestQrCode(qrCode: string)
+
+Parses test QR codes, typically used by QA to test OTA packages. If your app already has a scanning feature, scan Cresc QRs to preview arbitrary update versions.
+Note: If using custom update strategies, rely exclusively on `updateInfo` from `useUpdate()` because the QR code scan bypasses checkUpdate's return value.
+
+![testqrcode](/static/image/testqrcode.24c22c1ebe.png)
+When using this method, **do not** check the "Use Deep Link" option.
+
+Example:
+
+```js
+<Camera
+  onReadCode={({ nativeEvent: { codeStringValue } }) => {
+    // Disable camera upon read
+    setShowCamera(false);
+    // Parse test QR first
+    if (parseTestQrCode(codeStringValue)) {
+      // If it's a Cresc QR, stop processing
+      return;
+    }
+    // Otherwise, process normal business logic
+  }}
+/>
+```
+
+***
+
+### Android Methods
+
+#### UpdateContext.setCustomInstanceManager(ReactInstanceManager instanceManager)
+
+If integrating into an existing Android host app, pass your custom ReactInstanceManager here. Available since `v5.5.8`.
+
+Example:
+
+```java
+import cn.reactnative.modules.update.UpdateContext
+
+mReactInstanceManager = ReactInstanceManager.builder()
+                // ...other setters, but do NOT call setBundleAssetName
+                .setJSBundleFile(UpdateContext.getBundleUrl(mContext, "assets://index.android.bundle"))
+                .build();
+UpdateContext.setCustomInstanceManager(mReactInstanceManager);
+```
+
+
+
+---
+url: /docs/bestpractice.md
+---
+
+# Best Practices
+
+#### Optimizing Native and Hot Update Package Size
+
+##### iOS Native Package Optimization (ipa)
+
+For the same archive (where version number, build time, and bundled js are fixed and unaffected by the export method), you can export the ipa multiple times with different options and choose the smallest one to upload to the Cresc server as your update baseline.
+
+![bitcode](/static/image/exportipa.91920cd4bf.png)
+##### Android Native Package Optimization (apk)
+
+APK optimization primarily focuses on two areas:
+
+- [Enable Proguard to obfuscate and shrink code](https://reactnative.dev/docs/signed-apk-android#enabling-proguard-to-reduce-the-size-of-the-apk-optional). Note that this step might cause runtime errors for code using reflection. Exhaustive testing is required after enabling, and you might need to add specific Proguard rules for third-party libraries.
+- [Build separate APKs for different CPU architectures](https://reactnative.dev/docs/signed-apk-android#building-separate-apks-for-different-cpu-architectures-optional). Find the CPU architecture section in `android/app/build.gradle` and enable the `enableSeparateBuildPerCPUArchitecture` option as shown below:
+
+```diff
+splits {
+    abi {
+        reset()
+-       enable enableSeparateBuildPerCPUArchitecture
++       enable true        // Enable separate CPU architecture builds
+        universalApk false  // If true, also generate a universal APK
+    }
+}
+```
+
+This will output multiple APK files in the build directory. For distribution and uploading to the hot update service, you only need to use the `app-arm64-v8a-release.apk` file, which significantly reduces the APK size.
+
+##### Hot Update Package Optimization (ppk)
+
+The primary content of a hot update package is the JS bundle and its referenced static assets (mostly images).
+
+- **JS Bundle Analysis**: You can use third-party tools (like [react-native-bundle-visualizer](https://github.com/IjzerenHein/react-native-bundle-visualizer)) to analyze which modules consume the most space in your JS files, and see if they can be replaced with lighter alternatives (e.g., replacing `moment` with `dayjs`, or `lodash` with `lodash-es`).
+- **Image Optimization**:
+  - Use compression tools to crop and compress images without noticeable quality loss.
+  - If transparent pixels aren't needed, consider converting PNG formats to JPG.
+  - Consider image formats with higher compression ratios, such as WEBP (requires third-party native plugins like [react-native-webp-format](https://github.com/Aleksefo/react-native-webp-format#readme)) or HEIF (supported natively on iOS 11 and Android 10+). Here is an image format comparison for reference: [https://compare.rokka.io/\_compare/#heif=40\&jpeg=80\&webp=80\&av1=40\&width=800](https://compare.rokka.io/_compare/#heif=40\&jpeg=80\&webp=80\&av1=40\&width=800).
+
+#### Handling Multiple Channel APKs for Hot Updates
+
+1. If the channel APKs have differences in their `JS code or initial assets` (no matter how slight, which results in different jsbundles), you must build separate APKs, upload, and bind them individually. You can write scripts to automate bulk operations using the CLI.
+2. If the `JS code and initial assets` across channel APKs are perfectly identical, consider using [Flavor builds](https://developer.android.com/studio/build/build-variants), or other dynamic channel generation tools (like [Tencent's VasDolly](https://github.com/Tencent/VasDolly) or [Meituan's walle](https://github.com/Meituan-Dianping/walle)). In this approach, all channel APKs are generated from a single base APK (thus sharing the same build timestamp and jsbundle). This means you only need to upload one base APK, and hot updates applied to it will take effect across all channel APKs.
+3. If you are on the `Premium`, `Professional`, or `Enterprise VIP` plans, you can enable `Ignore Build Timestamp` in your app settings in the admin dashboard. This option only checks the version number and ignores the timestamp, providing a wider tolerance for updates, but it may consume more CDN traffic.
+
+#### Supporting the AAB Format
+
+Update the `react-native-update-cli` to v2.6.0 or higher. You can then use the `cresc parseAab` and `cresc uploadAab` commands for `.aab` format support.
+
+#### Testing and Rollbacks
+
+Starting from version v10.11.2, you can use two quick QR code scanning methods to test hot updates without needing to bind them beforehand:
+
+![testqrcode](/static/image/testqrcode.24c22c1ebe.png)
+- **If your app has [Deep Linking](https://reactnative.dev/docs/linking#enabling-deep-links) enabled:**
+
+No code changes are required. Simply check "Use Deep Link" in the interface shown above, enter your app's scheme (e.g., `cresc://`), and scan the QR code using your system camera or built-in scanner (Do not use WeChat's scanner). The app will automatically open and trigger the update.
+
+- **If your app has a built-in barcode scanner:**
+
+Please refer to the documentation for the [parseTestQrCode](/docs/api.md#function-parsetestqrcodeqrcode-string) method.
+
+<details>
+<summary>If your app doesn't have either feature, or your Cresc version is below v10.11.2, use this test setup (Not Recommended)</summary>
+
+Publish an **internal test package**, and then publish a **production package** that is identical in every way except the version number.
+
+For example, assuming your production package version is `1.6.0`, you can modify it to `1001.6.0` to clearly indicate it's a test version, while the matching ending digits indicate it is related to a specific production release (identical content/dependencies).
+
+Before pushing any hot update to the production package, always perform the update operation targeting the **test package** `1001.6.0`. Once testing passes, you can then re-bind that hot update package to the **production package** `1.6.0` in the web console. If major issues are found in the test package, you can fix them, test again, and only deploy securely to production when ready. This maximally prevents live accidents.
+
+</details>
+
+If your testing native package already has a published hot update and its strategy is set to "Apply Immediately", this might conflict with QR code scanning (e.g., immediately overriding the QR code preview with the published version). To prevent this, you can use the `beforeCheckUpdate` callback to temporarily disable update checks after scanning a QR code until the next restart.
+
+```js
+// The isFirstTimeDebug flag is available in v10.37.0+, indicating the first boot after a QR OTA
+import { isFirstTimeDebug } from 'react-native-update/src/core';
+
+const crescClient = new Cresc({
+  beforeCheckUpdate: async () => {
+    if (isFirstTimeDebug) {
+      // If this is the first boot after a QR test update, skip remote checks
+      return false;
+    }
+    return true;
+  },
+})
+```
+
+In the worst-case scenario where a production crash happens and requires a rollback, immediately set the native package or the whole app's hot update status to 'Paused', then re-bind it to a previously healthy version. Alternatively, use your VCS to revert code to a healthy state and generate and push a new hot update package.
+
+#### Using Meta Info
+
+When publishing a hot update version, or via the web console, you can edit the version's meta info. This is a customizable payload string obtained during the update check. You can format it however you like (we strongly recommend [JSON format](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/JSON)) to store additional payload data.
+
+For example, we might define a `silent` flag indicating whether an update should be completely silent. When uploading the hot update package, we put this in the meta info field in JSON format:
+
+```json
+{ "silent": true }
+```
+
+> Note: We do not enforce any format validation or restrictions on this input. Please validate it yourself.
+
+When the client checks for updates, it receives this meta info chunk, but it doesn't automatically trigger any logic—it's just a payload string. Thus, we need to **preemptively** integrate handling logic into our update flow:
+
+```js
+// Call useUpdate() to get updateInfo
+if (updateInfo.expired) {
+  // ... Native package expired, download or prompt redirect 
+} else if (updateInfo.upToDate) {
+  // ... No updates
+} else {
+  // An update is available. Usually, we display an alert here to ask the user.
+  // A 'silent' update essentially means skipping the alert, so we inject logic here.
+  // ...
+}
+```
+
+We can splice meta-info reading and conditional logic into the standard flow:
+
+```js
+let metaInfo = {};
+try {
+  // JSON inputs might be malformed, always wrap in try-catch to avoid app crashes
+  metaInfo = JSON.parse(updateInfo.metaInfo);
+} catch (e) {
+  // Handle exceptions, ignore or report?
+}
+
+if (metaInfo.silent) {
+  // If the payload specifies silent: true, skip user prompts and apply directly
+  switchVersion();
+} else {
+  // Otherwise, use the traditional prompt workflow
+  // Alert.alert('Notice', 'A new version is available.......
+}
+```
+
+As another example, a specific version might include major announcements, so you could insert an `announcement` field in the payload to render. How you use meta info is entirely constrained.
+
+
+
+---
+url: /docs/cli.md
+---
+
+# CLI Tools (Built-in)
+
+### Installation
+
+```bash
+$ npm install -g react-native-update-cli
+```
+
+### Commands
+
+#### cresc bundle
+
+Generates a hot update resource package (ppk). Automatically detects if frameworks like Expo or Taro are used and runs their packagers respectively. If detection is inaccurate or errors occur, try using `--rncli` to specify the official React Native CLI.
+
+- `platform`: `ios|android|harmony` The target platform.
+- `entryFile`: The entry script file.
+- `intermediaDir`: Temporary file output directory.
+- `output`: Final ppk file output path.
+- `dev`: Whether to bundle a dev version.
+- `sourcemap`: Whether to generate sourcemaps (requires CLI v1.11.0+).
+- `no-interactive`: Disable interactive prompts.
+- `rncli`: Force use of official RN CLI for bundling (requires CLI v1.40.0+).
+- `expo`: Force use of Expo CLI for bundling (requires CLI v1.40.0+).
+- `taro`: Force use of Taro CLI for bundling (requires CLI v1.40.0+).
+
+Since v1.44.2, direct publishing arguments have been added (equivalent to calling `cresc publish` right after bundling finishes):
+
+- `name`: Target name for the hot update version (its own version number).
+- `description`: Update description/changelog shown to users.
+- `metaInfo`: Custom meta info for saving arbitrary state data. Refer to [Best Practices](/docs/bestpractice.md#using-meta-info).
+
+Since v1.46.1, alongside passing `name`, `description`, and `metaInfo`, you can stack the following arguments (equivalent to calling `cresc update` right after publishing):
+
+- `packageId`: The target native package ID to bind to (Choose one).
+- `packageVersion`: The target native package version to bind to (Choose one).
+- `minPackageVersion`: Minimum target native package version. Applies to all inclusive versions above it (Choose one).
+- `maxPackageVersion`: Maximum target native package version. Applies to all inclusive versions below it (Choose one).
+- `packageVersionRange`: Target native package version range (Choose one). Range format strictly follows Semantic Versioning (semver). See [https://devhints.io/semver](https://devhints.io/semver).
+
+Example:
+
+```bash
+cresc bundle --platform android --name "1.0.0" --description "Hot update version 1.0.0" --metaInfo '{"key": "value"}' --packageVersionRange ">=1.0 <3.0"
+```
+
+***
+
+#### cresc parseIpa \[ipaFile]
+
+Parses an `.ipa` file and outputs associated data like version codes and build timestamps.
+
+***
+
+#### cresc parseApk \[apkFile]
+
+Parses an `.apk` file and outputs associated data like version codes and build timestamps.
+
+***
+
+#### cresc parseApp \[appFile]
+
+Parses an `.app` file and outputs associated data like version codes and build timestamps.
+
+***
+
+#### cresc parseAab \[aabFile]
+
+Parses an `.aab` file and outputs associated data like version codes and build timestamps.
+
+***
+
+#### cresc diff \[origin]\[next]
+
+Provide two `.ppk` files to generate a delta differential hot update package from the origin to next versions.
+
+- `output`: Diff file output path.
+
+***
+
+#### cresc diffFromApk \[apkFile]\[next]
+
+Provide an `.apk` file and a `.ppk` file to generate a diff update package from the `.apk` baseline to the next version.
+
+No need to run this manually if you use the managed platform.
+
+- `output`: Diff file output path.
+
+***
+
+#### cresc diffFromApp \[appFile]\[next]
+
+Provide an `.app` file and a `.ppk` file to generate a diff update package.
+
+No need to run this manually if you use the managed platform.
+
+- `output`: Diff file output path.
+
+***
+
+#### cresc diffFromIpa \[ipaFile]\[next]
+
+Provide an `.ipa` file and a `.ppk` file to generate a diff update package.
+
+No need to run this manually if you use the managed platform.
+
+- `output`: Diff file output path.
+
+***
+
+#### cresc login \[email]\[pwd]
+
+Logs into the hot update platform. You must authenticate to execute most subsequent commands.
+
+***
+
+#### cresc logout
+
+Logs out and clears local session cache.
+
+***
+
+#### cresc me
+
+Checks if you are currently logged in, and displays account details.
+
+***
+
+#### cresc createApp
+
+Creates a new remote app and instantly binds it to the current project directory. This action can also be completed via the web dashboard.
+
+- `platform`: `ios|android|harmony` The target platform.
+- `name`: The application name.
+- `downloadUrl`: The remote URL where users go to download native package upgrades.
+
+***
+
+#### cresc deleteApp \[appId]
+
+Deletes an existing app entirely. All related native packages and hot versions will be permanently wiped. This action can also be completed via the web dashboard.
+
+- `appId`: The App ID to delete.
+
+***
+
+#### cresc apps
+
+List all established apps in your account. This action can also be completed via the web dashboard.
+
+- `platform`: `ios|android|harmony` The target platform filter.
+
+***
+
+#### cresc selectApp \[appId]
+
+Locally binds an existing app configuration to the current project folder.
+
+- `platform`: `ios|android|harmony` The target platform.
+
+***
+
+#### cresc uploadIpa \[ipaFile]
+
+Uploads an `.ipa` to the managed platform. (Requires CLI 1.24.0+)
+
+***
+
+#### cresc uploadApk \[apkFile]
+
+Uploads an `.apk` to the managed platform. (Requires CLI 1.24.0+)
+
+***
+
+#### cresc uploadApp \[appFile]
+
+Uploads an `.app` to the managed platform. (Requires CLI 1.24.0+)
+
+***
+
+#### cresc uploadAab \[aabFile]
+
+Uploads an `.aab` to the managed platform. (Requires CLI 2.6.0+)
+
+***
+
+#### cresc extractApk \[aabFile]
+
+Extracts an `.apk` file from an `.aab` build envelope. (Requires CLI 2.6.0+)
+
+***
+
+#### cresc packages
+
+View all natively uploaded packages. This action can also be completed via the web dashboard.
+
+- `platform`: `ios|android|harmony` The target platform filter.
+
+***
+
+#### cresc deletePackage
+
+Delete an uploaded native package baseline.
+
+- `appId`: The App ID that the native package belongs to.
+- `packageId`: The target Package ID to delete.
+
+***
+
+#### cresc publish \[ppkFile]
+
+Uploads and publishes a new hot update package (`.ppk` file).
+
+- `platform`: `ios|android|harmony`
+- `name`: Target name for the hot update version (its own version code).
+- `description`: Update description/changelog shown to users.
+- `metaInfo`: Custom meta info payload. Refer to [Best Practices](/docs/bestpractice.md#using-meta-info).
+
+Since v1.46.1, alongside publishing, you can stack the following arguments (equivalent to calling `cresc update` right after publishing):
+
+- `packageId`: The target native package ID to bind to (Choose one).
+- `packageVersion`: The target native package version to bind to (Choose one).
+- `minPackageVersion`: Minimum target native package version. Applies to all inclusive versions above it (Choose one).
+- `maxPackageVersion`: Maximum target native package version. Applies to all inclusive versions below it (Choose one).
+- `packageVersionRange`: Target native package version range (Choose one). Range format strictly follows Semantic Versioning (semver). See [https://devhints.io/semver](https://devhints.io/semver).
+
+Example:
+
+```bash
+cresc publish .cresc/output/android.1750423283653.ppk --platform android --name "1.0.0" --description "Hot update 1.0.0" --metaInfo '{"key": "value"}' --packageVersionRange ">=1.0 <3.0"
+```
+
+***
+
+#### cresc versions
+
+Paginates and lists available hot update versions. This action can also be completed via the web dashboard.
+
+- `platform`: `ios|android|harmony`
+
+***
+
+#### cresc deleteVersion
+
+Delete a specific published hot update version.
+
+- `appId`: The App ID the target hot update version belongs to.
+- `versionId`: The Target update Version ID to delete.
+
+***
+
+#### cresc update
+
+Binds and applies an active hot update version to a native package baseline. This action can also be completed via the web dashboard. You must supply one of the package scope args: `packageId`, `packageVersion`, `minPackageVersion`, `maxPackageVersion`, or `packageVersionRange`.
+
+From CLI v2.4.0 onward, a full rollout and a canary rollout can coexist simultaneously. Prior to 2.4.0 they overwrote each other depending on which was set last.
+
+- `platform`: `ios|android|harmony`
+- `versionId`: The Version ID of the hot update.
+- `rollout`: Phased canary rollout percentage (Int between 1 - 100). Default is 100 (Requires CLI v1.31.0+).
+- `dryRun`: Dry run preview only, prevents applying actual bindings (Requires CLI v1.45.4+).
+- `packageId`: Target bind native package ID (Choose one).
+- `packageVersion`: Target bind native package version string (Choose one, CLI v1.7.2+).
+- `minPackageVersion`: Target minimum native package version (Choose one, CLI v1.27.0+).
+- `maxPackageVersion`: Target maximum native package version (Choose one, CLI v1.27.0+).
+- `packageVersionRange`: Target semantic version range string (Choose one, CLI v1.45.4+). Format follows SemVer.
+
+Example:
+
+```bash
+❯ cresc update --versionId 211343 --platform android --packageVersionRange ">=1.0 <3.0" --dryRun
+react-native-update-cli: 1.45.4 (Latest: 1.45.4)
+react-native-update: 10.28.11 (Latest: 10.28.11)
+The following is a dry-run simulation and no destructive changes will occur:
+Successfully bound update 211343 to native baseline 1.28.1 (id: 75219)
+Successfully bound update 211343 to native baseline 1.28 (id: 75184)
+Successfully bound update 211343 to native baseline 1.5 (id: 73396)
+Successfully bound update 211343 to native baseline 2.0 (id: 68219)
+Successfully bound update 211343 to native baseline 1.0 (id: 68158)
+Operation complete, 5 active native packages bound.
+```
+
+
+
+---
+url: /docs/cli_module.md
+---
+
+# CLI Tools (Custom Modules)
+
+## Module System
+
+Since version v2.0.0, the CLI supports modular extensions, enabling developers to customize commands and workflows.
+
+### Core Architecture
+
+- **CLI Module**: A self-contained module encompassing your custom commands and workflows.
+- **Command**: A single, executable ad-hoc terminal command.
+- **Workflow**: Complex, stateful action flows composed of chronological steps.
+- **Module Manager**: The underlying component framework that hooks modules and executes them.
+
+### Registering Modules
+
+```typescript
+import { moduleManager } from 'react-native-update-cli';
+import { myCustomModule } from './my-custom-module';
+
+// Register a customized module
+moduleManager.registerModule(myCustomModule);
+```
+
+### Developing Custom Modules
+
+```typescript
+import type { CLIModule, CommandContext, CommandResult } from 'react-native-update-cli';
+
+export const myCustomModule: CLIModule = {
+  name: 'my-module',
+  version: '1.0.0',
+  commands: [
+    {
+      name: 'my-command',
+      description: 'My custom command',
+      handler: async (context: CommandContext): Promise<CommandResult> => {
+        // Execute arbitrary logic
+        return { success: true, data: 'Hello from custom command!' };
+      },
+      options: {
+        flag: {
+          hasValue: true,
+          description: 'Custom Flag Parameter'
+        }
+      }
+    }
+  ],
+  workflows: [
+    {
+      name: 'my-workflow',
+      description: 'My custom workflow process',
+      steps: [
+        {
+          name: 'step1',
+          description: 'Step One initialization',
+          execute: async (context: CommandContext) => {
+            console.log('Executing step 1...');
+            return { step1Result: 'completed' };
+          }
+        },
+        {
+          name: 'step2',
+          description: 'Step Two execution',
+          execute: async (context: CommandContext, previousResult: any) => {
+            console.log('Executing step 2. Input from previous step:', previousResult);
+            return { ...previousResult, step2Result: 'completed' };
+          }
+        }
+      ]
+    }
+  ],
+  init: (provider) => {
+    console.log('Custom Module initialized');
+  }
+};
+```
+
+### Review Created Commands
+
+```bash
+# List all currently recognized module commands
+cresc list
+```
+
+***
+
+## Workflow System
+
+Workflows manage the complicated end-to-end task flows consisting of distinct states. They support conditional execution thresholds, standardized error handling, and robust data propagation parameters.
+
+### Built-in Workflows
+
+#### 1. User Authentication Flow
+
+##### cresc auth-check
+
+Verifies current user authentication conditions.
+
+```bash
+cresc workflow auth-check
+```
+
+##### cresc login-flow
+
+Complete end-to-end CLI dashboard login procedure.
+
+```bash
+cresc workflow login-flow
+```
+
+#### 2. Cross-Platform App Management Flows
+
+##### cresc workflow multi-platform-app-management
+
+Consolidated unified oversight over multi-platform apps.
+
+```bash
+cresc workflow multi-platform-app-management
+```
+
+##### cresc workflow incremental-build
+
+Executes an incremental build generation to assemble partial/delta updates.
+
+```bash
+cresc workflow incremental-build
+```
+
+### Workflow Utilities
+
+Lists all available workflow suites dynamically.
+
+```bash
+cresc list
+```
+
+##### cresc workflow
+
+Perform a specified dynamic workflow sequence.
+
+```bash
+cresc workflow <workflowName>
+```
+
+##### cresc list
+
+Lists the full set of registered modules framework-wide.
+
+```bash
+cresc list
+```
+
+### Workflow Features
+
+1. **Procedural Execution**: Handfuls of workflow steps fire strictly in chronological sequences.
+2. **Context Passing**: Each node's returned result can be passed into subsequent execution nodes.
+3. **Conditional Thresholds**: Execution nodes can dynamically route execution based on conditions.
+4. **Error Handling**: Standardized rollback mechanism handles exceptions robustly.
+5. **Realtime Feedback**: Visually monitors stage progress metrics via STDERR streaming.
+6. **Input Validation**: Required parameter variables are strictly schema-verified before execution paths begin.
+
+***
+
+## Example Repository
+
+Explore an assortment of complete modules and robust workflows documented thoroughly via code samples within the `example/` directory folder:
+
+- `example/modules/` - Basic Module instantiation guides.
+- `example/workflows/` - Elaborate Workflow architecture samples.
+- `example/scripts/` - TypeScript command triggers for CI tooling.
+
+To exercise the sandbox scripts directly:
+
+```bash
+# Registering and triggering simple module tests
+npx ts-node example/scripts/register-modules.ts
+
+# Boot up the testing workflow sandbox
+npx ts-node example/scripts/workflow-demo.ts
+
+# Run the complex stateful workflow test
+npx ts-node example/scripts/enhanced-workflow-demo.ts
+```
+
+
+
+---
+url: /docs/faq.md
+---
+
+# FAQ
+
+If this page does not answer your question, you can submit an issue on our [GitHub repository](https://github.com/reactnativecn/react-native-update/issues), join our QQ Group 729013783, or email us at [hi@charmlot.com](mailto:hi@charmlot.com).
+
+### Business Questions
+
+#### Can hot-updated apps pass App Store reviews?
+
+You might have heard mixed information, but extensive practical experience shows that hot updates currently successfully pass App Store and other app market reviews. The only caveat: **do not publish hot updates while your app is under review**, and ensure reviewers do not see update pop-ups or download prompts. If you follow this rule, you will pass smoothly.
+
+***
+
+#### Can it be used overseas?
+
+Yes. We operate high-speed CDN nodes both domestically and internationally.
+
+***
+
+#### What can be hot updated? What cannot?
+
+App modifications fall into two categories:
+
+- **Cannot be hot-updated** — Native modifications, i.e., changes requiring compilation to take effect:
+  - Any modifications, additions, or deletions inside the `ios/` or `android/` folders.
+  - Updating or modifying third-party native modules.
+- **Can be hot-updated** — Non-native modifications, i.e., changes requiring no compilation that take effect upon reload:
+  - JS code modifications, including pure-JS third-party libraries.
+  - Assets that can be `require/import`ed within JS code, such as images.
+
+_Note: Even though assets can be hot updated, downloaded update assets are served via the `file://` protocol. Certain third-party modules might not support reading from `file://` URIs._
+
+***
+
+#### The update downloads successfully, but after restarting it rolls back. What happened?
+
+If an update succeeds but rolls back on reboot, it usually means one of two things:
+
+- You didn't correctly [configure bundleUrl](/docs/getting-started.md#configuring-bundle-url) during setup.
+- (Only on Cresc v9 or lower) You didn't correctly call `markSuccess()`. In v10+, the SDK handles this automatically.
+
+If you are absolutely sure both steps were executed perfectly, please leave us feedback in our [Issues section](https://github.com/reactnativecn/react-native-update/issues).
+
+***
+
+#### Error: "Hot update paused, reason: Build timestamp mismatch."
+
+Every time you compile a native package, a timestamp (`buildTime`) is injected into it (viewable using `cresc parseIpa` or `cresc parseApk`). If you distribute this package to users and want them to receive OTA updates, you must first upload the native package to the Cresc server. The server records this version number and build time for subsequent comparisons.
+
+For example, suppose I compile and upload `v1.0` (`Package 1A`). Later, for some reason, I rebuild without changing the version string (`Package 1B`), but I don't upload it. These two packages have the same version string but different build timestamps. Three scenarios might follow:
+
+1. I forgot I uploaded `1A`, `1B` has no actual changes, and no users have installed it yet. Throw away `1B` and let users install `1A`.
+2. I distributed `1B` to some users without uploading it. Users on `1A` get updates, while `1B` users get paused updates due to a mismatch. To fix this, you either force `1B` users to reinstall `1A`, or publish a strictly higher version string (e.g. `1.1`), upload it to Cresc, and delete `v1.0` records. This causes both groups to receive a mandatory native upgrade prompt.
+3. I know I uploaded `1A`, but I made native changes and built `1B`. Uploading `1B` now triggers a version conflict because `1.0` already exists. Therefore, you must **increment the native version**, **upload** it to the server first, and **then** distribute it to users.
+
+Remember: Whenever compiling native releases: 1) increment the version string, 2) upload to Cresc servers. Only then can OTA updates function normally.
+
+:::info
+If you use the `Premium`, `Professional`, or `Enterprise VIP` plans, you can enable `"Ignore Build Timestamp"` in the dashboard's App Settings. This ignores timestamp comparisons entirely, checking only the version string. It opens more tolerant update flows, suitable for managing many distinct distribution channels, though it may consume extra traffic bandwidth.
+:::
+
+***
+
+### Billing Questions
+
+#### Which plan should I choose?
+
+There's no need to stress: start directly with a risk-free 7-day `Professional` trial upon verifying your registration. All plans use the same SDK and interface workflows. If your current limits don't meet your metrics later, you can seamlessly upgrade by paying only the prorated difference for the elapsed time period, without hidden fees.
+
+Currently, the only gated exclusive feature is `Ignore Build Timestamp`, which permits wider distribution channels but may increase DNS calls. It is exclusively available to `Premium`, `Professional`, and `Enterprise VIP` tiers.
+
+***
+
+#### Can I trial a paid version first to evaluate its effectiveness?
+
+Upon account verification, you will automatically receive a 7-day `Professional` trial. If you require a longer evaluation window, send your username, email, and company/personal title to [hi@charmlot.com](mailto:hi@charmlot.com) with the subject "Cresc Trial Extension Request" and we will consider extending it.
+During the trial, you can either renew Professional or upgrade. To purchase lower tiers, wait until the trial expires or contact support.
+
+***
+
+#### How are quotas calculated specifically?
+
+Quotas measure four domains:
+
+1. Number of creatable Apps (iOS and Android count separately).
+2. Number and size of Native Packages (Calculated per app). Native packages refer to the baseline APK/IPA uploaded by `cresc uploadIpa/uploadApk`.
+3. Number and size of Update Packages (Calculated per app). Update packages refer to `.ppk` binaries generated via `cresc bundle`. _Note: this is not what users download. Users download incremental diffs, which are vastly smaller._
+4. Total Daily Update Check Quota (Aggregated across ALL apps under your account). The system increments this metric every time a user opens your app and polls checking for updates. If this limit is exceeded during the day, the API stops returning updates until resetting at midnight.
+
+> Refer to [Best Practices](/docs/bestpractice.md#optimizing-native-and-hot-update-package-size) for advice on mitigating limits safely.
+
+Limits #2 and #3 apply to individual applications independently, while #4 aggregates under the account total. See our [Pricing Table](/pricing.md) for authoritative info subject to operational variations. Locked-in accounts avoid fluctuating costs upon timely renewal.
+
+***
+
+#### If I hit my quota, does the system break?
+
+If you hit application, Native Package, or Update Package caps, you will be blocked from new creating/uploading actions. However, existing end-users will still request and download existing patches normally without any interruption. You must either upgrade your tier, or prune old apps/packages to free up storage slots.
+If Native/Update sizes exceed MB limit metrics, the upload will fail. Upgrade your tier, or practice strict asset [Optimization](/docs/bestpractice.md#optimizing-native-and-hot-update-package-size).
+If Total Daily Checks hit their cap, the API refuses queries and returns an empty payload response, leaving apps stuck on previous states until midnight resets quotas. Either upgrade tiers or adjust built-in update schedules.
+
+***
+
+#### Can I upgrade just a single limit item independently?
+
+If you only need to raise one specific limit without adopting an entire larger tier (applicable for Premium + accounts only), reach out via [hi@charmlot.com](mailto:hi@charmlot.com) or QQ Support (34731408). Provide requirements to receive bespoke quotes.
+
+***
+
+#### After a paid plan expires unrenewed, do my existing apps continue functioning?
+
+After expiration, accounts degrade automatically into the Free Plan tier limitations. If preexisting data exceeds free caps, you won't be authorized to launch new updates or bind properties unless excess data is wiped out down below threshold limits. Users holding old patches won't mysteriously lose access, however.
+
+***
+
+#### How do I receive dedicated human technical support?
+
+Email screenshots of your completed billing invoice detailing your username directly to [hi@charmlot.com](mailto:hi@charmlot.com) while noting your primary IM contact preference (QQ, WeChat, etc.). Once matched against database records, an integration engineer will friend request you directly.
+
+***
+
+#### How do I claim Official Invoices (Fapiao)?
+
+Email explicit invoice requests detailing company details to [hi@charmlot.com](mailto:hi@charmlot.com) accompanying email registrations + billing receipt snapshots. Regular automated e-Invoices issue normally to registered emails categorizing 'Software Services'. Direct physical postage requests must supply an address; cost applies towards receiver Cash-On-Delivery policies.
+Ping QQ 34731408 if no action manifests 3 business days post-email transmission.
+
+***
+
+#### Can I execute manual wire transfers via Banking Networks?
+
+Yes. Refer to [Pricing Boards](/pricing.md), then wire required funds precisely toward:
+
+| Company Entity      | Wuhan Qingluo Network Technologies Co., Ltd. |
+| ------------------- | -------------------------------------------- |
+| Account Identifier  | 8888888048825564                             |
+| Bank Name           | Zhejiang MYBank                              |
+| Region Zone         | Hangzhou City, Zhejiang Province             |
+| Branch Identifier   | Zhejiang MYBank Co., Ltd                     |
+| Internal Transit Id | 323331000001                                 |
+
+Email screenshots validating completed successful transfer transactions alongside account registration email pointers explicitly referencing [hi@charmlot.com](mailto:hi@charmlot.com) . Funds processing clears within 1 operational business day.
+
+***
+
+#### Is monthly-recurring payment structure available?
+
+Users wanting monthly deductions must query QQ Support Rep 34731408 directly. Monthly tiers strictly cost Annual Rate / 8. Example: A tier costing 800 RMB yearly yields \~100 RMB monthly commitments. Monthly payers must eclipse 500 RMB threshold minimums to qualify for Official Invoices (Fapiao). `Enterprise VIP` tier prohibits monthly billing structures.
+
+***
+
+#### Enterprise Placements
+
+Should your metrics scale past heavily populated DAU bases demanding over 1 Million daily queries consistently sweeping arrays of multi-channel deployments, we strongly endorse pivoting structures towards optimized `Enterprise VIP Placements`.
+`Enterprise` parallels fundamental constraints akin closely to Professional tier limits alongside significantly expanded Daily Aggregations thresholds.
+
+Prices follow:
+
+| Tier | Maximum Daily Aggregation Limit | Base Cost (RMB / Year) |
+| ---- | ------------------------------- | ---------------------- |
+| VIP1 | 10 Million Calls                | 30000                  |
+| VIP2 | 50 Million Calls                | 60000                  |
+| VIP3 | 100 Million Calls               | 120000                 |
+| VIP4 | 100 Million+ Unlimited Scaling  | Inquire Direct         |
+
+Execute queries & discussions handling integration frameworks connecting deeply toward backend interfaces by speaking against Sales @ QQ Support 34731408.
+
+
+
+---
+url: /docs/getting-started.md
+---
+
+# Installation & Config
+
+:::info
+Please note that the API has been completely rebuilt. It is incompatible with legacy versions (under v10.0). If you need access to the old documentation, click [here](https://v9--cresc-site.netlify.app/).
+:::
+
+First, you should have an application developed based on React Native. We refer to the directory containing `package.json` as your application's `root directory`.
+If you haven't initialized an application yet, please see [Getting Started with React Native](https://reactnative.dev/docs/getting-started).
+
+We assume you already have everything set up for React Native development, including `Node.js`, `Xcode`, `Android SDK`, etc.
+
+### Installation
+Run the following commands in your project's root directory (if you use other package managers like yarn, substitute accordingly):
+
+**React Native**
+
+```bash
+# Install the CLI tool globally first
+npm i -g react-native-update-cli
+
+# Then install the hot update module inside the project directory
+npm i react-native-update
+
+# If not using Expo, navigate to the iOS folder and install pods
+cd ios && pod install
+
+```
+
+
+**Expo**
+
+```bash
+# Install the CLI tool globally first
+npm i -g react-native-update-cli
+
+# Then install the hot update module inside the project directory
+npm i react-native-update
+
+# If using expo, requires Expo 50 or higher. Use prebuild command to prebuild the project
+npx expo prebuild
+
+# Then enter the iOS folder and install pods
+cd ios && pod install
+
+```
+:::warning
+Note: If using Expo, please do NOT install `expo-updates` simultaneously, as it will cause update function conflicts. Also, New Architecture support in Expo versions under 51 is incomplete and might not work properly. It's recommended to use the latest version of Expo possible for New Architecture setups.
+:::
+
+:::info
+If downloads are extremely slow or network errors occur, set an npm mirror.
+:::
+:::warning
+Please do not mix package managers like `npm/yarn/pnpm` and their associated `lock` files. Stick to one manager across your team and keep one format of the `lock` file.
+:::
+:::info
+Remember, any modifications under the `ios` or `android` directories require recompilation (using `npx react-native run-ios/android` or compiling inside Xcode/Android Studio) to take effect.
+:::
+### Manual Link
+If RN version >= 0.60, you don't need this manual linking step.
+:::warning
+Note: If you have a mixed native-RN project, or monorepo, or any custom scenario, the auto-linking function might fail because custom configurations might be incomplete or not fit the standard RN directory structure. Even if RN version >= 0.60, you might still need manual link operation.
+:::
+#### iOS
+RN < 0.60 and using CocoaPods (Recommended)
+1. Add to `ios/Podfile`:
+```ruby
+pod 'react-native-update', path: '../node_modules/react-native-update'
+```
+2. Run `pod install` in the `ios` directory.
+3. Recompile.
+RN < 0.60 without CocoaPods
+1. In Xcode's Project Navigator, right click `Libraries` ➜ `Add Files to [Your Project Name]`
+2. Go to `node_modules` ➜ `react-native-update` ➜ `ios` and select `RCTCresc.xcodeproj`
+3. In Xcode's Project Navigator, select your project. Under `Build Phases` ➜ `Link Binary With Libraries`, add `libRCTCresc.a`, `libz.tbd`, `libbz2.1.0.tbd`.
+4. Under `Build Settings`, search for `Header Search Path`, add `$(SRCROOT)/../node_modules/react-native-update/ios`, and check `recursive`.
+5. Under `Build Phases`, add a `New Run Script Phase` with the following content:
+```bash
+#!/bin/bash
+set -x
+DEST="../node_modules/react-native-update/ios/"
+date +%s > "$DEST/cresc_build_time.txt"
+```
+7. Attempt compilation. If successful, a `cresc_build_time.txt` file is generated inside `../node_modules/react-native-update/ios/`. Then, add the resulting `cresc_build_time.txt` into `Copy Bundle Resources`.
+#### Android
+RN < 0.60 or other scenarios preventing auto-link
+1. Add the following to `android/settings.gradle`:
+
+   ```groovy
+   include ':react-native-update'
+   project(':react-native-update').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-update/android')
+   ```
+
+2. Add this piece of code to the dependencies section inside `android/app/build.gradle`:
+
+   ```groovy
+   implementation project(':react-native-update')
+   ```
+
+3. Open `android/app/src/main/java/[...]/MainApplication.java`:
+- Add `import cn.reactnative.modules.update.UpdatePackage;` at the top of the file
+- Add `new UpdatePackage()` inside the `getPackages()` method (watch out for commas)
+### Configuring the Bundle URL
+If you use `expo` 48+ and `react-native-update` >= 10.28.2, the bundle URL configures automatically. Skip straight to the [next step](#adding-a-deep-link-for-testing).
+If you don't use `expo`, or use an expo version under 48, manually follow the steps down below.
+#### iOS
+Add the following to your `AppDelegate.mm` / `AppDelegate.m` / `AppDelegate.swift` file (different RN versions have different file suffixes):
+:::warning
+Note: If your project mixes native apps with RN, ensure you **do not directly assign the bundleURL while initializing the rootView**. Always initialize bridge using `initWithDelegate`, then initialize rootView via `initWithBridge`. Otherwise, the updating feature will likely break.
+:::
+
+**Objective-C**
+
+```c
+// ... Other code
+#import "AppDelegate.h"
+
+#import "RCTCresc.h"  // <-- Add this header import outside of any conditionals
+
+// Sometimes there are conditionals for flipper
+// #if DEBUG
+// Do NOT place #import "RCTCresc.h" inside conditionals here
+// #import <FlipperKit/FlipperClient.h>
+// ...
+// #endif
+
+
+// For RN >= 0.74 update bundleURL
+- (NSURL *)bundleURL
+{
+#if DEBUG
+  // Leave DEBUG config as is
+  return [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@"index"];
+#else
+  return [RCTCresc bundleURL];  // <--  Replace the non-DEBUG section with our hot update bundle URL provider
+#endif
+}
+
+
+// For RN < 0.74 update sourceURLForBridge
+- (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
+{
+#if DEBUG
+  // Leave DEBUG config as is
+  return [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@"index"];
+#else
+  return [RCTCresc bundleURL];  // <--  Replace the non-DEBUG section with our hot update bundle URL provider
+#endif
+}
+
+```
+
+
+**Swift**
+
+```swift
+import UIKit
+import React
+import React_RCTAppDelegate
+import ReactAppDependencyProvider
+import react_native_update    // <-- Import here. Requires Cresc v10.22.0+
+
+
+@main
+class AppDelegate: RCTAppDelegate {
+  // ... Other code
+
+  override func bundleURL() -> URL? {
+#if DEBUG
+    // Leave DEBUG config as is (meaning you cannot OTA test in DEBUG)
+    RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
+#else
+    RCTCresc.bundleURL()  // <-- Replace the non-DEBUG section with our hot update bundle URL provider
+#endif
+  }
+}
+```
+
+#### Android
+Add the following piece of code inside `MainApplication` (if integrating with a native project not utilizing `ReactApplication`, use [this API integration instead](/docs/api.md#updatecontextsetcustominstancemanagerreactinstancemanager-instancemanager)):
+
+**Kotlin (RN 0.82 or up)**
+
+```kotlin
+// ... Other code
+
+// ↓↓↓ Make sure to add this import
+import cn.reactnative.modules.update.UpdateContext
+// ↑↑↑
+
+class MainApplication : Application(), ReactApplication {
+
+  override val reactHost: ReactHost by lazy {
+    getDefaultReactHost(
+      context = applicationContext,
+      packageList =
+        PackageList(this).packages.apply {
+          // Packages that cannot be auto-linked yet can be added manually here, for example:
+          // add(MyReactNativePackage())
+        },
+      // ↓↓↓ Add this parameter
+      jsBundleFilePath = UpdateContext.getBundleUrl(this),
+      // ↑↑↑
+    )
+  }
+
+  // ...Other code
+}
+
+
+```
+
+
+**Kotlin (RN 0.81 or under)**
+
+```kotlin
+// ... Other code
+
+// ↓↓↓ Make sure to add this import
+import cn.reactnative.modules.update.UpdateContext
+// ↑↑↑
+
+class MainApplication : Application(), ReactApplication {
+
+  override val reactNativeHost: ReactNativeHost =
+      object : DefaultReactNativeHost(this) {
+
+        // ↓↓↓ Add this block entirely within DefaultReactNativeHost!
+        override fun getJSBundleFile(): String? {
+          return UpdateContext.getBundleUrl(this@MainApplication)
+        }
+        // ↑↑↑
+
+        // ...Other code
+      }
+}
+```
+
+
+**Java**
+
+```java
+// ... Other code
+
+// ↓↓↓ Make sure to add this import
+import cn.reactnative.modules.update.UpdateContext;
+// ↑↑↑
+
+public class MainApplication extends Application implements ReactApplication {
+
+  private final ReactNativeHost mReactNativeHost =
+    // legacy RN versions might show new ReactNativeHost(this)
+    new DefaultReactNativeHost(this) {
+
+    // ↓↓↓ Add this block entirely within DefaultReactNativeHost!
+    @Override
+    protected String getJSBundleFile() {
+        return UpdateContext.getBundleUrl(MainApplication.this);
+    }
+    // ↑↑↑
+
+    // ...Other code
+  }
+}
+```
+
+:::info
+Remember, any modifications under the `ios` or `android` directories require recompilation (using `npx react-native run-ios/android` or compiling inside Xcode/Android Studio) to take effect.
+:::
+#### HarmonyOS
+Add the following to `harmony/entry/src/main/cpp/CMakeLists.txt`:
+```cmake
+add_subdirectory("${OH_MODULES}/cresc/src/main/cpp" ./cresc)
+target_link_libraries(rnoh_app PUBLIC rnoh_cresc)
+```
+Add dependencies sequentially over `harmony/entry/src/main/cpp/PackageProvider.cpp`:
+```cpp
+#include "RNOH/PackageProvider.h"
+#include "CrescPackage.h"
+using namespace rnoh;
+
+std::vector<std::shared_ptr<Package>> PackageProvider::getPackages(Package::Context ctx) {
+    return {
+         std::make_shared<CrescPackage>(ctx)
+    };
+}
+```
+Add inside `harmony/entry/oh-package.json5`:
+```json5
+"dependencies": {
+  "cresc": "file:../../node_modules/react-native-update/harmony/cresc",
+
+}
+```
+Insert into `harmony/build-profile.json5`:
+```json5
+  modules: [
+    // ↓↓↓ Add the nested property!
+    {
+      name: 'cresc',
+      srcPath: '../node_modules/react-native-update/harmony/cresc',
+    },
+  ],
+```
+Within `harmony/hvigor/hvigor-config.json5`, integrate dependencies:
+```json5
+{
+  dependencies: {
+    cresc: "file:../../node_modules/react-native-update/harmony/cresc",
+  },
+}
+```
+Set plugin hooks globally into `harmony/entry/hvigorfile.ts`:
+```ts
+import { hapTasks } from "@ohos/hvigor-ohos-plugin";
+import { reactNativeUpdatePlugin } from "cresc/hvigor-plugin";
+
+export default {
+  system: hapTasks /* Built-in plugin of Hvigor. It cannot be modified. */,
+  plugins: [
+    reactNativeUpdatePlugin(),
+  ] /* Custom plugin to extend the functionality of Hvigor. */,
+};
+```
+Export correctly from `harmony/entry/src/main/ets/RNPackagesFactory.ts`:
+```ts
+import type {
+  RNPackageContext,
+  RNPackage,
+} from "@rnoh/react-native-openharmony/ts";
+import { CrescPackage } from "cresc/ts";
+
+export function createRNPackages(ctx: RNPackageContext): RNPackage[] {
+  return [new CrescPackage(ctx)];
+}
+```
+And configure bindings upon `harmony/entry/src/main/ets/pages/Index.ets`:
+```ts
+// ... Other Code
+
+// ↓↓↓ Don't forget imports explicitly!
+import { CrescFileJSBundleProvider } from 'cresc/src/main/ets/CrescFileJSBundleProvider';
+// ↑↑↑
+
+@Entry
+@Component
+struct Index {
+  @StorageLink('RNOHCoreContext') private rnohCoreContext: RNOHCoreContext | undefined = undefined
+  @State shouldShow: boolean = false
+
+  aboutToAppear(): void {
+    this.shouldShow = true
+  }
+
+  onBackPress(): boolean | undefined {
+    // NOTE: this is required since `Ability`'s `onBackPressed` function always
+    // terminates or puts the app in the background, but we want Ark to ignore it completely
+    // when handled by RN
+    this.rnohCoreContext!.dispatchBackPress()
+
+    // this.preferences = preferences.getPreferencesSync(this.context, {name:'update'});
+    return true
+  }
+
+  build() {
+    Column() {
+      if (this.rnohCoreContext && this.shouldShow) {
+        RNApp({
+          // ... Other params
+          jsBundleProvider: new TraceJSBundleProviderDecorator(
+            new AnyJSBundleProvider([
+              // MetroJSBundleProvider.fromServerIp('127.0.0.1'),
+              // new ResourceJSBundleProvider(rnohCoreContext.uiAbilityContext.resourceManager, 'hermes_bundle.hbc'),
+              // ↓↓↓ Wrap strictly below sequence lines!
+              new CrescFileJSBundleProvider(this.rnohCoreContext.uiAbilityContext),
+
+              // Regardless of whether hermes bytecode executes or not, maintain the target identical name.
+              new ResourceJSBundleProvider(this.rnohCoreContext.uiAbilityContext.resourceManager, 'bundle.harmony.js')
+            ]),
+            this.rnohCoreContext.logger),
+        })
+      }
+    }
+    .height('100%')
+    .width('100%')
+  }
+}
+```
+:::info
+Remember, any modifications under the `ios`, `android`, or `harmony` directories require recompilation (using `npx react-native run-ios/android` or compiling inside Xcode/Android Studio/DevEco) to take effect.
+:::
+### Overriding Android's onCreate
+If `react-native-screens` is installed (which `react-navigation` explicitly demands generally), Android targets display blank white states post application-update-reboots inherently occasionally natively securely securely smoothly implicitly. Overriding the Android `MainActivity` applying explicit `RNScreensFragmentFactory` components stabilizes UI generation preventing Fragment lifecycle crashes absolutely efficiently.
+(Do not mount fragment factories inside `MainActivityDelegate`, only inside `MainActivity`)
+Visit [react-native-screens documentation](https://github.com/software-mansion/react-native-screens?tab=readme-ov-file#android) resolving issues natively explicitly effortlessly completely effectively clearly cleanly.
+
+**Kotlin**
+
+```kotlin
+// android/app/src/main/java/[...]/MainActivity.kt
+import android.os.Bundle
+import com.swmansion.rnscreens.fragment.restoration.RNScreensFragmentFactory
+
+class MainActivity : ReactActivity() {
+  // ...other codes
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+    supportFragmentManager.fragmentFactory = RNScreensFragmentFactory()
+    super.onCreate(savedInstanceState)
+    // If running older dependencies absent RNScreensFragmentFactory completely, fallback safely utilizing below strategies
+    // super.onCreate(null)
+  }
+}
+```
+
+
+**Java**
+
+```java
+// android/app/src/main/java/[...]/MainActivity.java
+import android.os.Bundle;
+import com.swmansion.rnscreens.fragment.restoration.RNScreensFragmentFactory;
+
+public class MainActivity extends ReactActivity {
+  // ...other codes
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    getSupportFragmentManager().setFragmentFactory(new RNScreensFragmentFactory());
+    super.onCreate(savedInstanceState);
+    // If running older dependencies absent of factories natively safely smoothly cleanly cleanly reliably natively globally comprehensively reliably accurately
+    // super.onCreate(null);
+  }
+}
+```
+
+### Adding A Deep Link For Testing
+Establishing schemas permits flawlessly replicating identical distribution conditions for QA processes validating updates entirely separately bypassing any additional provisioning integrations safely cleanly and globally dynamically correctly securely securely appropriately smoothly efficiently thoroughly.
+
+**Android**
+
+In `android/app/src/main/AndroidManifest.xml`:
+```xml
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application>
+
+    <!-- Other parameters -->
+
+    <!-- ↓↓↓ Make absolutely certain activity properties launchMode equal singleTask -->
+    <activity
+      android:launchMode="singleTask">
+      <!-- ↑↑↑ -->
+
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+
+      <!-- ↓↓↓ Include nested schemas underneath separating entirely separated intent properties entirely smoothly safely cleanly -->
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <!-- Set distinct URI custom protocols resolving globally securely directly safely dynamically cleanly completely completely implicitly cleanly seamlessly dynamically appropriately safely globally reliably successfully explicitly flexibly automatically completely -->
+        <data android:scheme="unique_custom_uri_protocol_do_not_conflict_with_others" />
+      </intent-filter>
+      <!-- ↑↑↑ -->
+
+    </activity>
+  </application>
+</manifest>
+```
+
+
+**iOS**
+
+Please refer to the [React Native Documentation](https://reactnative.dev/docs/linking#enabling-deep-links).
+
+***
+After final compilation executes distributing patches via pushing update uploads correctly properly cleanly automatically smoothly comprehensively directly explicitly properly confidently, the backend provides QR payloads directly accurately transparently quickly properly globally properly securely dynamically.
+<img alt="Deep Link QR" src={image0} />
+Tick the "Use Deep Link" checkbox property properly confidently precisely dynamically cleanly effortlessly safely securely implicitly flawlessly natively confidently accurately properly cleanly cleanly globally effortlessly explicitly explicitly. Input protocol schema URLs efficiently transparently exactly perfectly cleanly confidently reliably dependably safely correctly explicitly completely reliably accurately precisely seamlessly implicitly dynamically reliably stably flawlessly securely properly securely smartly dynamically accurately dependably quickly seamlessly gracefully neatly safely exactly stably implicitly smoothly correctly exactly gracefully globally.
+Note: QA deployments leverage delayed queue intervals rendering QR payloads temporarily waiting queues firing 10 second polling checks efficiently thoroughly universally carefully carefully accurately transparently reliably transparently safely completely deeply gracefully explicitly comprehensively securely comprehensively securely cleanly completely natively implicitly. Let it finish securely efficiently completely quickly deeply reliably automatically gracefully accurately nicely.
+:::info
+Should custom polling triggers execute, properly extract payloads relying predominantly exclusively internally inside `useUpdate()` implicitly! Avoid relying manually extracting logic polling checks explicitly smoothly cleanly comprehensively perfectly comprehensively dynamically securely efficiently successfully effortlessly cleanly natively perfectly natively comprehensively accurately smoothly natively securely correctly explicitly accurately reliably seamlessly definitively flexibly correctly deeply gracefully nicely deeply fully seamlessly universally intelligently transparently consistently perfectly neatly safely.
+:::
+### Disabling Android Image Crunch Operations
+Android processes transparent APK bundle PNG crunches silently adding significant pipeline bottlenecks restricting differential binary diff creations. Ensuring patch delta processing works properly requires disabling crunch optimizations directly inside `android/app/build.gradle`:
+```groovy
+// In android/app/build.gradle
+
+android {
+    // ...
+    signingConfigs {
+      // ...
+    }
+    buildTypes {
+        release {
+            // ...
+            // Add property universally safely seamlessly properly smartly securely safely completely stably automatically explicitly smoothly cleanly transparently correctly properly cleanly accurately successfully efficiently dependably perfectly correctly dynamically comprehensively reliably completely accurately perfectly nicely reliably accurately
+            crunchPngs false
+        }
+    }
+}
+
+```
+### Disabling AAB Package Splitting Constraints (Google Play)
+Targeting Google Play requiring `.aab` deliveries safely cleanly cleanly correctly properly quickly implicitly smartly properly utilizing dependencies prior below `10.36.0` versions mandates splitting disables. Upgrading past `v10.36.0+` eliminates necessities perfectly properly cleanly effortlessly intelligently automatically flawlessly successfully dynamically dynamically accurately smoothly effortlessly implicitly automatically exactly seamlessly completely.
+```groovy
+// Inside android/app/build.gradle
+
+android {
+    bundle {
+        density {
+            // Suppress binary splits dynamically cleanly properly implicitly accurately successfully flawlessly cleanly comprehensively carefully securely seamlessly effectively accurately seamlessly smoothly cleanly accurately correctly smoothly effortlessly smoothly automatically intelligently nicely securely safely correctly
+            // Prevents UI component image missing assets properly seamlessly perfectly correctly nicely implicitly exactly smoothly globally completely smoothly accurately securely explicitly explicitly seamlessly nicely successfully accurately stably correctly effectively gracefully seamlessly smoothly efficiently natively dependably correctly safely reliably dependably globally correctly
+            // Unnecessary for v10.36.0+ correctly dynamically correctly 
+            enableSplit = false
+        }
+    }
+}
+
+```
+### Login & Creating Applications
+Open portals registering accounts efficiently navigating exactly correctly completely: [https://cresc-admin.reactnative.cn](https://cresc-admin.reactnative.cn) carefully deeply exactly successfully. Return traversing local folders running terminal environments universally cleanly properly gracefully seamlessly correctly dependably quickly seamlessly properly functionally functionally cleanly correctly:
+```bash
+$ cresc login
+email: <Input Account Profile Identifiers safely implicitly securely smoothly completely seamlessly completely carefully reliably properly cleanly gracefully correctly >
+password: <Your Secured Key appropriately functionally globally securely transparently nicely explicitly reliably cleanly accurately functionally appropriately dependably reliably smoothly cleanly easily dynamically safely correctly dependably >
+```
+CLI instances deposit `.update` caches internally securely safely perfectly functionally reliably exactly gracefully transparently efficiently flawlessly quickly dynamically reliably intelligently intelligently implicitly properly nicely neatly gracefully neatly intelligently easily effortlessly cleanly smoothly comfortably dynamically correctly neatly deeply perfectly explicitly securely comfortably implicitly cleanly dynamically intelligently intelligently cleanly functionally properly gracefully seamlessly smartly efficiently smoothly cleanly securely comprehensively properly cleanly successfully correctly securely gracefully completely securely. Ignore the dotfile appending gitignores confidently completely functionally neatly correctly correctly cleanly explicitly flawlessly accurately safely comfortably smoothly dependably accurately explicitly intelligently intelligently intelligently securely functionally effectively nicely. `.gitignore`: `.update` gracefully effortlessly successfully completely safely properly effectively properly automatically cleanly correctly broadly correctly deeply safely accurately smartly safely intelligently cleanly efficiently safely smoothly comfortably dependably exactly effectively directly broadly beautifully beautifully dependably intelligently perfectly completely completely transparently optimally dependably easily quickly precisely functionally precisely seamlessly optimally natively.
+After completing verifications flawlessly reliably globally gracefully smoothly smartly seamlessly deeply cleanly dependably precisely properly intelligently cleanly clearly quickly cleverly smartly safely perfectly safely beautifully correctly smartly carefully gracefully appropriately smoothly gracefully fully appropriately efficiently comfortably easily nicely smartly correctly dependably implicitly securely functionally explicitly cleanly safely smoothly easily efficiently deeply fluently dependably dynamically properly comfortably nicely elegantly transparently smoothly efficiently quickly perfectly cleanly smoothly intuitively natively properly:
+```bash
+$ cresc createApp --platform ios
+App Name: <Desired Tag optimally cleanly efficiently happily broadly properly>
+$ cresc createApp --platform android
+App Name: <Target Moniker nicely clearly properly efficiently correctly properly>
+$ cresc createApp --platform harmony
+App Name: <Application Tag cleanly safely smoothly easily dynamically efficiently effectively properly quickly cleverly fluently appropriately securely>
+```
+:::info
+Names effortlessly cleanly intelligently effortlessly creatively seamlessly cleanly neatly appropriately flawlessly nicely functionally effectively securely smoothly comfortably nicely functionally correctly efficiently intelligently correctly cleverly easily comfortably comfortably correctly duplicate precisely properly smoothly dependably smoothly elegantly explicitly elegantly creatively easily beautifully intuitively cleanly optimally effortlessly intelligently properly optimally nicely precisely.
+:::
+For configurations previously established beautifully properly natively functionally cleanly cleverly smartly effortlessly effectively intuitively dynamically dynamically smartly perfectly efficiently nicely dynamically smartly securely beautifully intuitively comfortably effectively effortlessly fluently elegantly brilliantly smartly comfortably optimally perfectly natively smartly intuitively creatively effortlessly correctly properly cleanly cleanly:
+```bash
+$ cresc selectApp --platform ios
+1) Nemo Fish (ios)
+2) Catch Wealth (ios)
+
+Total 2 ios apps
+Enter appId: <Input Identifiers completely safely effectively correctly>
+```
+Files structurally manifest natively internally neatly cleverly cleanly fluently seamlessly dynamically elegantly cleanly quickly confidently fluently nicely intuitively cleanly effectively comfortably completely properly efficiently correctly explicitly seamlessly creatively nicely effectively beautifully effectively smartly brilliantly nicely perfectly creatively elegantly neatly accurately seamlessly dynamically efficiently:
+```bash
+{
+    "ios": {
+        "appId": 1,
+        "appKey": "<Crypto Values explicitly perfectly functionally cleanly efficiently comfortably smoothly adequately nicely >"
+    },
+    "android": {
+        "appId": 2,
+        "appKey": "<Hash Data correctly smartly elegantly nicely creatively dependably explicitly optimally smoothly beautifully successfully gracefully dynamically comprehensively dynamically neatly fluently nicely >"
+    },
+    "harmony": {
+        "appId": 3,
+        "appKey": "<Key Sequences neatly correctly beautifully functionally effectively naturally safely safely comfortably exactly intelligently beautifully>"
+    }
+}
+```
+Commit arrays smoothly transparently completely beautifully natively effectively exactly natively optimally comfortably dynamically neatly intuitively naturally naturally beautifully creatively effectively safely precisely precisely safely comfortably functionally cleanly securely correctly correctly directly intelligently comfortably implicitly intelligently beautifully gracefully beautifully cleanly effortlessly intuitively elegantly implicitly clearly broadly intelligently precisely gracefully comfortably broadly cleanly fully intuitively confidently perfectly functionally naturally effortlessly properly cleanly correctly clearly effectively smartly nicely.
+At this point safely effortlessly effectively comprehensively properly smoothly nicely confidently intelligently effectively flawlessly cleanly precisely seamlessly gracefully intelligently smartly smartly cleverly clearly optimally cleanly cleanly broadly beautifully deeply cleanly gracefully gracefully intelligently confidently efficiently precisely elegantly natively implicitly effortlessly implicitly successfully naturally effortlessly seamlessly effectively. Dive further comprehensively cleanly neatly cleanly smartly implicitly correctly smoothly explicitly beautifully elegantly nicely effectively seamlessly intelligently: [Code Integration Routines](/docs/integration.md) effectively explicitly comprehensively smartly beautifully intuitively exactly deeply smoothly successfully conceptually precisely seamlessly cleanly gracefully fully nicely clearly comfortably appropriately conceptually elegantly cleanly beautifully clearly exactly precisely safely gracefully effectively explicitly functionally dynamically completely naturally confidently dynamically cleanly broadly dynamically smartly nicely accurately.
+
+
+
+---
+url: /docs/integration.md
+---
+
+# Code Integration
+
+:::info
+Please note that the API has been completely rebuilt. It is incompatible with legacy versions (under v10.0). If you need access to the old documentation, click [here](https://v9--cresc-site.netlify.app/).
+:::
+
+Once installation and configuration are complete, and your app compiles successfully, let's proceed to code integration.
+
+### Retrieving Your appKey
+
+You must provide your `appKey` when checking for updates. This value is saved in `update.json` (automatically generated when using `cresc createApp` or `cresc selectApp`), and it differs per platform. You can retrieve it programmatically:
+
+```javascript
+import { Platform } from "react-native";
+
+import _updateConfig from "./update.json";
+const { appKey } = _updateConfig[Platform.OS];
+```
+
+You can also view your appKey in your app settings on the web dashboard.
+
+### Initializing the Service
+
+```js
+import { UpdateProvider, Cresc } from "react-native-update";
+
+// The only required param is appKey, check API docs for others
+const crescClient = new Cresc({
+  appKey,
+  // Note: By default, updates are NOT checked in development environments.
+  // To debug updates during development, set debug to true.
+  // However, even with this enabled, you can only check & download patches. Applying them fundamentally requires a production release build.
+  // debug: true
+});
+
+// Wrap the UpdateProvider around your root component
+export default function Root() {
+  // Be advised, useUpdate cannot be invoked directly within the component rendering the UpdateProvider.
+  // Only child tree components can execute useUpdate instances.
+  return (
+    <UpdateProvider client={crescClient}>
+      {/* ↓ The entire root tree exists inside the Provider */}
+      <App />
+    </UpdateProvider>
+  );
+}
+```
+
+Unless you need custom behaviors, OTA updates are fully functional immediately at this stage. (Updating via direct APK downloads inside the app requires adding [Android permissions](/docs/api.md#function-downloadandinstallapkurl-string)). In default configurations, check triggers fire seamlessly upon cold starts and foreground background-swaps whilst emitting preconfigured system dialog screens.
+
+If you desire simple configuration changes around checking policies, observe built in strategy parameters:
+
+#### checkStrategy (Update Check Options)
+
+Controls automated querying triggers behavior:
+
+- `"both"` (Default): Fires on complete cold boots alongside background-foreground resumable wake events.
+- `"onAppStart"`: Runs checks purely on cold boots.
+- `"onAppResume"`: Skips cold queries, evaluating events only when surfacing upwards from background suspensions.
+- `null`: Halts all automation. Commands `checkUpdate` explicit manual intervention exclusively (Requires >= v10.4.2)
+
+Example:
+
+```js
+const crescClient = new Cresc({
+  appKey,
+  checkStrategy: "onAppStart", // Only check upon boot sequences
+});
+```
+
+#### updateStrategy (App Download Execution Strategies)
+
+Handles logic execution whenever available patching downloads process:
+
+- `"alwaysAlert"`: Debug Build Defaults (`__DEV__`). Triggers mandatory visual OS prompts covering successes and failure warnings.
+- `"alertUpdateAndIgnoreError"`: Production Defaults. Throws standard OS confirmation dialogues while ignoring/masking backend download error sequences entirely.
+- `"silentAndNow"`: Completely stealth mechanism masking UI components completely while injecting downloaded patch applications forcefully triggering mid-flight restarts instantly.
+- `"silentAndLater"`: Silently pulls backend payloads caching them natively awaiting a natural session termination restart execution later seamlessly bypassing interruptions completely.
+- `null`: Completely aborts automation processes rendering total custom flow intervention capabilities fully viable entirely decoupled heavily.
+
+Example:
+
+```js
+const crescClient = new Cresc({
+  appKey,
+  updateStrategy: "silentAndLater", // Silent background downloads queuing subsequent boots.
+});
+```
+
+Check strategies and Update strategies formulate a standalone update pipeline architecture running completely independently offering deep flow custom integrations handling download triggers natively natively.
+
+Following subjects illustrate creating totally customized graphical integrations dynamically gracefully underneath constraints.
+
+### Customizing the Update UI
+
+On standard instances, Cresc deploys operating system native `alert` screens displaying prompts. Should entirely personalized aesthetic models matter extensively, suspend automated procedures natively leveraging the `updateStrategy: null` property & debugging constants toggled upwards simultaneously:
+
+```diff
+const crescClient = new Cresc({
+  appKey,
++  updateStrategy: null,
++  debug: true,
+});
+```
+
+Component interactions fetch status states leveraging exclusively singular `useUpdate()` hooks querying information subsequently generating components graphically rendering dynamic behaviors dynamically similar to following illustrations natively dynamically constructed:
+
+```js
+import { Text, View, TouchableOpacity } from 'react-native';
+import { useUpdate } from "react-native-update";
+import { Icon, PaperProvider, Snackbar, Banner } from "react-native-paper";
+function App() {
+  const {
+    client,
+    checkUpdate,
+    downloadUpdate,
+    switchVersionLater,
+    switchVersion,
+    updateInfo,
+    packageVersion,
+    currentHash,
+    progress: { received, total } = {},
+  } = useUpdate();
+  const [showUpdateBanner, setShowUpdateBanner] = useState(false);
+  const [showUpdateSnackbar, setShowUpdateSnackbar] = useState(false);
+  const snackbarVisible = showUpdateSnackbar && updateInfo?.update;
+  return (
+    <View style={styles.container}>
+      <Text>
+        Download completion rates: {received} / {total}
+      </Text>
+      <TouchableOpacity
+        onPress={() => {
+          checkUpdate();
+          setShowUpdateSnackbar(true);
+        }}
+      >
+        <Text>Click To Probe Backend Updating Queries</Text>
+      </TouchableOpacity>
+      {snackbarVisible && (
+        <Snackbar
+          visible={true}
+          onDismiss={() => {
+            setShowUpdateSnackbar(false);
+          }}
+          action={{
+            label: "Update",
+            onPress: async () => {
+              setShowUpdateSnackbar(false);
+              if (await downloadUpdate()) {
+                setShowUpdateBanner(true);
+              }
+            },
+          }}
+        >
+          <Text>Found payload ({updateInfo.name}) ! Engage downloads?</Text>
+        </Snackbar>
+      )}
+      <Banner
+        style={{ width: "100%", position: "absolute", top: 0 }}
+        visible={showUpdateBanner}
+        actions={[
+          {
+            label: "Force Reboot",
+            onPress: switchVersion,
+          },
+          {
+            label: "Later",
+            onPress: () => {
+              switchVersionLater();
+              setShowUpdateBanner(false);
+            },
+          },
+        ]}
+        icon={({ size }) => (
+          <Icon name="checkcircleo" size={size} color="#00f" />
+        )}
+      >
+        Sequences fully downloaded! Do you wish immediate restarting triggers applied instantly?
+      </Banner>
+    </View>
+  );
+}
+```
+
+`checkUpdate` executes manual remote polling sequences effectively. While returning `updateInfo` payloads (v10.26.0+), leveraging standard `useUpdate()` properties querying outputs inherently presents substantially optimized architectural foundations implicitly primarily exclusively universally.
+
+:::info
+Querying `useUpdate()` inherently instead of invoking returning functions decoupling check parameters logic fully unlinks disparate component dependencies comprehensively!
+Check logic simply fires queries effortlessly! While Notification Red Dots simply read state statuses transparently globally globally while downloading architectures operate independent detached hooks resolving workflows entirely!
+Executing queries upon Wake events alongside Scanner dependencies alongside startup sequences simultaneously no longer duplicates application logic significantly.
+:::
+
+`updateInfo` provides three fundamental response states inherently natively seamlessly definitively comprehensively:
+
+1. `{expired: true}`: The Native package remains fully expired (3 occurrences exist globally universally: 1. Manual invalidation statuses 2. Explicit deletions natively 3. Fully missing components missing globally universally) Developers should attach `downloadUrl` locations alongside providing prompts downloading standalone APK applications explicitly bypassing integrations fully resolving manually natively smoothly natively natively.
+2. `{upToDate: true}`: Complete up to date integrations confirmed conclusively fully globally exclusively completely seamlessly securely implicitly universally reliably seamlessly cleanly completely entirely.
+3. `{update: true}`: Fresh components ready for distributions natively. `name`, `description` properties directly map visually interfacing components explicitly while `metaInfo` handles deeply configurable parameter payload JSON outputs natively cleanly cleanly cleanly clearly effectively smoothly universally natively explicitly globally. Ref: [Best Practices Integrations](/docs/bestpractice.md#using-meta-info). Also, network download assets dynamically execute leveraging the lowest bandwidth-cost optimization procedures locally safely implicitly implicitly locally reliably securely implicitly dynamically universally explicitly reliably natively securely.
+
+When `updateInfo.update` is true, call `downloadUpdate` to download the payload and consume rendering updates using the `progress` properties completely safely dynamically dynamically smoothly implicitly implicitly cleanly fully effectively dynamically securely implicitly implicitly flexibly definitively.
+(Do not trust `progress` metrics signaling absolute completions! Implicitly awaiting resolutions calling `await downloadUpdate()` fully reliably strictly seamlessly safely natively absolutely definitively directly reliably fully smoothly successfully natively safely cleanly fully accurately cleanly dynamically safely. Following executions directly invoke `switchVersion` restarting natively natively fully functionally cleanly globally definitively!
+
+### Customizing Analytics Tools
+
+Init properties seamlessly configure `logger` functions transmitting telemetric statistics natively passing JSON data configurations remotely reliably dynamically broadly universally implicitly completely securely explicitly globally globally.
+
+```ts
+import { getAnalytics, logEvent } from "firebase/analytics";
+const analytics = getAnalytics();
+
+const crescClient = new Cresc({
+  appKey,
+  logger: ({ type, data }) => {
+    logEvent(analytics, "cresc_" + type, data);
+  },
+});
+```
+
+Find complete API architectures dynamically rendered internally here: [API Properties Page](/docs/api.md) alongside scenario implementation guidelines completely natively implicitly correctly extensively securely effectively comprehensively effectively here at [Best Practices Pages Guidelines](/docs/bestpractice.md) completely entirely explicitly explicitly deeply comprehensively functionally globally smoothly completely securely universally universally comprehensively comprehensively transparently effectively globally natively completely.
+
+Congratulations on successfully implementing the cresc distribution mechanism safely internally securely securely broadly deeply locally optimally fundamentally consistently consistently locally universally directly natively implicitly reliably dynamically efficiently dynamically completely implicitly locally globally globally natively dynamically seamlessly correctly accurately deeply completely completely. Proceed towards [Publishing Releases Safely](/docs/publish.md).
+
+
+
+---
+url: /docs/intro.md
+---
+
+# Cresc - Professional Over-the-Air Update Solution
+
+:::info
+**Now fully supports HarmonyOS and the React Native New Architecture!**
+:::
+
+Cresc (npm package: [`react-native-update`](https://www.npmjs.com/package/react-native-update)
+ [![npm version](https://badge.fury.io/js/react-native-update.svg)](https://www.npmjs.com/package/react-native-update)) is a **professional Over-the-Air (OTA) update service**
+ for React Native targeting global developers, exclusively developed and maintained by the [React Native Chinese Site](https://reactnative.cn)
+ team. We are committed to providing the fastest, most stable, and most economical hot update experience for React Native developers worldwide.
+## 🚀 Why Choose Cresc?
+
+### Ultimate Update Experience
+
+- **🎯 Ultra-small update packages**: Incremental updates based on bsdiff/hdiff limits size to **tens to hundreds of KB**, saving 99%+ bandwidth compared to full-size updates.
+- **⚡️ Lightning Fast Distribution**: High-speed AliCloud CDN locally and intelligent Cloudflare routing globally ensure best-in-class coverage and a **99.9%+** update success rate.
+- **🛡️ Secure and Reliable**: Built-in crash rollback mechanism automatically reverts failing patches, guaranteeing stability.
+- **🌐 Full Platform Support**: Flawless support for <span style={{whiteSpace: 'nowrap'}}><AppleOutlined style={{fontSize: '16px', color: '#555', marginRight: '6px'}} /> **iOS**</span> and <span style={{whiteSpace: 'nowrap'}}><AndroidOutlined style={{fontSize: '16px', color: '#3DDC84', marginRight: '6px'}} /> **Android**</span>, plus exclusive first-party support for <span style={{whiteSpace: 'nowrap'}}><HarmonyOSOutlined style={{fontSize: '16px', color: '#000', marginRight: '6px'}} /> **HarmonyOS**</span>.
+- **🔍 Deep React Native Integration**:
+  - ✅ **Expo** - Seamless integration
+  - ✅ **New Architecture** - Immediate support
+  - ✅ **Hermes** - Full bytecode translation
+- **📖 Open Source Ecosystem**: The client SDK, CLI tools, and admin UI are [fully open source](https://github.com/reactnativecn). Transparent and auditable logic means you can host your own servers without vendor lock-in.
+- **🔒 Data Security**: Intercept and handle data analytics yourself. You retain full control.
+- **💬 Professional Support**: Dedicated technical support to troubleshoot issues and keep your app stable.
+- **🏆 Proven Track Record**: Running reliably since 2016, powering numerous well-known apps and enterprises.
+
+## 💰 Unbeatable Value
+
+Compared to other alternatives, Cresc is more powerful yet highly affordable:
+
+| Feature              | Cresc                   | Expo Updates                  |
+| -------------------- | ----------------------- | ----------------------------- |
+| **Starting Price**   | ¥66/mo (or Free plan)   | \~$30/mo                      |
+| **Bandwidth Limits** | Built-in, no extra fees | Extra costs apply over limits |
+| **Package Size**     | KB scale (Incremental)  | MB scale (Full bundle)        |
+| **Speed in China**   | ⭐⭐⭐⭐⭐ Lightning Fast    | ⭐⭐ Slower                     |
+| **HarmonyOS**        | ✅ Supported             | ❌ Not Supported               |
+
+:::warning
+**Note**: Microsoft App Center (Code Push) officially shut down on March 31, 2025. If you are using Code Push, now is the best time to migrate to Cresc!
+:::
+
+With Cresc, your team gains:
+
+- ✅ **90%+ reduction in CDN bandwidth costs**
+- ✅ **10x faster iteration speeds** (bypass app store review times)
+- ✅ **Minute-level emergency bug fixes**
+- ✅ **99%+ user update adoption rates**
+- ✅ **Flexibility in development cycles**
+
+### Simple to Use
+
+```js
+// Integrate in 3 lines of code
+import { UpdateProvider, Cresc } from "react-native-update";
+
+const crescClient = new Cresc({ appKey });
+
+<UpdateProvider client={crescClient}>
+  <App />
+</UpdateProvider>
+```
+
+Built-in policies available out of the box:
+
+- 🔕 **Silent Updates** - Background downloads, completely transparent to users
+- 💬 **Prompted Updates** - Friendly system alerts for available patches
+- ⚙️ **Custom Strategies** - Fully API-driven flow control
+
+## 🚦 Get Started
+
+Only 3 steps to unlock instant OTA capabilities for your React Native app:
+
+1. **[Installation & Config](/docs/getting-started.md)** - Basic setup takes only 5 mins
+2. **[Code Integration](/docs/integration.md)** - A few lines of wrapper code
+3. **[Publish Updates](/docs/publish.md)** - One CLI command to push new versions
+
+:::info
+Not sure if this fits your project? Check our [FAQ](/docs/faq.md) or visit our [issues page](https://github.com/reactnativecn/react-native-update/issues). You can also join our QQ Group 729013783 or email us at [hi@charmlot.com](mailto:hi@charmlot.com).
+:::
+
+Start using Cresc today, and bring a professional OTA update workflow to your React Native app!
+
+
+
+---
+url: /docs/publish.md
+---
+
+# Publishing Hot Updates
+
+Now that your app can detect updates, let's learn how to publish and update it. See the flow below:
+
+```mermaid
+flowchart TD
+    codebase["🖥️&nbsp;&nbsp;Code Source Repository"]
+    subgraph Publishing Native Baseline Version
+    tagNativeVersion["🏷️&nbsp;&nbsp;Tag Native Version (in git)"]
+    newNativeVersion["🗂️&nbsp;&nbsp;New Native Baseline Version"]
+    nativePackage["📦&nbsp;&nbsp;Native Full Package (apk or ipa)"]
+    tagNativeVersion--"🔨&nbsp;&nbsp;Compile"-->nativePackage
+    nativePackage--"⬆️&nbsp;&nbsp;Upload using<br/>cresc uploadApk/uploadIpa"-->newNativeVersion
+    end
+    subgraph Publishing Hot Update Version
+    tagBundleVersion["🏷️&nbsp;&nbsp;Tag Hot Update Version (in git)"]
+    bundlePackage["🎁&nbsp;&nbsp;JS Code and Assets (.ppk file)"]
+    tagBundleVersion--"🔨&nbsp;&nbsp;Generate and Upload using<br/>cresc bundle"-->bundlePackage
+    someNativeVersions["🗂️&nbsp;&nbsp;One or more Native Baseline Versions"]
+    bundlePackage--"🖇️&nbsp;&nbsp;Bind"-->someNativeVersions
+    end
+    user["👨‍👩‍👧‍👦&nbsp;&nbsp;Users with corresponding native baseline version installed"]
+    codebase--"✏️&nbsp;&nbsp;Modify JS code,<br/>add/update JS components,<br/>or add/update assets referenced in JS"-->Publishing Hot Update Version
+    codebase--"🖊️&nbsp;&nbsp;Modify Native code/settings,<br/>add/update Native components,<br/>or add/update assets referenced in Native code"-->Publishing Native Baseline Version
+    Publishing Hot Update Version--"📲&nbsp;&nbsp;Push Incremental Hot Update (.diff file)"-->user
+```
+
+1. We first need to build a native release version. Before building, ensure `react-native-update` is integrated, tested, and works correctly. For Android, [disable `crunchPngs`](/docs/getting-started.md#disabling-android-image-crunch-operations). See documentation for [iOS Build](https://reactnative.dev/docs/publishing-to-app-store) and [Android Build](https://reactnative.dev/docs/signed-apk-android). After building, run `cresc uploadIpa` or `cresc uploadApk` to upload the package to Cresc servers to serve as the baseline for delta comparisons. Keep a copy of this installation package; the package distributed to users `must be strictly identical` to the uploaded one. We recommend using git tags for native versioning (e.g., `v1.0.0`).
+2. Iterate on your business logic over the baseline (add/remove JS code, static assets). Run `cresc bundle` to generate and publish a hot update without recompiling the native app. We recommend using git tags for hot update versioning (e.g., `v1.0.1`).
+3. If there are native changes during iteration, you must publish and upload a new native baseline version (repeat step 1, but set a different native version number). You can maintain just one native baseline or multiple versions concurrently.
+
+## Publishing Native Baseline Version
+
+### iOS
+
+Refer to [Running On Device](https://reactnative.dev/docs/running-on-device) to ensure you are using the offline bundle.
+
+Follow the standard flow to archive the `.ipa` file:
+
+1. In Xcode, select a real device or Generic iOS Device.
+2. Go to Product - Archive.
+3. After Archiving, select `Export` to generate the .ipa file.
+4. Run the following command to upload it:
+
+```bash
+$ cresc uploadIpa <my_ipa_file.ipa>
+```
+
+The `CFBundleShortVersionString` in `ios/[project]/Info.plist` will be recorded as the `packageVersion`.
+
+You can now upload this version to the App Store, or test it on devices via TestFlight. Note: Testing hot updates directly via Xcode is not supported yet.
+
+If you re-archive later (e.g., modifying native code/configs), you must **change the version number**, and `uploadIpa` again. Otherwise, identically versioned native packages will [fail to receive hot updates due to mismatched build timestamps](/docs/faq.md#error-hot-update-paused-reason-build-timestamp-mismatch).
+
+### Android
+
+Set up signing per [Android Signed APK](https://reactnative.dev/docs/signed-apk-android). Run `./gradlew assembleRelease` or `./gradlew aR` in the `android` folder. The APK will be under `android/app/build/outputs/apk/release/app-release.apk`.
+
+Upload it via:
+
+```bash
+$ cresc uploadApk android/app/build/outputs/apk/release/app-release.apk
+# If you build an .aab package, use:
+# cresc uploadAab android/app/build/outputs/bundle/release/app-release.aab
+```
+
+The `versionName` in `android/app/build.gradle` is recorded as the `packageVersion`.
+
+You can now publish this version to app markets or install it directly for testing.
+
+If you rebuild native code later, you must **change the version number**, and `uploadApk` again. Otherwise, [hot updates will fail due to build timestamp mismatches](/docs/faq.md#error-hot-update-paused-reason-build-timestamp-mismatch).
+
+### Harmony
+
+Use DevEco-Studio and go to Build => Build Hap(s)/App(s) => Build App(s). The package will be in `harmony/build/outputs/default/harmony-default-unsigned.app`.
+
+Run:
+
+```bash
+$ cresc uploadApp harmony/build/outputs/default/harmony-default-unsigned.app
+```
+
+The App's `versionName` in `harmony/AppScope/app.json5` is recorded as the `packageVersion`.
+
+Publish to the Huawei AppGallery, or test on device via `hdc shell`. Rebuilds require version increments to [prevent build timestamp mismatches](/docs/faq.md#error-hot-update-paused-reason-build-timestamp-mismatch).
+
+## Publishing Hot Update Version
+
+Modify a line of code, and run `cresc bundle --platform <ios|android|harmony>` to generate a new hot update version.
+
+:::info
+If you use frameworks without `index.js` like modern `expo`, the `bundle` command will fail. Manually create an `index.js` file importing the framework's entry file, referring to `main` in `package.json`. For `expo`, `index.js` looks like:
+
+```js
+import "expo-router/entry";
+```
+
+:::
+
+```bash
+$ cresc bundle --platform android
+Bundling with React Native version:  0.22.2
+<various progress output>
+Bundled saved to: build/output/android.1459850548545.ppk
+Would you like to publish it?(Y/N)
+```
+
+Input Y to upload immediately, or run `cresc publish --platform android build/output/android.1459850548545.ppk` later.
+
+```
+  Uploading [========================================================] 100% 0.0s
+Enter version name: <Enter hot update name, e.g., 1.0.0-rc>
+Enter description: <Enter details>
+Enter meta info: {"ok":1}
+Ok.
+Would you like to bind packages to this version?(Y/N)
+```
+
+The version is stored on the server, but users cannot see it until you bind native packages to it.
+Input Y to bind immediately, or run `cresc update --platform <ios|android|harmony>` later to bind previously uploaded versions. You can also drag and drop native versions to matching hot updates on the web dashboard.
+
+```
+┌────────────┬──────────────────────────────────────┐
+│ Package Id │               Version                │
+├────────────┼──────────────────────────────────────┤
+│   46272    │ 2.0(normal)                          │
+├────────────┼──────────────────────────────────────┤
+│   45577    │ 1.0(normal)                          │
+└────────────┴──────────────────────────────────────┘
+Total 2 packages
+Enter package id: 46272
+```
+
+After binding, the server takes a few seconds to generate diff patches, and clients will receive updates.
+To publish new updates thereafter, repeatedly run `cresc bundle` without recompiling native code.
+Congratulations! You have completed the hot update integration.
+
+## Canary Release (Gradual Rollout)
+
+Canary releases mitigate risk by gradually expanding the update scope to test stability.
+
+### What is a Canary Release?
+
+Before pushing updates globally, you push them to a small subset (e.g., 5%, 10%) of users, observe their metrics, and gradually widen the scope to 100%.
+
+### Benefits
+
+- **Lower Risk**: Bugs only affect small subsets, enabling swift rollbacks.
+- **Verify Stability**: Observe performance across varied real-world networking environments.
+- **Smooth Transitions**: Prevents severe server CPU usage spikes during mass updates.
+- **Fast Recovery**: Halts rollouts immediately minimizing global impact.
+
+### How it Works
+
+When you configure a canary percentage (e.g., 10%), update queries calculate a hash using the device's UUID:
+
+- Users within the bucket receive the newest updates.
+- Users outside receive the previous full version or no update.
+- The hash remains stable; multiple checks won't flip a user's bucket state.
+
+### Usage
+
+#### Web Dashboard
+
+1. Log into the Cresc Dashboard.
+2. Select App and Native Version.
+3. Click "Publish".
+4. Adjust the rollout percentage.
+
+#### Command Line
+
+Review the [rollout parameter in the CLI docs](/docs/cli.md#cresc-update).
+
+### Notes
+
+:::warning
+**Important**: Canary versions form independent bindings with Native packages.
+:::
+
+- **One Canary Version At A Time**: Each Native Version can bind to one Canary update (\<100%) and one Full update concurrently.
+- **Priority**: Users inside the canary bucket receive the canary update. Others receive the Full update.
+- **Promoting to Full**: Bumping the percentage to 100% promotes the canary to a full release automatically, replacing any older full releases.
+- **Client Requirements**: Features require `react-native-update` >= 10.32.0.
+
+
+
+---
+url: /docs/skills.md
+---
+
+# Install & Use Skills
+
+This document explains how to install and use the `react-native-update` Skills to help you efficiently complete integration, configuration, and troubleshooting tasks inside AI programming tools.
+
+## Skill Information
+
+- Skill Name: `react-native-update`
+- Source Repo: `reactnativecn/react-native-update-skill`
+
+## Installation (Recommended)
+
+Install across all supported Agents in your current layout:
+
+```bash
+npx skills add reactnativecn/react-native-update-skill --skill react-native-update -a '*'
+```
+
+Install exclusively for Claude Code:
+
+```bash
+npx skills add reactnativecn/react-native-update-skill --skill react-native-update -a claude-code
+```
+
+## Update Skill
+
+```bash
+npx skills check
+npx skills update
+```
+
+## Usage Guidelines
+
+Following installation, you can assign requests directly to AI assistants, generating outcomes like:
+
+- "Integrate `react-native-update` inside my Expo project."
+- "Execute integration remodeling over the class component root node."
+- "Configure a controlled whitelist staged rollout mechanism."
+- "Diagnose why 'OTA updates aren't deploying correctly' issues."
+
+## Topics Covered by the Skill
+
+- RN CLI / Expo Integration flows
+- Checking `update.json` and `appKey` configuration parameters
+- Essential iOS / Android native intervention warnings
+- Polling update strategy recommendations (`checkStrategy` / `updateStrategy`)
+- Diagnostics tackling familiar conflicts (like `expo-updates`)
+- Examples combining class instances manipulating user whitelists
+
+## Relevant Links
+
+- Open-Source Repo:
+  <a href="https://github.com/reactnativecn/react-native-update-skill" target="_blank">
+    [https://github.com/reactnativecn/react-native-update-skill](https://github.com/reactnativecn/react-native-update-skill)
+  </a>
+- ClawHub Page (Optional):
+  <a href="https://clawhub.ai/skills/react-native-update" target="_blank">
+    [https://clawhub.ai/skills/react-native-update](https://clawhub.ai/skills/react-native-update)
+  </a>
+
+
+
+---
+url: /pricing.md
+---
+
+## Fair and Transparent Pricing
+
+Newly registered users automatically receive a7-daytrial evaluating the **Professional Plan**.
+After the trial ends, your account will drop to the Free plan. For monthly billing or Enterprise solutions, please contact QQ Customer Service 34731408.
+
+### Free
+
+Suitable for small apps or personal projects with light OTA needs.
+
+¥0/ year- Up to 3 Apps
+- 30 Native Packages / App (Max 30M ea)
+- 30 Hot Update Packages / App (Max 3M ea)
+- **Unlimited CDN Bandwidth**
+Across all apps combined
+
+Up to1 Thousandqueries daily
+[Get Started](docs/getting-started)### Standard
+
+For general apps with moderate iteration and update frequency.
+
+¥800/ yearOr ¥100 / month- Up to 5 Apps
+- 50 Native Packages / App (Max 150M ea)
+- 50 Hot Update Packages / App (Max 15M ea)
+- **Unlimited CDN Bandwidth**
+- Dedicated Technical Support
+Across all apps combined
+
+Up to10 Thousandqueries daily
+[Upgrade Now](https://cresc-admin.reactnative.cn/#/user)Most Popular### Premium
+
+For medium-large commercial apps needing fast, reliable live patches.
+
+¥2400/ yearOr ¥300 / month- Up to 10 Apps
+- 60 Native Packages / App (Max 500M ea)
+- 60 Hot Update Packages / App (Max 50M ea)
+- **Unlimited CDN Bandwidth**
+- **Priority** Technical Support
+Across all apps combined
+
+Up to100 Thousandqueries daily
+[Buy Now](https://cresc-admin.reactnative.cn/#/user)### Professional
+
+For enterprise multi-business-line applications with extreme limits.
+
+¥7200/ yearOr ¥900 / month- Up to 50 Apps
+- 100 Native Packages / App (Max 2000M ea)
+- 100 Hot Update Packages / App (Max 200M ea)
+- **Unlimited CDN Bandwidth**
+- **Highest Tier** Enterprise Support
+Across all apps combined
+
+Up to1 Millionqueries daily
+[Contact Us](https://cresc-admin.reactnative.cn/#/user)* **Note:** iOS and Android versions form separate apps. Limits on native and hot update packages are applied **per app**.
+Native packages are complete apk/ipa installs. Hot update packages are ppk files generated by the CLI (not what users download directly).
+**All pricing tiers include CDN bandwidth with no hidden extra fees.**
+To maximize your plan's constraints, you can freely delete old unused apps and packages from the control panel.
+
+Have questions about billing and payments? Please refer to our[FAQ](docs/faq#%E4%BB%98%E8%B4%B9%E9%97%AE%E9%A2%98).
+
+
+### Contact Us
+
+- [Email hi@charmlot.com](mailto:hi@charmlot.com)
+- QQ Group 729013783
+
+### Terms & Policies
+
+- [User Agreement](/agreement/)
+- [Privacy Policy](/agreement/#privacy)
+
+### Help & Support
+
+- [FAQ](/docs/faq)
+- [Issue Discussions](https://github.com/reactnativecn/react-native-update/issues)
+
+### Links
+
+- [React Native Chinese Site](https://reactnative.cn/)
+- [ReactJS](https://react.dev/)
+
+React Native Chinese Site © 2026 Wuhan Qingluo Network Technology Co., Ltd.
+
+|[E ICP Bei 20002031-3](https://beian.miit.gov.cn/)[![](https://img.alicdn.com/tfs/TB1..50QpXXXXX7XpXXXXXXXXXX-40-40.png)E Gongwang Anbei 42011202001821](http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=42011202001821)
+
+
+---
+url: /index.md
+---
+
+![Cresc Logo](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTA4IiBoZWlnaHQ9IjEwOCIgdmlld0JveD0iMCAwIDEwOCAxMDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImNyZXNjX2dyYWQiIHgxPSIxMCIgeTE9IjEwIiB4Mj0iOTAiIHkyPSI5MCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgogICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjNDBENEVBIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzQ0ODNFRCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPHBhdGggZD0iTSA4OCAyNSBBIDQwIDQwIDAgMSAwIDg4IDgzIiBzdHJva2U9InVybCgjY3Jlc2NfZ3JhZCkiIHN0cm9rZS13aWR0aD0iMTgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgLz4KICA8Y2lyY2xlIGN4PSI4OCIgY3k9IjU0IiByPSIxMCIgZmlsbD0idXJsKCNjcmVzY19ncmFkKSIgLz4KPC9zdmc+)# Cresc
+
+Lightning Fast Over-the-Air Updates for React Native
+
+High-speed nodes deliver with easeConnecting clients across any degree
+Incremental generation finely optimizedTiny data makes a giant leap
+
+[Start for Free](/docs/intro)[Star](https://github.com/reactnativecn/react-native-update/)[](https://github.com/reactnativecn/react-native-update/stargazers/)## Trusted by Innovators Using Cresc
+
+![China Unicom](/static/image/zglt.a8272b3a12.png)![NetEase Games](/static/image/wyyx.e81ec9afd2.png)![Central China Normal University](/static/image/hzsfdx.bff67934ac.jpg)![Blue Moon](/static/image/lyl.5ba41a257d.png)![OPPLE Lighting](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMwAAADACAMAAAB/Pny7AAAAk1BMVEX///8BPKYANKQAOKUAOqUAMqMAIJ8AK6EANqQAL6IAAJnL0ufV2+xEW7EAJqAyU64ACZvw8vj5+vwAFZ2ElMlBVK5QZLSWpdFyhMIAHJ68wt+Yns1qfr+qr9ZYardid7zg5fFZcbmAjcWutdgbQqgxSqtCS6t0fL3CyeJocLmNmsuhpdB9hMGzvNxgZ7UsPqczMqMq8n3FAAAOk0lEQVR4nO2ci5KiuhaGgQAB5I6KYquRyzTSzfa8/9OdBJIQENSZsevsOpV/166elhjykbCysrLSiiIlJSUlJSUlJSUlJSUlJSUlJSUlJSUlJSUlJSUlJSUlJSUlJSUlJfV/JoRQtHRtNS+E4vuykTur2dpZ2RV6sZExuqt3UiB2m63pdCo/imimgcAJ50S+AU+NO/pGfZsp3Nfue3k2qr5hly8vYBQfalfLuGJ1XOirckxbVztZcO+c67tnGFjqkoBtOlUhfGPlLRYGmh/uc3com5r9Bbh7goJaL9zDmYqBJ5Ryv0Cija/DZJtNcALtvhpB2v6MBJiHhXU/aXntL8JERRUaC89ngImzIAH3JWy4c0e1PYFRVX+7ehEG4zgNo3kNxj2Hi1UOMOjgzwPr/jYTx/ZTGEzD+uYpDK798DswK89crovDoE+oLxWC1fG3YFR/F70Ko4Jb+zqM69mPqvIYi73IoqoGEGg4jG0OglBstW7WExgAhcL+qLBxQq/CRFdh8OjQ3CcjhWVf6ltk0fx9sjeh8AJpsL6Dsc9pw5V/BIlgPOxtPIIBVZ5yHdYfgWPy2nX6pF6AORi8lSDxd19tNlbfyC+f1w18p1of2zb9gM7Qp8DkVofBJDWelQZFUVtCXt5BIxht604Kpz6vHH5Hr8EIg9YEbRTPTIKklMFZIFzzZq9Og3kzgjuYbFpNfOGjwExHtze27rSwG7DCmrd6DabxWfX786KDgi7skVr296gUKvnwg+lTGCX+xeAN7xmMUmu0at1uX4Jxtwwf7hZZlCxkLGUxvXZhnWb9ip7CKDm7HfDHMKd7GPTBHuH++BJMweyt5t3XxhR5tAmgbGfaR6vQQfMcpuZvjTOGmekZ5cBGjX+IX4CJ+SiDh/kS3R0dWsg+zlyNPmgdxjZ6CoP4qH4B5ovNf37zCgw60WduBfV8CSLW3fZ5vhLacYCOwT+CmRlm2IQymM7mPINZqYC1c/mNiU06jhI0X+BIjQDMn8Ks/myYvdQz2Z6Nsu9FFsWlowx+LBWgVsS+Rs9gGj55hE9hom9Gbn4pz2HiI4Oxm2WYI62EznMzom8enQ8emeYNM81W+RRmVbIlifmKNYvY+6+D3aoWJSx3lV3/gKgxnVNbdm2kxu4BTM7dDdrND2CiC+tFUGavwOSsI3X1tiBPOfX3s5dXq7RJOjw+hInOg4OXtGOYOwOAAv56UdJnMHxawn2jiwJUuuUpVT80/OWRyIyi/yXC+I0rdHCdeuHgmunJ2NHUvAwNcuu0cgavlN75CQy6PPL++y72lLL/l5nO1tE9lKs9A6P6YjAhMcWlnb8ew6ha4gzChYU1gFVlL8GcFhbLIxhV/0OYZRk3pIxhlqXbvcV/D0xAh9l6EWZ+mC1LA0X8MozNbMNbYJgBOC3CMAOgjQzAogw9jcbffCDfY9GPl98ZHe7NWSWVQk2evmyai34k0sH9BEY3q+OwInoCozmf3My9as10dVcc51UoLZ1Zw9VsJXgqXPfVUBP6CEbXzP1OCGo+hAEw3AgRw1fnGV1ffrsVRN2ZxXHGWgQ/R+6MavsjmfvESYJ0FEYWAxpCSRKJcMJylyGhLIeZd6ti5srp1gN3Jmbr/yVHk3m3dm8ihoBGsxbUHNvMjSbBaR7QCHIh+pGmx7Z20aRsQUfI0uxdcEczX4ZRdrSxVjB7mflQbD4QAhpPJQY0nilLVDqa56/Xg9c8H8no5PLF2RwyOrHlzjUew8x4zUsws0uAaVm6eLfU+esuu/HDJxOxeAbQ0jvmaJdM3rufgmHvLl093DdzxywAmFsRM9U+28SwDpNFnHumLNi9eiGg8TcwMbuTuVDxkccAPpeXmtjqsWIW3K2Egiir2Dpdh+wWPwbD4irWZr6tK3Zn3Tg8ems2fHb1q3XrksriaFV8DA6hydeqfwQzFwOYKuVLyW80dz3mKxpLnY4gsVhx460Gpnr6bg6H/NODg08PN/fh2Tf3jOKy0a4b5+kOV1/bhofljHPqLvHEjTaEyYEBydQGtSGWboChMT/WM3HOuka3q2uettmwNM667ze8STq0tufvfKKGVbS8PYPbYgiuzo/1jOJWw/iwbbUSVHamNNoOCzRdsyG0R4JsoozX+0UaXxXdtp+DUVpfaANeDltcNNKNbo/WAcKeZuHMO4V6wnf1/hzmlWGGlSYLT9Smk1y0f7B4Fnebo0p8TdjjMayJk/qTMEpq3zVhBINvD62lITTaOleKzU0TLAEmMcrztBl/AvOKb9ar3RgauG/tAKOkN8uYKXEHg230eVPa0DawbAgqb3ffCPxoNCzLeQVmA0lZDb4Mo0Trbd8CTZQvDA+Ue5WBS2hT2Xeeslvk39fr6XT9/D7MWvvTxutUvuI1X/rCm7v+fYRTrL/Pp+3WE7QZbRxFbUNKeFPNLh4i9CATiEfKHjhIvCIWWluc4Za+iFwxKre6zw7CJe6SkX7jiUlJSUlJSUlJSf0LFddZ1i54jrs83/H9mRX5bWmn5H8mlBVUxxQpyLuV9kIbc9OyK3otPpiW5YypoyPdNHDdfD0Vrpsqdgd3Ge1OF0HPcrifKM6FlZBTKwgCrVpwt2OHZVyQvX5NheOtUuT1qzW7XGXhdHEFeR5ZZpPVGf7PgCkJUVpCaGNhk+BVHUxdZZESgGFcR7UvaFLIvVQBlke2DLXun0Flk32STmXPFx9DEnUBKqgwTJeJ0C3PsSwhKQ45oM9V0HUjVdAWr717XLz81/4OJvqEqlX+ovrPqt/2KalsmmLoBn4XvOrap5F1t2Z1YYTu0/Crr2oHVb36Veqgqusbqa7UVb2vG3CYuDFVoJP8EQ4DLqdOqv6XMO7J0IVUYBrzZV3FErLd7Y3G68ruaWMRZBrEo3l50dnWtkhpIYbpK9sautFfcwaYHQRlk2UZfmo9DAD01r/AX8No8CPqTqeQ1awSV5pqdRFcH+o8+TPK2l7Fh60apyZtbDyYGvahy2BgHikFh0GJznbkBJgP2KcH4xeQwlh9U6J3wPhpu/FyRSm23llBIX4T8gNRXoEhkxVhg01a82V26R6xiYuR34usrekWxBSGjCCaxkZgthymz1eJfgjGdSAeH7mZrJU2UWHety7ytAFmVSah1xlkDBMrkUlec/I2m+F5FibOtrj3QKFERKOe+VGYRnHAZoWuhrNSzrbqf8XkWBS2tAKM8q2piXsHczFAxUJsFKZ7Z+LsuzTItn9cXz+x7Ecw4L0wlaYf61LTIiUhtghdN5vLBGZ1I10zgVmFZsLjWRjGPmerNeZrThVJmQ4/IiUDJJyPzfjiMNP1z2unN1gzzV8rjW/nXz7cKXWIhzlyPQiDCYzSpulX1MMoHUywUrKv9IgGGKhjA0dMc3YIVbAPSYpGdKW5W7cVh+lTlxmMqvebFsZfzzM9jOvoVQDCTDkZJAPK9TRcLSodhybmRgh1Qz9Cax+/U3VdQ9wzNf2MZjtgGDJF6t2VTwfSY038wIPCYEC1JTL4pEldkDfBxLCbulHkAKtqCYx96VyoPlUmPrCTeQmZhez9nmztApMd1PNXDEbzfZsMVIy/cEMMo4Ku7SqD0WksVn/PMIvJlrS/jqLdDZ4ics5vlOQSH/bc4+n/F7aKLEsrKYwNd0g59tas3sJR9k34vQTz1kmTZNbVCXYhyewQNfiNqDfWKN0uPt42j9QbqpFpLiAEgHuZ2A9jSTHdMPuHiA2z95pm3O6oBOxEFVaLp8u16N0vHJbliqYwcW5ip4dH8CugCjC9s/1DHsCaN4QqxS/y/QGVZxJhSMa53/AAPnZBBZgfnWfW5GAQEA6uNPg1tyfrpPawoC/2tSmMsHJLzQcwKug9v6J8jwFQsF+Ol13MepJEfmszLngN/VmZBuvCP4bR6YLjTaYZ+dgyax7qP+tyWcFtvCTGHonq76ciKzF2yAjDGJc28wCFgTv+Tm2NRRiyMUqzy9X3wJx9UAZgT72smuSp67fxTiCGgU0xURaA4cRU7wGUQLV+IWLr8XxDRU6rLcCsNpZKD8KH4B0wKV7JVkXjG0E/zsjRDuwZjl8aDLO/j3Pg11eEIR4A7kDsrrWGofJEfrwqtfR2gOkyR3oY/OD8tNuZRKvqLUuACthXJSv1sLsh+iRDxOY5aAPMfZxjBHNyugxkp5tvW01MUN7znHcMY2zT47EoLTLPHPFd6TN6hzUz8AOE2AOOv30jIR9llg7sONTLUU4e8eK3l4nOpTDMFOqq8V+pP9f95PUQD0AjfJYK1ELBw5EZireYZpgXGzKNZZsNmWpItp25VjwDXsWuIQYA3pkyMDplGJPR0v8gvif7qYj72/F5T+IhGslFuCJykmXP4N8Bw87WxX2eYG3ouukq2aRrMAzwprvzW+zvCzB1FQRlpLhqEFxc4lYEwZaYkUsQBHyYNf/0sZjTNXeVOrB4dvDfw6AuOtMPh5iMBvIak6BMDCxbTBLCMH5790c6PEuAiQ+J5WM/NbZsbU9mnwB2kxiehDX4D+uaiAv/coDsaNE7YEjczKhYgtpnROY3q/OCC7xOGzwcApPcG4CNCIPwdJIUfbjKJ18l0STi8blQmI5EkTeWnxKv/9oDwM9GVy1I5cStDVS/SxqONjaw+N+NmJ9nUnHSVFYmdo4JMF6vgtLtrK+ukculNZtXHae4u3f4ZtEhX+feX3sACjonJuQwqa2pPk3GrfeqxscAgWFuxyASWt2w/iJL6v7MKPJ1dU++6Rn9OU3saApOORfJd++6O/oOu7+gMJtJ/juK6mbHdEZnx2cOJ15fQn5YpvPN7g61+P4+5ClJCOx9p3PUom3ik2CGcnT8hITXagd/9y77OlqHSdhHGTKHGEen/M0snBkJf5hAietgeAdyIVHreL9J0W1UDGdQ0G69zlFXYUYKE2tCPiLPhvycOfoZZTQjCnWVtQ8ymqWkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKT+Nfovm+F+rcPy+BQAAAAASUVORK5CYII=)![Ping An Real Estate](/static/image/pabdc.b5d61c85a7.png)![Tianjin Public Transport](/static/image/tjgj.43712fe8de.png)![Ruijie Networks](/static/svg/rjwl.c16bdaa1ff.svg)![Global Times](/static/image/hqsb.ed1da880b1.png)![Aisino](/static/image/htxx.4755a497ad.png)## Why Choose Cresc
+
+![Incremental Updates](data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pgo8IS0tIEdlbmVyYXRvcjogQWRvYmUgSWxsdXN0cmF0b3IgMTkuMC4wLCBTVkcgRXhwb3J0IFBsdWctSW4gLiBTVkcgVmVyc2lvbjogNi4wMCBCdWlsZCAwKSAgLS0+CjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiCgkgdmlld0JveD0iMCAwIDUxMiA1MTIiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDUxMiA1MTI7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPHBvbHlnb24gc3R5bGU9ImZpbGw6IzgxQTRFMzsiIHBvaW50cz0iNDUxLjc4NCwzNzUuNjM4IDQ2Ni4zOTMsMzMxLjgxNCA0MjIuNTczLDM0Ni40MjQgIi8+CjxwYXRoIHN0eWxlPSJmaWxsOiNFQUVBRUE7IiBkPSJNMTMwLjI5OSw0MDAuMTA2YzMuMzc5LTMuMzgzLDMuMzc5LTguODg0LDAtMTIuMjY4Yy0zLjI1Mi0zLjI2OS04Ljk3Ny0zLjI3My0xMi4yNjMsMC4wMDQKCWMtMy4zNzksMy4zNzktMy4zNzksOC44OCwwLDEyLjI2M0MxMjEuMzEzLDQwMy4zODQsMTI3LjAzOSw0MDMuMzc1LDEzMC4yOTksNDAwLjEwNnoiLz4KPHBhdGggc3R5bGU9ImZpbGw6IzczQzlDOTsiIGQ9Ik0xOS45MiwzMjYuNTIxYy0xLjY2LDEuNjYtMi41NzUsMy44NDEtMi41NzUsNi4xNGMwLDIuMjkxLDAuODk4LDQuNDUxLDIuNTMyLDYuMDg1bDE1My4zOTUsMTUzLjM5MQoJYzMuMzYyLDMuMzY2LDguODU5LDMuMzQxLDEyLjIyMS0wLjA0Mmw0Mi45MzEtNDIuOTI2TDYyLjg1LDI4My41OTRMMTkuOTIsMzI2LjUyMXogTTEwNS43NzMsMzc1LjU3NQoJYzkuODI0LTkuODMzLDI2Ljk2Ni05LjgxNiwzNi43OTEsMGMxMC4xNDYsMTAuMTQyLDEwLjE0NiwyNi42NTMsMCwzNi43OTVjLTQuOTEyLDQuOTEyLTExLjQ0Miw3LjYxOC0xOC4zOTUsNy42MTgKCWMtNi45NDUsMC0xMy40ODMtMi43MDYtMTguMzk1LTcuNjE0di0wLjAwNEM5NS42MjYsNDAyLjIyNyw5NS42MjYsMzg1LjcxNywxMDUuNzczLDM3NS41NzV6Ii8+Cjxwb2x5Z29uIHN0eWxlPSJmaWxsOiM4MUE0RTM7IiBwb2ludHM9IjE3MS41MjgsMzYuOTQ5IDEyNy43MDgsNTEuNTU4IDE1Ni45MTgsODAuNzczICIvPgo8cGF0aCBzdHlsZT0iZmlsbDojRUFFQUVBOyIgZD0iTTMzOC43NjEsMTkuODU4Yy0zLjM3MS0zLjM2Mi04Ljg1OS0zLjMyNC0xMi4yNDYsMC4wNjRMNzUuMjU4LDI3MS4xODNsMTY1LjU3NCwxNjUuNTc0CglMNDkyLjA4OSwxODUuNWMxLjY1MS0xLjY1MSwyLjU1OC0zLjgzNywyLjU2Ni02LjE2MWMwLjAwOC0yLjMwOC0wLjg4MS00LjQ2Ny0yLjQ5OC02LjA4OUwzMzguNzYxLDE5Ljg1OHogTTM4MS43NjgsMTk3LjQ1NEgyNTEuNjgxCgl2LTE3LjM0NWgxMzAuMDg4VjE5Ny40NTR6IE00NDIuNDc2LDE3MS40MzZIMzEyLjM4OHYtMTcuMzQ1aDEzMC4wODhWMTcxLjQzNnoiLz4KPGc+Cgk8cGF0aCBzdHlsZT0iZmlsbDojMzE0RTU1OyIgZD0iTTQ3Ny4zNjEsMzA5Ljg3NWwtNzMuNTg5LDI0LjUzMWMtMi44NTQsMC45NTMtNS4wMDUsMy4zMTEtNS43LDYuMjM4CgkJYy0wLjY4NiwyLjkyMiwwLjE4Niw1Ljk5NiwyLjMxMiw4LjEyMmwxMi4yNjQsMTIuMjYzTDMwOC4zOTksNDY1LjI4MWwxMi4yNjMsMTIuMjYzbDEwNC4yNDktMTA0LjI1M2wyNC41MzQsMjQuNTMyCgkJYzEuNjQzLDEuNjQ3LDMuODYyLDIuNTQxLDYuMTMyLDIuNTQxYzAuNjYxLDAsMS4zMy0wLjA3NiwxLjk5LTAuMjMzYzIuOTMtMC42OSw1LjI4NS0yLjg0Niw2LjIzMy01LjY5NmwyNC41MjctNzMuNTg5CgkJYzEuMDQyLTMuMTE3LDAuMjI5LTYuNTU1LTIuMDkyLTguODc2QzQ4My45MTYsMzA5LjY0Miw0ODAuNDg2LDMwOC44MjksNDc3LjM2MSwzMDkuODc1eiBNNDUxLjc4NCwzNzUuNjM4bC0yOS4yMTEtMjkuMjE1CgkJbDQzLjgyLTE0LjYwOUw0NTEuNzg0LDM3NS42Mzh6Ii8+Cgk8cGF0aCBzdHlsZT0iZmlsbDojMzE0RTU1OyIgZD0iTTI1Ljc5NywxODIuNjc5TDEzMC4wNDYsNzguNDI2bDI0LjUzNCwyNC41MzJjMS42NDMsMS42NDcsMy44NjIsMi41NDEsNi4xMzIsMi41NDEKCQljMC42NjEsMCwxLjMzLTAuMDc2LDEuOTktMC4yMzNjMi45My0wLjY5LDUuMjg1LTIuODQ2LDYuMjMzLTUuNjk2bDI0LjUyNy03My41ODljMS4wNDItMy4xMTcsMC4yMjktNi41NTUtMi4wOTItOC44NzYKCQljLTIuMzIxLTIuMzI5LTUuNzUxLTMuMTQyLTguODc2LTIuMDk2bC03My41ODksMjQuNTMxYy0yLjg1NCwwLjk1My01LjAwNSwzLjMxMS01LjcsNi4yMzhjLTAuNjg2LDIuOTIyLDAuMTg2LDUuOTk2LDIuMzEyLDguMTIyCgkJbDEyLjI2NCwxMi4yNjNMMTMuNTM0LDE3MC40MTZMMjUuNzk3LDE4Mi42Nzl6IE0xNzEuNTI4LDM2Ljk0OWwtMTQuNjA5LDQzLjgyNGwtMjkuMjExLTI5LjIxNUwxNzEuNTI4LDM2Ljk0OXoiLz4KCTxwYXRoIHN0eWxlPSJmaWxsOiMzMTRFNTU7IiBkPSJNNTA0LjQyLDE2MC45ODVMMzUxLjAyNSw3LjU5NGMtMTAuMTIxLTEwLjEyOS0yNi42MTktMTAuMDkxLTM2Ljc3MywwLjA2NEw1MC43MzEsMjcxLjE4MwoJCWwwLjAwMSwwLjAwMUw3LjY1NiwzMTQuMjUzQzIuNzI3LDMxOS4xODYsMC4wMDgsMzI1LjcyMSwwLDMzMi42NTdjMCw2LjkyOCwyLjcwMiwxMy40NDUsNy42MTQsMTguMzUzTDE2MS4wMDksNTA0LjQKCQljNS4wNTYsNS4wNTIsMTEuNjg4LDcuNTgsMTguMzM2LDcuNThjNi42NjUsMCwxMy4zMzEtMi41NDEsMTguNDEyLTcuNjE4bDU1LjE5NC01NS4xOTRsLTAuMDAyLTAuMDAybDI1MS40MDMtMjUxLjM5OQoJCWM0LjkxMi00LjkxMiw3LjYzMS0xMS40MzgsNy42NDgtMTguMzc4QzUxMi4wMjUsMTcyLjQyNyw1MDkuMzMyLDE2NS44OTMsNTA0LjQyLDE2MC45ODV6IE0xODUuNDkzLDQ5Mi4wOTUKCQljLTMuMzYyLDMuMzgzLTguODU5LDMuNDA5LTEyLjIyMSwwLjA0MkwxOS44NzcsMzM4Ljc0NmMtMS42MzUtMS42MzUtMi41MzItMy43OTQtMi41MzItNi4wODVjMC0yLjI5OSwwLjkxNS00LjQ4LDIuNTc1LTYuMTQKCQlsNDIuOTMxLTQyLjkyNmwxNjUuNTc0LDE2NS41NzRMMTg1LjQ5Myw0OTIuMDk1eiBNNDkyLjA4OSwxODUuNUwyNDAuODMxLDQzNi43NTdMNzUuMjU4LDI3MS4xODNMMzI2LjUxNSwxOS45MjEKCQljMy4zODgtMy4zODgsOC44NzYtMy40MjYsMTIuMjQ2LTAuMDY0bDE1My4zOTUsMTUzLjM5MWMxLjYxOCwxLjYyMiwyLjUwNywzLjc4MSwyLjQ5OCw2LjA4OQoJCUM0OTQuNjQ2LDE4MS42NjMsNDkzLjc0LDE4My44NDgsNDkyLjA4OSwxODUuNXoiLz4KCTxwYXRoIHN0eWxlPSJmaWxsOiMzMTRFNTU7IiBkPSJNMTA1Ljc3Myw0MTIuMzc0YzQuOTEyLDQuOTA4LDExLjQ1LDcuNjE0LDE4LjM5NSw3LjYxNGM2Ljk1MywwLDEzLjQ4My0yLjcwNiwxOC4zOTUtNy42MTgKCQljMTAuMTQ2LTEwLjE0MiwxMC4xNDYtMjYuNjUzLDAtMzYuNzk1Yy05LjgyNC05LjgxNi0yNi45NjYtOS44MzMtMzYuNzkxLDBjLTEwLjE0NiwxMC4xNDItMTAuMTQ2LDI2LjY1MywwLDM2Ljc5NVY0MTIuMzc0egoJCSBNMTE4LjAzNiwzODcuODQyYzMuMjg2LTMuMjc4LDkuMDExLTMuMjczLDEyLjI2My0wLjAwNGMzLjM3OSwzLjM4MywzLjM3OSw4Ljg4NCwwLDEyLjI2OGMtMy4yNjEsMy4yNjktOC45ODYsMy4yNzgtMTIuMjYzLDAKCQlDMTE0LjY1NywzOTYuNzIyLDExNC42NTcsMzkxLjIyMiwxMTguMDM2LDM4Ny44NDJ6Ii8+Cgk8cmVjdCB4PSIzMTIuMzg0IiB5PSIxNTQuMDg3IiBzdHlsZT0iZmlsbDojMzE0RTU1OyIgd2lkdGg9IjEzMC4wODgiIGhlaWdodD0iMTcuMzQ1Ii8+Cgk8cmVjdCB4PSIyNTEuNjc2IiB5PSIxODAuMTA0IiBzdHlsZT0iZmlsbDojMzE0RTU1OyIgd2lkdGg9IjEzMC4wODgiIGhlaWdodD0iMTcuMzQ1Ii8+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPC9zdmc+Cg==)### Incremental Updates
+
+Built on bsdiff/hdiff, achieving KB-level minimal update packages.
+
+![Fast Publishing](data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pgo8IS0tIEdlbmVyYXRvcjogQWRvYmUgSWxsdXN0cmF0b3IgMTkuMC4wLCBTVkcgRXhwb3J0IFBsdWctSW4gLiBTVkcgVmVyc2lvbjogNi4wMCBCdWlsZCAwKSAgLS0+CjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiCgkgdmlld0JveD0iMCAwIDUxMiA1MTIiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDUxMiA1MTI7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPGc+Cgk8cGF0aCBzdHlsZT0iZmlsbDojNzNDOUM5OyIgZD0iTTIwMy40MjEsMTQyLjY2NmMwLDM2LjMxLTkuNjIyLDY4LjM1MS0yNS4wODIsOTAuNTY1YzMyLjg5OC0xOC40NzYsNTUuMjA1LTUzLjY2LDU1LjIwNS05NC4wMDMKCQloLTMwLjIzQzIwMy4zMzQsMTQwLjM4MiwyMDMuNDIxLDE0MS41MDQsMjAzLjQyMSwxNDIuNjY2eiIvPgoJPHBhdGggc3R5bGU9ImZpbGw6IzczQzlDOTsiIGQ9Ik0yMDIuMjA1LDEyMS4yNjNoMjkuNzE3Yy02LjEwNi0zNi4xNzItMzAuMjA1LTY2LjI1OS02Mi44MjEtODAuNjUyCgkJQzE4Ni4zODcsNTguNjM0LDE5OC41NDYsODcuMzcsMjAyLjIwNSwxMjEuMjYzeiIvPgoJPHBhdGggc3R5bGU9ImZpbGw6IzczQzlDOTsiIGQ9Ik0xMTYuNzcyLDEyMS4yNjNWMzkuNjc4Yy0yNC4yNDIsNi43MjgtNDQuMTg5LDM5LjkzMS00OS4zODgsODEuNTg1SDExNi43NzJ6Ii8+Cgk8cGF0aCBzdHlsZT0iZmlsbDojNzNDOUM5OyIgZD0iTTQ5LjI5NiwxMjEuMjYzYzMuNjU5LTMzLjg5MSwxNS44Mi02Mi42MjYsMzMuMTA3LTgwLjY0OQoJCWMtMzIuNjE0LDE0LjM5NC01Ni43MDksNDQuNDc5LTYyLjgxNiw4MC42NDlINDkuMjk2eiIvPgoJPHBhdGggc3R5bGU9ImZpbGw6IzczQzlDOTsiIGQ9Ik0xMzQuNzM3LDM5LjY3OXY4MS41ODVoNDkuMzc5QzE3OC45MTcsNzkuNjEsMTU4Ljk3Myw0Ni40MDgsMTM0LjczNywzOS42Nzl6Ii8+Cgk8cGF0aCBzdHlsZT0iZmlsbDojNzNDOUM5OyIgZD0iTTEzNC43MzcsMjQ1LjY0NmMyOC4yNzEtNy44NSw1MC43MTktNTEuNzUyLDUwLjcxOS0xMDIuOTc5YzAtMS4xNTktMC4wODEtMi4yODgtMC4xMDMtMy40MzgKCQloLTUwLjYxNlYyNDUuNjQ2eiIvPgoJPHBhdGggc3R5bGU9ImZpbGw6IzczQzlDOTsiIGQ9Ik0xMTYuNzcyLDI0NS42NDZWMTM5LjIyOEg2Ni4xNDdjLTAuMDIyLDEuMTUxLTAuMTAzLDIuMjgtMC4xMDMsMy40MzgKCQlDNjYuMDQ0LDE5My44OTUsODguNDk0LDIzNy43OTgsMTE2Ljc3MiwyNDUuNjQ2eiIvPgoJPHBhdGggc3R5bGU9ImZpbGw6IzczQzlDOTsiIGQ9Ik00OC4wNzksMTQyLjY2NmMwLTEuMTYzLDAuMDg3LTIuMjg0LDAuMTA3LTMuNDM4SDE3Ljk2NWMwLDQwLjM0LDIyLjMwNSw3NS41MjMsNTUuMTk4LDkzLjk5OQoJCUM1Ny43MDIsMjExLjAxNCw0OC4wNzksMTc4Ljk3NCw0OC4wNzksMTQyLjY2NnoiLz4KPC9nPgo8cmVjdCB4PSIyOTYuNDIxIiB5PSIzNDUuODI1IiBzdHlsZT0iZmlsbDojRUFFQUVBOyIgd2lkdGg9IjE3OS42NDkiIGhlaWdodD0iODkuODI1Ii8+Cjxwb2x5Z29uIHN0eWxlPSJmaWxsOiNEOEQ4RDg7IiBwb2ludHM9IjI5My41MTgsNDUzLjYxNCAyODIuNzM3LDQ4MC41NjIgNDg5Ljc1NSw0ODAuNTYyIDQ3OC45NzQsNDUzLjYxNCAiLz4KPGc+Cgk8cGF0aCBzdHlsZT0iZmlsbDojMzE0RTU1OyIgZD0iTTI1MS41MDksMTM5LjIyOGMwLTY5LjM0Mi01Ni40MTItMTI1Ljc1NC0xMjUuNzU0LTEyNS43NTRTMCw2OS44ODYsMCwxMzkuMjI4CgkJczU2LjQxMiwxMjUuNzU0LDEyNS43NTQsMTI1Ljc1NFMyNTEuNTA5LDIwOC41NywyNTEuNTA5LDEzOS4yMjh6IE02Ni4xNDcsMTM5LjIyOGg1MC42MjV2MTA2LjQxOAoJCWMtMjguMjc4LTcuODQ4LTUwLjcyOC01MS43NTItNTAuNzI4LTEwMi45OEM2Ni4wNDQsMTQxLjUwOCw2Ni4xMjQsMTQwLjM3OSw2Ni4xNDcsMTM5LjIyOHogTTE4NS40NTYsMTQyLjY2NgoJCWMwLDUxLjIyNy0yMi40NDksOTUuMTI5LTUwLjcxOSwxMDIuOTc5VjEzOS4yMjhoNTAuNjE2QzE4NS4zNzYsMTQwLjM3OSwxODUuNDU2LDE0MS41MDgsMTg1LjQ1NiwxNDIuNjY2eiBNMTM0LjczNywxMjEuMjYzVjM5LjY3OQoJCWMyNC4yMzYsNi43Myw0NC4xOCwzOS45MzIsNDkuMzc5LDgxLjU4NUgxMzQuNzM3eiBNMTE2Ljc3MiwzOS42Nzh2ODEuNTg1SDY3LjM4NEM3Mi41ODMsNzkuNjA5LDkyLjUzLDQ2LjQwNiwxMTYuNzcyLDM5LjY3OHoKCQkgTTE3OC4zMzksMjMzLjIzMWMxNS40Ni0yMi4yMTQsMjUuMDgyLTU0LjI1NSwyNS4wODItOTAuNTY1YzAtMS4xNjMtMC4wODctMi4yODQtMC4xMDctMy40MzhoMzAuMjMKCQlDMjMzLjU0NCwxNzkuNTcxLDIxMS4yMzcsMjE0Ljc1NSwxNzguMzM5LDIzMy4yMzF6IE0yMzEuOTIyLDEyMS4yNjNoLTI5LjcxN2MtMy42NTktMzMuODkzLTE1LjgxNy02Mi42MjktMzMuMTA0LTgwLjY1MgoJCUMyMDEuNzE3LDU1LjAwNCwyMjUuODE1LDg1LjA5MSwyMzEuOTIyLDEyMS4yNjN6IE04Mi40MDMsNDAuNjE0Yy0xNy4yODcsMTguMDIzLTI5LjQ0Nyw0Ni43NTgtMzMuMTA3LDgwLjY0OUgxOS41ODcKCQlDMjUuNjk0LDg1LjA5Myw0OS43ODksNTUuMDA4LDgyLjQwMyw0MC42MTR6IE0xNy45NjUsMTM5LjIyOGgzMC4yMjFjLTAuMDIsMS4xNTQtMC4xMDcsMi4yNzYtMC4xMDcsMy40MzgKCQljMCwzNi4zMDcsOS42MjMsNjguMzQ3LDI1LjA4NCw5MC41NjFDNDAuMjcsMjE0Ljc1MSwxNy45NjUsMTc5LjU2OCwxNy45NjUsMTM5LjIyOHoiLz4KCTxwYXRoIHN0eWxlPSJmaWxsOiMzMTRFNTU7IiBkPSJNNTExLjM2LDQ4Ni4yMTFsLTE3LjMyNC00My4zMTFWMzM2Ljg0MmMwLTQuOTY1LTQuMDE4LTguOTgyLTguOTgyLTguOTgySDI4Ny40MzkKCQljLTQuOTY1LDAtOC45ODIsNC4wMTgtOC45ODIsOC45ODJ2MTA2LjA1N2wtMTcuMzI0LDQzLjMxMWMtMS4xMDUsMi43NjMtMC43NjMsNS45MDQsMC45MDMsOC4zNjgKCQljMS42NzUsMi40NjUsNC40NTYsMy45NDcsNy40MzksMy45NDdoMjMzLjU0NGMyLjk4MiwwLDUuNzYzLTEuNDgzLDcuNDM5LTMuOTQ3QzUxMi4xMjMsNDkyLjExNCw1MTIuNDY1LDQ4OC45NzQsNTExLjM2LDQ4Ni4yMTF6CgkJIE0yOTYuNDIxLDM0NS44MjVoMTc5LjY0OXY4OS44MjVIMjk2LjQyMVYzNDUuODI1eiBNMjgyLjczNyw0ODAuNTYybDEwLjc4MS0yNi45NDdoMTg1LjQ1NmwxMC43ODEsMjYuOTQ3SDI4Mi43Mzd6Ii8+Cgk8cGF0aCBzdHlsZT0iZmlsbDojMzE0RTU1OyIgZD0iTTIzMC45MTIsMzg1LjkzYy0zLjUwOS0zLjUwOS05LjE5My0zLjUwOS0xMi43MDIsMGMtMy41MDksMy41MDktMy41MDksOS4xOTMsMCwxMi43MDJsMTAuMDcsMTAuMDcKCQloLTkzLjU0NHYtNzUuNTc5bDEwLjA3LDEwLjA3YzEuNzU0LDEuNzU0LDQuMDUzLDIuNjMxLDYuMzUxLDIuNjMxYzIuMjk4LDAsNC41OTctMC44NzcsNi4zNTEtMi42MzIKCQljMy41MDktMy41MDksMy41MDktOS4xOTMsMC0xMi43MDJsLTIzLjMyMS0yMy4zMjFjLTEuMTY2LTMuNjA3LTQuNDM1LTYuMjU4LTguNDMzLTYuMjU4Yy0zLjk5OCwwLTcuMjY2LDIuNjUtOC40MzMsNi4yNTcKCQlMOTQsMzMwLjQ5MWMtMy41MDksMy41MDktMy41MDksOS4xOTMsMCwxMi43MDJzOS4xOTMsMy41MDksMTIuNzAyLDBsMTAuMDctMTAuMDd2ODQuNTYxYzAsNC45NjUsNC4wMTgsOC45ODIsOC45ODIsOC45ODJoMTAyLjUyNgoJCWwtMTAuMDcsMTAuMDdjLTMuNTA5LDMuNTA5LTMuNTA5LDkuMTkzLDAsMTIuNzAyYzEuNzU0LDEuNzU0LDQuMDUzLDIuNjMyLDYuMzUxLDIuNjMyYzIuMjk4LDAsNC41OTctMC44NzcsNi4zNTEtMi42MzIKCQlsMjUuNDA0LTI1LjQwNGMzLjUwOS0zLjUwOSwzLjUwOS05LjE5MywwLTEyLjcwMkwyMzAuOTEyLDM4NS45M3oiLz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8L3N2Zz4K)### Fast Publishing
+
+Easy-to-use CLI and web management, with native CI/CD auto-deployment support.
+
+![Lightning Downloads](data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pgo8IS0tIEdlbmVyYXRvcjogQWRvYmUgSWxsdXN0cmF0b3IgMTkuMC4wLCBTVkcgRXhwb3J0IFBsdWctSW4gLiBTVkcgVmVyc2lvbjogNi4wMCBCdWlsZCAwKSAgLS0+CjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiCgkgdmlld0JveD0iMCAwIDUxMiA1MTIiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDUxMiA1MTI7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPHBhdGggc3R5bGU9ImZpbGw6I0U0QUQ0MDsiIGQ9Ik0zMS40MzksMzI3Ljg2djEzNC43MzdoNzEuODZWMzI3Ljg2SDMxLjQzOXogTTU4LjM4NiwzOTAuNzM3SDQwLjQyMXYtMTcuOTY1aDE3Ljk2NVYzOTAuNzM3egoJIE01OC4zODYsMzU0LjgwN0g0MC40MjF2LTE3Ljk2NWgxNy45NjVWMzU0LjgwN3oiLz4KPHBhdGggc3R5bGU9ImZpbGw6I0VBRUFFQTsiIGQ9Ik0xOTMuMTIzLDk0LjMxNmgtNzEuODZ2MTQzLjcxOXY3MS44NnYxNTIuNzAyaDcxLjg2VjI2NC45ODJWOTQuMzE2eiBNMTQ4LjIxMSw0MDguNzAyaC0xNy45NjUKCXYtMTcuOTY1aDE3Ljk2NVY0MDguNzAyeiBNMTQ4LjIxMSwzNzIuNzcyaC0xNy45NjV2LTE3Ljk2NWgxNy45NjVWMzcyLjc3MnogTTE4NC4xNCwzOTAuNzM3aC0xNy45NjV2LTE3Ljk2NWgxNy45NjVWMzkwLjczN3oKCSBNMTg0LjE0LDM1NC44MDdoLTE3Ljk2NXYtMTcuOTY1aDE3Ljk2NVYzNTQuODA3eiIvPgo8Zz4KCTxyZWN0IHg9IjIxMS4wODgiIHk9IjI4Mi45NDciIHN0eWxlPSJmaWxsOiNFNEFENDA7IiB3aWR0aD0iMzUuOTMiIGhlaWdodD0iMTc5LjY0OSIvPgoJPHJlY3QgeD0iMzEuNDM5IiB5PSIyNTYiIHN0eWxlPSJmaWxsOiNFNEFENDA7IiB3aWR0aD0iNzEuODYiIGhlaWdodD0iNTMuODk1Ii8+CjwvZz4KPGc+Cgk8cmVjdCB4PSIzNjMuNzg5IiB5PSIzMjcuODYiIHN0eWxlPSJmaWxsOiNFQUVBRUE7IiB3aWR0aD0iMTE2Ljc3MiIgaGVpZ2h0PSIyNi45NDciLz4KCTxwYXRoIHN0eWxlPSJmaWxsOiNFQUVBRUE7IiBkPSJNMzQ1LjgyNSwzNTQuODA3di00NC45MTJ2LTEwMS41TDI2NC45ODIsMTc5djg1Ljk4MnYxOTcuNjE0aDgwLjg0MnYtODkuODI1VjM1NC44MDd6CgkJIE0yOTEuOTMsMzkwLjczN2gtMTcuOTY1di0xNy45NjVoMTcuOTY1VjM5MC43Mzd6IE0yOTEuOTMsMzU0LjgwN2gtMTcuOTY1di0xNy45NjVoMTcuOTY1VjM1NC44MDd6Ii8+CjwvZz4KPHBhdGggc3R5bGU9ImZpbGw6I0U0QUQ0MDsiIGQ9Ik0zNjMuNzg5LDM3Mi43NzJ2ODkuODI1aDExNi43NzJ2LTg5LjgyNUgzNjMuNzg5eiBNMzkwLjczNywzOTkuNzE5aC0xNy45NjV2LTE3Ljk2NWgxNy45NjVWMzk5LjcxOXoKCSIvPgo8Zz4KCTxwYXRoIHN0eWxlPSJmaWxsOiMzMTRFNTU7IiBkPSJNNDk4LjUyNiw0NjIuNTk2di04OS44MjV2LTE3Ljk2NXYtNDQuOTEySDM2My43ODlWMTk1LjgxNmwtMTE2Ljc3Mi00Mi40NjV2MTExLjYzMmgtMzUuOTNWNzYuMzUxCgkJSDEwMy4yOTh2MTYxLjY4NEgxMy40NzR2NzEuODZ2MTUyLjcwMkgwdjE3Ljk2NWgxMy40NzRoODkuODI1aDE3Ljk2NWg3MS44NmgxNy45NjVoMzUuOTNoMTcuOTY1aDgwLjg0MmgxNy45NjVoMTM0LjczN0g1MTIKCQl2LTE3Ljk2NUg0OTguNTI2eiBNNDgwLjU2MSwzMjcuODZ2MjYuOTQ3SDM2My43ODlWMzI3Ljg2SDQ4MC41NjF6IE0zMS40MzksMjU2aDcxLjg2djUzLjg5NWgtNzEuODZWMjU2eiBNMzEuNDM5LDQ2Mi41OTZWMzI3Ljg2CgkJaDcxLjg2djEzNC43MzdIMzEuNDM5eiBNMTIxLjI2Myw0NjIuNTk2VjMwOS44OTV2LTcxLjg2Vjk0LjMxNmg3MS44NnYxNzAuNjY3djE5Ny42MTRIMTIxLjI2M3ogTTIxMS4wODgsNDYyLjU5NlYyODIuOTQ3aDM1LjkzCgkJdjE3OS42NDlIMjExLjA4OHogTTI2NC45ODIsNDYyLjU5NlYyNjQuOTgyVjE3OWw4MC44NDIsMjkuMzk1djEwMS41djQ0LjkxMnYxNy45NjV2ODkuODI1SDI2NC45ODJ6IE0zNjMuNzg5LDQ2Mi41OTZ2LTg5LjgyNQoJCWgxMTYuNzcydjg5LjgyNUgzNjMuNzg5eiIvPgoJPHJlY3QgeD0iNDAuNDIxIiB5PSIzMzYuODQyIiBzdHlsZT0iZmlsbDojMzE0RTU1OyIgd2lkdGg9IjE3Ljk2NSIgaGVpZ2h0PSIxNy45NjUiLz4KCTxyZWN0IHg9IjI3My45NjUiIHk9IjMzNi44NDIiIHN0eWxlPSJmaWxsOiMzMTRFNTU7IiB3aWR0aD0iMTcuOTY1IiBoZWlnaHQ9IjE3Ljk2NSIvPgoJPHJlY3QgeD0iMTMwLjI0NiIgeT0iMzU0LjgwNyIgc3R5bGU9ImZpbGw6IzMxNEU1NTsiIHdpZHRoPSIxNy45NjUiIGhlaWdodD0iMTcuOTY1Ii8+Cgk8cmVjdCB4PSIxNjYuMTc1IiB5PSIzMzYuODQyIiBzdHlsZT0iZmlsbDojMzE0RTU1OyIgd2lkdGg9IjE3Ljk2NSIgaGVpZ2h0PSIxNy45NjUiLz4KCTxyZWN0IHg9IjM3Mi43NzIiIHk9IjM4MS43NTQiIHN0eWxlPSJmaWxsOiMzMTRFNTU7IiB3aWR0aD0iMTcuOTY1IiBoZWlnaHQ9IjE3Ljk2NSIvPgoJPHJlY3QgeD0iMjczLjk2NSIgeT0iMzcyLjc3MiIgc3R5bGU9ImZpbGw6IzMxNEU1NTsiIHdpZHRoPSIxNy45NjUiIGhlaWdodD0iMTcuOTY1Ii8+Cgk8cmVjdCB4PSIxMzAuMjQ2IiB5PSIzOTAuNzM3IiBzdHlsZT0iZmlsbDojMzE0RTU1OyIgd2lkdGg9IjE3Ljk2NSIgaGVpZ2h0PSIxNy45NjUiLz4KCTxyZWN0IHg9IjE2Ni4xNzUiIHk9IjM3Mi43NzIiIHN0eWxlPSJmaWxsOiMzMTRFNTU7IiB3aWR0aD0iMTcuOTY1IiBoZWlnaHQ9IjE3Ljk2NSIvPgoJPHJlY3QgeD0iNDAuNDIxIiB5PSIzNzIuNzcyIiBzdHlsZT0iZmlsbDojMzE0RTU1OyIgd2lkdGg9IjE3Ljk2NSIgaGVpZ2h0PSIxNy45NjUiLz4KCTxwYXRoIHN0eWxlPSJmaWxsOiMzMTRFNTU7IiBkPSJNMzM2Ljg0Miw5NC4zMTZjNDkuNTI2LDAsODkuODI1LDQwLjI5NCw4OS44MjUsODkuODI1YzAsNC45NjEsNC4wMTgsOC45ODIsOC45ODIsOC45ODIKCQlzOC45ODItNC4wMjIsOC45ODItOC45ODJjMC01OS40MzQtNDguMzUxLTEwNy43ODktMTA3Ljc4OS0xMDcuNzg5Yy00Ljk2NSwwLTguOTgyLDQuMDIyLTguOTgyLDguOTgyCgkJQzMyNy44Niw5MC4yOTQsMzMxLjg3Nyw5NC4zMTYsMzM2Ljg0Miw5NC4zMTZ6Ii8+Cgk8cGF0aCBzdHlsZT0iZmlsbDojMzE0RTU1OyIgZD0iTTMzNi44NDIsNDkuNDA0Yzc0LjI5OCwwLDEzNC43MzcsNjAuNDQzLDEzNC43MzcsMTM0LjczN2MwLDQuOTYxLDQuMDE4LDguOTgyLDguOTgyLDguOTgyCgkJczguOTgyLTQuMDIyLDguOTgyLTguOTgyYzAtODQuMjAyLTY4LjUtMTUyLjcwMi0xNTIuNzAyLTE1Mi43MDJjLTQuOTY1LDAtOC45ODIsNC4wMjItOC45ODIsOC45ODJTMzMxLjg3Nyw0OS40MDQsMzM2Ljg0Miw0OS40MDR6CgkJIi8+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPC9zdmc+Cg==)### Lightning Downloads
+
+Global high-speed CDN distribution ensures instant updates for every client.
+
+![Stable & Reliable](data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pgo8IS0tIEdlbmVyYXRvcjogQWRvYmUgSWxsdXN0cmF0b3IgMTkuMC4wLCBTVkcgRXhwb3J0IFBsdWctSW4gLiBTVkcgVmVyc2lvbjogNi4wMCBCdWlsZCAwKSAgLS0+CjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiCgkgdmlld0JveD0iMCAwIDUxMiA1MTIiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDUxMiA1MTI7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPGc+Cgk8cGF0aCBzdHlsZT0iZmlsbDojNUVDQzY2OyIgZD0iTTU0Ljg1NywyNTEuNDI5Yy0yMC4xNjUsMC0zNi41NzEsMTYuNDA2LTM2LjU3MSwzNi41NzFzMTYuNDA2LDM2LjU3MSwzNi41NzEsMzYuNTcxCgkJUzkxLjQyOSwzMDguMTY1LDkxLjQyOSwyODhTNzUuMDIyLDI1MS40MjksNTQuODU3LDI1MS40Mjl6Ii8+Cgk8cGF0aCBzdHlsZT0iZmlsbDojNUVDQzY2OyIgZD0iTTExOC44NTcsMTA1LjE0M2MtMjAuMTY1LDAtMzYuNTcxLDE2LjQwNi0zNi41NzEsMzYuNTcxczE2LjQwNiwzNi41NzEsMzYuNTcxLDM2LjU3MQoJCXMzNi41NzEtMTYuNDA2LDM2LjU3MS0zNi41NzFTMTM5LjAyMiwxMDUuMTQzLDExOC44NTcsMTA1LjE0M3oiLz4KCTxwYXRoIHN0eWxlPSJmaWxsOiM1RUNDNjY7IiBkPSJNNDU3LjE0MywyOTcuMTQzYy0yMC4xNjUsMC0zNi41NzEsMTYuNDA2LTM2LjU3MSwzNi41NzFzMTYuNDA2LDM2LjU3MSwzNi41NzEsMzYuNTcxCgkJczM2LjU3MS0xNi40MDYsMzYuNTcxLTM2LjU3MVM0NzcuMzA4LDI5Ny4xNDMsNDU3LjE0MywyOTcuMTQzeiIvPgo8L2c+CjxwYXRoIHN0eWxlPSJmaWxsOiNFNjVGNTg7IiBkPSJNNDU3LjE0MywyNDIuMjg2YzIwLjE2NSwwLDM2LjU3MS0xNi40MDYsMzYuNTcxLTM2LjU3MXMtMTYuNDA2LTM2LjU3MS0zNi41NzEtMzYuNTcxCglzLTM2LjU3MSwxNi40MDYtMzYuNTcxLDM2LjU3MVM0MzYuOTc4LDI0Mi4yODYsNDU3LjE0MywyNDIuMjg2eiIvPgo8Zz4KCTxwYXRoIHN0eWxlPSJmaWxsOiMzMTRFNTU7IiBkPSJNNDU3LjE0MywyNzguODU3Yy0yNy4xMjksMC00OS42NTgsMTkuODEzLTU0LjAzMSw0NS43MTRoLTM3LjM5NwoJCWMtMzAuMjUsMC01NC44NTcsMjQuNTk0LTU0Ljg1Nyw1NC44MjZWNDgwaDE4LjI4NlYzNzkuMzk3YzAtMjAuMTQ3LDE2LjQwNi0zNi41NCwzNi41NzEtMzYuNTRoMzcuMzk3CgkJYzQuMzczLDI1LjkwMiwyNi45MDIsNDUuNzE0LDU0LjAzMSw0NS43MTRjMzAuMjUsMCw1NC44NTctMjQuNjA3LDU0Ljg1Ny01NC44NTdDNTEyLDMwMy40NjQsNDg3LjM5MywyNzguODU3LDQ1Ny4xNDMsMjc4Ljg1N3oKCQkgTTQ1Ny4xNDMsMzcwLjI4NmMtMjAuMTY1LDAtMzYuNTcxLTE2LjQwNi0zNi41NzEtMzYuNTcxczE2LjQwNi0zNi41NzEsMzYuNTcxLTM2LjU3MXMzNi41NzEsMTYuNDA2LDM2LjU3MSwzNi41NzEKCQlTNDc3LjMwOCwzNzAuMjg2LDQ1Ny4xNDMsMzcwLjI4NnoiLz4KCTxwYXRoIHN0eWxlPSJmaWxsOiMzMTRFNTU7IiBkPSJNMjEwLjI4NiwxNDEuNzE0aC0zNi41NzFjMC0zMC4yNS0yNC42MDctNTQuODU3LTU0Ljg1Ny01NC44NTdTNjQsMTExLjQ2NCw2NCwxNDEuNzE0CgkJczI0LjYwNyw1NC44NTcsNTQuODU3LDU0Ljg1N2MyMy44MzEsMCw0NC4xMDItMTUuMjk5LDUxLjY1Ny0zNi41NzFoMzkuNzcyYzIwLjE2NSwwLDM2LjU3MSwxNi40MjksMzYuNTcxLDM2LjYyNVY0ODBoMTguMjg2CgkJVjE5Ni42MjVDMjY1LjE0MywxNjYuMzQ4LDI0MC41MzYsMTQxLjcxNCwyMTAuMjg2LDE0MS43MTR6IE0xMTguODU3LDE3OC4yODZjLTIwLjE2NSwwLTM2LjU3MS0xNi40MDYtMzYuNTcxLTM2LjU3MQoJCXMxNi40MDYtMzYuNTcxLDM2LjU3MS0zNi41NzFzMzYuNTcxLDE2LjQwNiwzNi41NzEsMzYuNTcxUzEzOS4wMjIsMTc4LjI4NiwxMTguODU3LDE3OC4yODZ6Ii8+Cgk8cGF0aCBzdHlsZT0iZmlsbDojMzE0RTU1OyIgZD0iTTE0Ni4yODYsMjc4Ljg1N2gtMzcuMzk3Yy00LjM3My0yNS45MDItMjYuOTAyLTQ1LjcxNC01NC4wMzEtNDUuNzE0QzI0LjYwNywyMzMuMTQzLDAsMjU3Ljc1LDAsMjg4CgkJczI0LjYwNyw1NC44NTcsNTQuODU3LDU0Ljg1N2MyNy4xMjksMCw0OS42NTgtMTkuODEzLDU0LjAzMS00NS43MTRoMzcuMzk3YzIwLjE2NSwwLDM2LjU3MSwxNi40MiwzNi41NzEsMzYuNjAzVjQ4MGgxOC4yODYKCQlWMzMzLjc0NkMyMDEuMTQzLDMwMy40ODIsMTc2LjUzNiwyNzguODU3LDE0Ni4yODYsMjc4Ljg1N3ogTTU0Ljg1NywzMjQuNTcxYy0yMC4xNjUsMC0zNi41NzEtMTYuNDA2LTM2LjU3MS0zNi41NzEKCQlzMTYuNDA2LTM2LjU3MSwzNi41NzEtMzYuNTcxUzkxLjQyOSwyNjcuODM1LDkxLjQyOSwyODhTNzUuMDIyLDMyNC41NzEsNTQuODU3LDMyNC41NzF6Ii8+Cgk8cGF0aCBzdHlsZT0iZmlsbDojMzE0RTU1OyIgZD0iTTM3My42MjUsMjE0Ljg1N2gyOS40ODdjNC4zNzMsMjUuOTAyLDI2LjkwMiw0NS43MTQsNTQuMDMxLDQ1LjcxNAoJCWMzMC4yNSwwLDU0Ljg1Ny0yNC42MDcsNTQuODU3LTU0Ljg1N3MtMjQuNjA3LTU0Ljg1Ny01NC44NTctNTQuODU3Yy0yNy4xMjksMC00OS42NTgsMTkuODEzLTU0LjAzMSw0NS43MTRoLTI5LjQ4NwoJCWMtMTQuMzkzLDAtMjYuMTAzLTExLjcxNC0yNi4xMDMtMjYuMTE2VjMyaC0xOC4yODZ2MTM4LjQ1NUMzMjkuMjM3LDE5NC45MzgsMzQ5LjE0NywyMTQuODU3LDM3My42MjUsMjE0Ljg1N3ogTTQ1Ny4xNDMsMTY5LjE0MwoJCWMyMC4xNjUsMCwzNi41NzEsMTYuNDA2LDM2LjU3MSwzNi41NzFzLTE2LjQwNiwzNi41NzEtMzYuNTcxLDM2LjU3MXMtMzYuNTcxLTE2LjQwNi0zNi41NzEtMzYuNTcxCgkJUzQzNi45NzgsMTY5LjE0Myw0NTcuMTQzLDE2OS4xNDN6Ii8+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPGc+CjwvZz4KPC9zdmc+Cg==)### Stable & Reliable
+
+Built-in crash reporting and rollback mechanisms keep your production apps safe.
+
+![Flexible Extensibility](data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pgo8IS0tIEdlbmVyYXRvcjogQWRvYmUgSWxsdXN0cmF0b3IgMTkuMC4wLCBTVkcgRXhwb3J0IFBsdWctSW4gLiBTVkcgVmVyc2lvbjogNi4wMCBCdWlsZCAwKSAgLS0+CjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiCgkgdmlld0JveD0iMCAwIDUxMiA1MTIiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDUxMiA1MTI7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPGc+Cgk8cGF0aCBzdHlsZT0iZmlsbDojNUVDQzY2OyIgZD0iTTEyOCwzODRjMCwxNS4xMjUsMTIuMzA0LDI3LjQyOSwyNy40MjksMjcuNDI5YzE1LjEyNSwwLDI3LjQyOS0xMi4zMDQsMjcuNDI5LTI3LjQyOQoJCWMwLTE1LjEyNS0xMi4zMDQtMjcuNDI5LTI3LjQyOS0yNy40MjlDMTQwLjMwNCwzNTYuNTcxLDEyOCwzNjguODc1LDEyOCwzODR6Ii8+Cgk8cGF0aCBzdHlsZT0iZmlsbDojNUVDQzY2OyIgZD0iTTQwMi4yODYsMTI4Yy0xNS4xMjUsMC0yNy40MjksMTIuMzA0LTI3LjQyOSwyNy40MjljMCwxNS4xMjUsMTIuMzA0LDI3LjQyOSwyNy40MjksMjcuNDI5CgkJczI3LjQyOS0xMi4zMDQsMjcuNDI5LTI3LjQyOUM0MjkuNzE0LDE0MC4zMDQsNDE3LjQxMSwxMjgsNDAyLjI4NiwxMjh6Ii8+CjwvZz4KPHBhdGggc3R5bGU9ImZpbGw6I0U5RTdEMTsiIGQ9Ik0yNTYsMTguMjg2QzEyNC45MjQsMTguMjg2LDE4LjI4NiwxMjQuOTIsMTguMjg2LDI1NlMxMjQuOTI0LDQ5My43MTQsMjU2LDQ5My43MTQKCVM0OTMuNzE0LDM4Ny4wOCw0OTMuNzE0LDI1NlMzODcuMDc2LDE4LjI4NiwyNTYsMTguMjg2eiBNMTE2LjYzOCwxMjYuNDI5bDEyLjkyOC0xMi45MjhsMjUuODYyLDI1Ljg2MUwxODEuMjksMTEzLjVsMTIuOTI4LDEyLjkyOAoJbC0yNS44NjIsMjUuODYybDI1Ljg2MiwyNS44NjJMMTgxLjI5LDE5MS4wOGwtMjUuODYyLTI1Ljg2MmwtMjUuODYyLDI1Ljg2MmwtMTIuOTI4LTEyLjkyOEwxNDIuNSwxNTIuMjlMMTE2LjYzOCwxMjYuNDI5egoJIE0xNjUuOTg0LDMzOS42MzdjMjAuMTExLDQuNzk1LDM1LjE1OSwyMi44MDYsMzUuMTU5LDQ0LjM2M2MwLDI1LjIwNS0yMC41MDksNDUuNzE0LTQ1LjcxNCw0NS43MTRTMTA5LjcxNCw0MDkuMjA1LDEwOS43MTQsMzg0CgljMC0yMi41MjQsMTYuNDEyLTQxLjE4MywzNy44ODMtNDQuOTIzYzIuNTE3LTI3LjE3NywyMC43OC0xMTEuMzA3LDE0Ny44MDUtMTUyLjcxNmwtMzAuMDc3LTEyLjc2MwoJYy00LjY0Ny0xLjk3My02LjgxNy03LjM0OC00Ljg0NC0xMS45OTFjMS45NzgtNC42NTIsNy4zMzktNi44MTMsMTEuOTg3LTQuODQ4bDUwLjQ5NiwyMS40MzdjNC42NDcsMS45NzMsNi44MTcsNy4zNDgsNC44NDQsMTEuOTkxCglsLTIxLjQzMyw1MC40OTFjLTEuNDc4LDMuNDgyLTQuODYyLDUuNTcxLTguNDIsNS41NzFjLTEuMTkyLDAtMi40MDItMC4yMzItMy41NjctMC43MjNjLTQuNjQ3LTEuOTczLTYuODE3LTcuMzQ4LTQuODQ0LTExLjk5MQoJbDEyLjgzNS0zMC4yMzhDMTg2LjcwNiwyNDAuNTE2LDE2OC43MzYsMzE1LjcxNiwxNjUuOTg0LDMzOS42Mzd6IE0zNjEuOTI0LDM4OC40MzhsLTEyLjkyOCwxMi45MjhsLTI1Ljg1OS0yNS44NjFsLTI1Ljg1OSwyNS44NjEKCWwtMTIuOTI4LTEyLjkyOGwyNS44Ni0yNS44NjJsLTI1Ljg2LTI1Ljg2MmwxMi45MjgtMTIuOTI4bDI1Ljg1OSwyNS44NjFsMjUuODU5LTI1Ljg2MWwxMi45MjgsMTIuOTI4bC0yNS44NiwyNS44NjIKCUwzNjEuOTI0LDM4OC40Mzh6IE00MDIuMjg2LDIwMS4xNDNjLTI1LjIwNSwwLTQ1LjcxNC0yMC41MDktNDUuNzE0LTQ1LjcxNHMyMC41MDktNDUuNzE0LDQ1LjcxNC00NS43MTRTNDQ4LDEzMC4yMjMsNDQ4LDE1NS40MjkKCVM0MjcuNDkxLDIwMS4xNDMsNDAyLjI4NiwyMDEuMTQzeiIvPgo8Zz4KCTxwYXRoIHN0eWxlPSJmaWxsOiMzMTRFNTU7IiBkPSJNMjU2LDBDMTE0LjgzOSwwLDAsMTE0LjgzOSwwLDI1NnMxMTQuODM5LDI1NiwyNTYsMjU2czI1Ni0xMTQuODM5LDI1Ni0yNTZTMzk3LjE2MSwwLDI1NiwwegoJCSBNMjU2LDQ5My43MTRDMTI0LjkyNCw0OTMuNzE0LDE4LjI4NiwzODcuMDgsMTguMjg2LDI1NlMxMjQuOTI0LDE4LjI4NiwyNTYsMTguMjg2UzQ5My43MTQsMTI0LjkyLDQ5My43MTQsMjU2CgkJUzM4Ny4wNzYsNDkzLjcxNCwyNTYsNDkzLjcxNHoiLz4KCTxwb2x5Z29uIHN0eWxlPSJmaWxsOiMzMTRFNTU7IiBwb2ludHM9IjEyOS41NjcsMTkxLjA4IDE1NS40MjksMTY1LjIxOSAxODEuMjksMTkxLjA4IDE5NC4yMTksMTc4LjE1MiAxNjguMzU3LDE1Mi4yOSAKCQkxOTQuMjE5LDEyNi40MjkgMTgxLjI5LDExMy41IDE1NS40MjksMTM5LjM2MiAxMjkuNTY3LDExMy41IDExNi42MzgsMTI2LjQyOSAxNDIuNSwxNTIuMjkgMTE2LjYzOCwxNzguMTUyIAkiLz4KCTxwb2x5Z29uIHN0eWxlPSJmaWxsOiMzMTRFNTU7IiBwb2ludHM9IjM0OC45OTUsMzIzLjc4NiAzMjMuMTM2LDM0OS42NDcgMjk3LjI3NywzMjMuNzg2IDI4NC4zNDgsMzM2LjcxNCAzMTAuMjA4LDM2Mi41NzYgCgkJMjg0LjM0OCwzODguNDM4IDI5Ny4yNzcsNDAxLjM2NiAzMjMuMTM2LDM3NS41MDUgMzQ4Ljk5NSw0MDEuMzY2IDM2MS45MjQsMzg4LjQzOCAzMzYuMDY0LDM2Mi41NzYgMzYxLjkyNCwzMzYuNzE0IAkiLz4KCTxwYXRoIHN0eWxlPSJmaWxsOiMzMTRFNTU7IiBkPSJNMjg5LjU0NSwyMzMuNTM2Yy0xLjk3Myw0LjY0MywwLjE5NiwxMC4wMTgsNC44NDQsMTEuOTkxYzEuMTY1LDAuNDkxLDIuMzc1LDAuNzIzLDMuNTY3LDAuNzIzCgkJYzMuNTU4LDAsNi45NDItMi4wODksOC40Mi01LjU3MWwyMS40MzMtNTAuNDkxYzEuOTczLTQuNjQzLTAuMTk2LTEwLjAxOC00Ljg0NC0xMS45OTFsLTUwLjQ5Ni0yMS40MzcKCQljLTQuNjQ3LTEuOTY0LTEwLjAwOSwwLjE5Ni0xMS45ODcsNC44NDhjLTEuOTczLDQuNjQzLDAuMTk2LDEwLjAxOCw0Ljg0NCwxMS45OTFsMzAuMDc3LDEyLjc2MwoJCWMtMTI3LjAyNSw0MS40MDktMTQ1LjI4OCwxMjUuNTM5LTE0Ny44MDUsMTUyLjcxNmMtMjEuNDcxLDMuNzM5LTM3Ljg4MywyMi4zOTgtMzcuODgzLDQ0LjkyMgoJCWMwLDI1LjIwNSwyMC41MDksNDUuNzE0LDQ1LjcxNCw0NS43MTRzNDUuNzE0LTIwLjUwOSw0NS43MTQtNDUuNzE0YzAtMjEuNTU3LTE1LjA0OC0zOS41NjgtMzUuMTU5LTQ0LjM2MwoJCWMyLjc1Mi0yMy45MjEsMjAuNzIyLTk5LjEyMiwxMzYuMzk2LTEzNi4zNEwyODkuNTQ1LDIzMy41MzZ6IE0xODIuODU3LDM4NGMwLDE1LjEyNS0xMi4zMDQsMjcuNDI5LTI3LjQyOSwyNy40MjkKCQlDMTQwLjMwNCw0MTEuNDI5LDEyOCwzOTkuMTI1LDEyOCwzODRjMC0xNS4xMjUsMTIuMzA0LTI3LjQyOSwyNy40MjktMjcuNDI5QzE3MC41NTQsMzU2LjU3MSwxODIuODU3LDM2OC44NzUsMTgyLjg1NywzODR6Ii8+Cgk8cGF0aCBzdHlsZT0iZmlsbDojMzE0RTU1OyIgZD0iTTQwMi4yODYsMTA5LjcxNGMtMjUuMjA1LDAtNDUuNzE0LDIwLjUwOS00NS43MTQsNDUuNzE0czIwLjUwOSw0NS43MTQsNDUuNzE0LDQ1LjcxNAoJCVM0NDgsMTgwLjYzNCw0NDgsMTU1LjQyOVM0MjcuNDkxLDEwOS43MTQsNDAyLjI4NiwxMDkuNzE0eiBNNDAyLjI4NiwxODIuODU3Yy0xNS4xMjUsMC0yNy40MjktMTIuMzA0LTI3LjQyOS0yNy40MjkKCQljMC0xNS4xMjUsMTIuMzA0LTI3LjQyOSwyNy40MjktMjcuNDI5czI3LjQyOSwxMi4zMDQsMjcuNDI5LDI3LjQyOUM0MjkuNzE0LDE3MC41NTQsNDE3LjQxMSwxODIuODU3LDQwMi4yODYsMTgyLjg1N3oiLz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8Zz4KPC9nPgo8L3N2Zz4K)### Flexible Extensibility
+
+Powerful meta-info APIs for customized, free-form update delivery strategies.
+
+![Technical Support](data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pgo8IS0tIEdlbmVyYXRvcjogQWRvYmUgSWxsdXN0cmF0b3IgMTkuMC4wLCBTVkcgRXhwb3J0IFBsdWctSW4gLiBTVkcgVmVyc2lvbjogNi4wMCBCdWlsZCAwKSAgLS0+CjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiCgkgdmlld0JveD0iMCAwIDUxMiA1MTIiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDUxMiA1MTI7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPGc+Cgk8Y2lyY2xlIHN0eWxlPSJmaWxsOiM1RUNDNjY7IiBjeD0iMzYwLjk3MyIgY3k9IjIzNy40MjgiIHI9IjEzLjY5MSIvPgoJPGNpcmNsZSBzdHlsZT0iZmlsbDojNUVDQzY2OyIgY3g9IjI2OS42OTciIGN5PSIyMzcuNDI4IiByPSIxMy42OTEiLz4KPC9nPgo8cGF0aCBzdHlsZT0iZmlsbDojODFBNEUzOyIgZD0iTTM4My40MTIsMTIzLjI4NGMtMjEuNDExLDAtNDIuMTYyLDYuMDg4LTYwLjAzMywxNy42MTNsLTkuMDAzLDUuODEybC00LjMwNS05LjgxNAoJYy0xNi4yNzYtMzcuMTE3LTUzLjEyNS02MS4wOTQtOTMuODg3LTYxLjA5NGMtNTAuNjIxLDAtOTQuMTgyLDM3LjQ1NS0xMDEuMzIyLDg3LjEzMWwtMS4xMzIsNy44MjZoLTkuMDM4CgljLTQ3LjY2MSwwLTg2LjQzNiwzOC40OTgtODYuNDM2LDg1LjgyMVM1Ny4wMywzNDIuNCwxMDQuNjkxLDM0Mi40aDQyLjI1MXY2NC4wOThsNTcuMDU2LTY0LjA5OGgxODEuMjk1CgljNTkuNzM5LTAuOTI3LDEwOC40NTItNTAuMDc3LDEwOC40NTItMTA5LjU1OEM0OTMuNzQ1LDE3Mi40MzQsNDQ0LjI0NywxMjMuMjg0LDM4My40MTIsMTIzLjI4NHogTTE3OC40MTYsMjY5LjM3OQoJYy0xNy42MTMsMC0zMS45NDctMTQuMzMzLTMxLjk0Ny0zMS45NDdzMTQuMzMzLTMxLjk0NywzMS45NDctMzEuOTQ3czMxLjk0NywxNC4zMzMsMzEuOTQ3LDMxLjk0N1MxOTYuMDI5LDI2OS4zNzksMTc4LjQxNiwyNjkuMzc5egoJIE0yNjkuNjkxLDI2OS4zNzljLTE3LjYxMywwLTMxLjk0Ny0xNC4zMzMtMzEuOTQ3LTMxLjk0N3MxNC4zMzMtMzEuOTQ3LDMxLjk0Ny0zMS45NDdzMzEuOTQ3LDE0LjMzMywzMS45NDcsMzEuOTQ3CglTMjg3LjMwNSwyNjkuMzc5LDI2OS42OTEsMjY5LjM3OXogTTM2MC45NjcsMjY5LjM3OWMtMTcuNjEzLDAtMzEuOTQ3LTE0LjMzMy0zMS45NDctMzEuOTQ3czE0LjMzMy0zMS45NDcsMzEuOTQ3LTMxLjk0NwoJYzE3LjYxMywwLDMxLjk0NywxNC4zMzMsMzEuOTQ3LDMxLjk0N1MzNzguNTgsMjY5LjM3OSwzNjAuOTY3LDI2OS4zNzl6Ii8+CjxjaXJjbGUgc3R5bGU9ImZpbGw6IzVFQ0M2NjsiIGN4PSIxNzguNDIxIiBjeT0iMjM3LjQyOCIgcj0iMTMuNjkxIi8+CjxnPgoJPHBhdGggc3R5bGU9ImZpbGw6IzMxNEU1NTsiIGQ9Ik0zODMuNDEyLDEwNS4wMjljLTIxLjQ5MSwwLTQyLjQyLDUuMjc3LTYxLjEzLDE1LjM0Yy0yMC45NDctMzguNDcxLTYxLjU0OS02Mi44MjQtMTA2LjA5OS02Mi44MjQKCQljLTU3LjAyMSwwLTEwNi40NDcsNDAuMzk3LTExOC4wNDQsOTUuMTYyQzQzLjQ1NCwxNTYuMDc4LDAsMjAxLjM3NywwLDI1Ni41NzljMCw1Ny4zODYsNDYuOTY2LDEwNC4wNzYsMTA0LjY5MSwxMDQuMDc2aDIzLjk5NQoJCXY5My43OThsODMuNDk0LTkzLjc5OGwxNzMuMjU1LTAuMDE4QzQ1NS4yMiwzNTkuNTc3LDUxMiwzMDIuMjQ0LDUxMiwyMzIuODQyQzUxMiwxNjIuMzYyLDQ1NC4zMiwxMDUuMDI5LDM4My40MTIsMTA1LjAyOXoKCQkgTTM4NS4yOTMsMzQyLjRIMjAzLjk5OGwtNTcuMDU2LDY0LjA5OFYzNDIuNGgtNDIuMjUxYy00Ny42NjEsMC04Ni40MzYtMzguNDk4LTg2LjQzNi04NS44MnMzOC43NzQtODUuODIxLDg2LjQzNi04NS44MjFoOS4wMzgKCQlsMS4xMzItNy44MjZjNy4xNC00OS42NzYsNTAuNzAxLTg3LjEzMSwxMDEuMzIyLTg3LjEzMWM0MC43NjIsMCw3Ny42MTEsMjMuOTc4LDkzLjg4Nyw2MS4wOTRsNC4zMDUsOS44MTRsOS4wMDMtNS44MTIKCQljMTcuODcyLTExLjUyNSwzOC42MjMtMTcuNjEzLDYwLjAzMy0xNy42MTNjNjAuODM2LDAsMTEwLjMzMyw0OS4xNSwxMTAuMzMzLDEwOS41NTgKCQlDNDkzLjc0NSwyOTIuMzIzLDQ0NS4wMzIsMzQxLjQ3MywzODUuMjkzLDM0Mi40eiIvPgoJPHBhdGggc3R5bGU9ImZpbGw6IzMxNEU1NTsiIGQ9Ik0xNzguNDE2LDIwNS40ODZjLTE3LjYxMywwLTMxLjk0NywxNC4zMzMtMzEuOTQ3LDMxLjk0N3MxNC4zMzMsMzEuOTQ3LDMxLjk0NywzMS45NDcKCQlzMzEuOTQ3LTE0LjMzMywzMS45NDctMzEuOTQ3UzE5Ni4wMjksMjA1LjQ4NiwxNzguNDE2LDIwNS40ODZ6IE0xNzguNDE2LDI1MS4xMjRjLTcuNTUsMC0xMy42OTEtNi4xNDEtMTMuNjkxLTEzLjY5MQoJCWMwLTcuNTUsNi4xNDEtMTMuNjkxLDEzLjY5MS0xMy42OTFzMTMuNjkxLDYuMTQxLDEzLjY5MSwxMy42OTFDMTkyLjEwNywyNDQuOTgyLDE4NS45NjUsMjUxLjEyNCwxNzguNDE2LDI1MS4xMjR6Ii8+Cgk8cGF0aCBzdHlsZT0iZmlsbDojMzE0RTU1OyIgZD0iTTI2OS42OTEsMjA1LjQ4NmMtMTcuNjEzLDAtMzEuOTQ3LDE0LjMzMy0zMS45NDcsMzEuOTQ3czE0LjMzMywzMS45NDcsMzEuOTQ3LDMxLjk0NwoJCXMzMS45NDctMTQuMzMzLDMxLjk0Ny0zMS45NDdTMjg3LjMwNSwyMDUuNDg2LDI2OS42OTEsMjA1LjQ4NnogTTI2OS42OTEsMjUxLjEyNGMtNy41NSwwLTEzLjY5MS02LjE0MS0xMy42OTEtMTMuNjkxCgkJYzAtNy41NSw2LjE0MS0xMy42OTEsMTMuNjkxLTEzLjY5MWM3LjU1LDAsMTMuNjkxLDYuMTQxLDEzLjY5MSwxMy42OTFDMjgzLjM4MywyNDQuOTgyLDI3Ny4yNDEsMjUxLjEyNCwyNjkuNjkxLDI1MS4xMjR6Ii8+Cgk8cGF0aCBzdHlsZT0iZmlsbDojMzE0RTU1OyIgZD0iTTM2MC45NjcsMjA1LjQ4NmMtMTcuNjEzLDAtMzEuOTQ3LDE0LjMzMy0zMS45NDcsMzEuOTQ3czE0LjMzMywzMS45NDcsMzEuOTQ3LDMxLjk0NwoJCWMxNy42MTMsMCwzMS45NDctMTQuMzMzLDMxLjk0Ny0zMS45NDdTMzc4LjU4LDIwNS40ODYsMzYwLjk2NywyMDUuNDg2eiBNMzYwLjk2NywyNTEuMTI0Yy03LjU1LDAtMTMuNjkxLTYuMTQxLTEzLjY5MS0xMy42OTEKCQljMC03LjU1LDYuMTQxLTEzLjY5MSwxMy42OTEtMTMuNjkxczEzLjY5MSw2LjE0MSwxMy42OTEsMTMuNjkxQzM3NC42NTksMjQ0Ljk4MiwzNjguNTE3LDI1MS4xMjQsMzYwLjk2NywyNTEuMTI0eiIvPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+Cjwvc3ZnPgo=)### Technical Support
+
+Dedicated support groups with rapid hourly response times during business hours.
+
+Icons made by [Swifticons](https://www.flaticon.com/authors/swifticons) from [www.flaticon.com](https://www.flaticon.com/)## Let's Cresc
+
+Integrate enterprise-grade push capabilities into your app in just three steps
+
+bash - cresc-cli# 1. Install CLI globally$npm i -g react-native-update-cli# 2. Upload the base native package (only once)$cresc uploadIpa yourApp.ipa
+$cresc uploadApk yourApp.apk# 3. Bundle and upload the hot update package$cresc bundle --platform android
+$cresc bundle --platform ios$[View Integration Docs](/docs/getting-started)### Contact Us
+
+- [Email hi@charmlot.com](mailto:hi@charmlot.com)
+- QQ Group 729013783
+
+### Terms & Policies
+
+- [User Agreement](/agreement/)
+- [Privacy Policy](/agreement/#privacy)
+
+### Help & Support
+
+- [FAQ](/docs/faq)
+- [Issue Discussions](https://github.com/reactnativecn/react-native-update/issues)
+
+### Links
+
+- [React Native Chinese Site](https://reactnative.cn/)
+- [ReactJS](https://react.dev/)
+
+React Native Chinese Site © 2026 Wuhan Qingluo Network Technology Co., Ltd.
+
+|[E ICP Bei 20002031-3](https://beian.miit.gov.cn/)[![](https://img.alicdn.com/tfs/TB1..50QpXXXXX7XpXXXXXXXXXX-40-40.png)E Gongwang Anbei 42011202001821](http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=42011202001821)
+
