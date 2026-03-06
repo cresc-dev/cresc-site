@@ -12,7 +12,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v6
@@ -21,7 +21,7 @@ jobs:
 
       - name: Build
         run: |
-          cd site && npm i -g bun && bun i && bun run build && cd -
+          cd site && npm i && npm run build && cd -
           mv site/out ./
           cp CNAME out/
           mv policy out/policy
