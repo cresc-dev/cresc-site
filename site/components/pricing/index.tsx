@@ -61,11 +61,11 @@ const FeatureItem = ({ children }: { children: ReactNode }) => (
 
 function Pricing() {
   return (
-    <div className="min-h-screen bg-slate-50 font-sans py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-[#f7fbff] font-sans py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Background Decorative Blobs */}
       <div className="absolute top-0 inset-x-0 h-[500px] overflow-hidden -z-10 pointer-events-none">
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-400/20 blur-3xl mix-blend-multiply" />
-        <div className="absolute top-[20%] -right-[5%] w-[30%] h-[50%] rounded-full bg-indigo-400/20 blur-3xl mix-blend-multiply" />
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-sky-400/20 blur-3xl mix-blend-multiply" />
+        <div className="absolute top-[20%] -right-[5%] w-[30%] h-[50%] rounded-full bg-cyan-300/20 blur-3xl mix-blend-multiply" />
       </div>
 
       <div className="max-w-7xl mx-auto">
@@ -89,7 +89,7 @@ function Pricing() {
           {/* Card 1: 免费版 (Free) */}
           <div className="flex flex-col bg-white rounded-3xl p-8 shadow-sm border border-slate-200 hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
             <div className="mb-6">
-              <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-500 mb-6 drop-shadow-sm">
+              <div className="w-14 h-14 bg-sky-50 rounded-2xl flex items-center justify-center text-sky-600 mb-6 drop-shadow-sm">
                 <SmileOutlined className="text-3xl" />
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-2">Free</h3>
@@ -114,16 +114,16 @@ function Pricing() {
 
             <a
               href="docs/getting-started"
-              className="mt-auto block w-full py-4 px-6 rounded-xl font-bold text-center bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+              className="mt-auto block w-full py-4 px-6 rounded-xl font-bold text-center bg-white text-sky-700 border border-sky-100 hover:bg-sky-50 transition-colors"
             >
               Get Started
             </a>
           </div>
 
           {/* Card 2: 标准版 (Standard) */}
-          <div className="flex flex-col bg-white rounded-3xl p-8 shadow-sm border border-slate-200 hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
+          <div className="flex flex-col bg-white rounded-3xl p-8 shadow-sm border border-sky-100 hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
             <div className="mb-6">
-              <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 mb-6 drop-shadow-sm">
+              <div className="w-14 h-14 bg-sky-50 rounded-2xl flex items-center justify-center text-sky-600 mb-6 drop-shadow-sm">
                 <CarOutlined className="text-3xl" />
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-2">Standard</h3>
@@ -149,24 +149,24 @@ function Pricing() {
             </ul>
 
             <a
-              href="https://cresc-admin.reactnative.cn/#/user"
+              href="https://admin.cresc.dev"
               target="_blank"
-              className="mt-auto block w-full py-4 px-6 rounded-xl font-bold text-center bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/30 transition-all"
+              className="mt-auto block w-full py-4 px-6 rounded-xl font-bold text-center bg-sky-600 text-white hover:bg-sky-700 hover:shadow-lg hover:shadow-sky-500/30 transition-all"
             >
               Upgrade Now
             </a>
           </div>
 
           {/* Card 3: 高级版 (Premium) */}
-          <div className="relative flex flex-col bg-white rounded-3xl p-8 shadow-2xl shadow-indigo-500/10 border-2 border-indigo-500 hover:-translate-y-3 transition-transform duration-300 z-10">
+          <div className="relative flex flex-col bg-white rounded-3xl p-8 shadow-2xl shadow-sky-500/10 border-2 border-sky-500 hover:-translate-y-3 transition-transform duration-300 z-10">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-              <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-sm font-bold tracking-wider px-4 py-1.5 rounded-full uppercase shadow-md">
+              <span className="bg-gradient-to-r from-sky-500 to-blue-600 text-white text-sm font-bold tracking-wider px-4 py-1.5 rounded-full uppercase shadow-md">
                 Most Popular
               </span>
             </div>
             
             <div className="mb-6 mt-2">
-              <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-500 mb-6 drop-shadow-sm">
+              <div className="w-14 h-14 bg-sky-50 rounded-2xl flex items-center justify-center text-sky-600 mb-6 drop-shadow-sm">
                 <SendOutlined className="text-3xl" />
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-2">Premium</h3>
@@ -174,7 +174,7 @@ function Pricing() {
             </div>
             
             <div className="mb-8 border-b border-slate-100 pb-8 h-28 flex flex-col justify-end">
-              <div className="flex items-baseline text-indigo-600">
+              <div className="flex items-baseline text-sky-700">
                 <span className="text-3xl font-bold">¥</span>
                 <span className="text-5xl font-extrabold tracking-tight">2400</span>
                 <span className="text-slate-500 ml-2 font-medium">/ year</span>
@@ -187,23 +187,23 @@ function Pricing() {
               <FeatureItem>60 <PackageText /> / App (Max 500M ea)</FeatureItem>
               <FeatureItem>60 <HotUpdateText /> / App (Max 50M ea)</FeatureItem>
               <FeatureItem><strong className="text-emerald-600">Unlimited CDN Bandwidth</strong></FeatureItem>
-              <FeatureItem><strong className="text-indigo-600">Priority</strong> Technical Support</FeatureItem>
+              <FeatureItem><strong className="text-sky-700">Priority</strong> Technical Support</FeatureItem>
               <CheckLimitText>100 Thousand</CheckLimitText>
             </ul>
 
             <a
-              href="https://cresc-admin.reactnative.cn/#/user"
+              href="https://admin.cresc.dev"
               target="_blank"
-              className="mt-auto block w-full py-4 px-6 rounded-xl font-bold text-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-500 hover:to-purple-500 hover:shadow-xl hover:shadow-indigo-500/40 transition-all"
+              className="mt-auto block w-full py-4 px-6 rounded-xl font-bold text-center bg-gradient-to-r from-sky-600 to-blue-600 text-white hover:from-sky-500 hover:to-blue-500 hover:shadow-xl hover:shadow-sky-500/40 transition-all"
             >
               Buy Now
             </a>
           </div>
 
           {/* Card 4: 专业版 (Professional) */}
-          <div className="flex flex-col bg-white rounded-3xl p-8 shadow-sm border border-slate-200 hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
+          <div className="flex flex-col bg-white rounded-3xl p-8 shadow-sm border border-sky-100 hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
             <div className="mb-6">
-              <div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 mb-6 drop-shadow-sm">
+              <div className="w-14 h-14 bg-sky-50 rounded-2xl flex items-center justify-center text-sky-700 mb-6 drop-shadow-sm">
                 <RocketOutlined className="text-3xl" />
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-2">Professional</h3>
@@ -224,14 +224,14 @@ function Pricing() {
               <FeatureItem>100 <PackageText /> / App (Max 2000M ea)</FeatureItem>
               <FeatureItem>100 <HotUpdateText /> / App (Max 200M ea)</FeatureItem>
               <FeatureItem><strong className="text-emerald-600">Unlimited CDN Bandwidth</strong></FeatureItem>
-              <FeatureItem><strong className="text-rose-500">Highest Tier</strong> Enterprise Support</FeatureItem>
+              <FeatureItem><strong className="text-sky-700">Highest Tier</strong> Enterprise Support</FeatureItem>
               <CheckLimitText>1 Million</CheckLimitText>
             </ul>
 
             <a
-              href="https://cresc-admin.reactnative.cn/#/user"
+              href="https://admin.cresc.dev"
               target="_blank"
-              className="mt-auto block w-full py-4 px-6 rounded-xl font-bold text-center bg-slate-900 text-white hover:bg-slate-800 hover:shadow-lg hover:shadow-slate-900/30 transition-all"
+              className="mt-auto block w-full py-4 px-6 rounded-xl font-bold text-center bg-sky-950 text-white hover:bg-sky-900 hover:shadow-lg hover:shadow-sky-900/30 transition-all"
             >
               Contact Us
             </a>
@@ -240,7 +240,7 @@ function Pricing() {
         </div>
 
         {/* Footer Notes */}
-        <div className="mt-16 text-center text-slate-500 text-sm md:text-base max-w-4xl mx-auto p-6 bg-slate-100/50 rounded-2xl border border-slate-200/60">
+        <div className="mt-16 text-center text-slate-500 text-sm md:text-base max-w-4xl mx-auto p-6 bg-white/80 rounded-2xl border border-sky-100">
           <p className="mb-3 leading-relaxed">
             * <strong>Note:</strong> iOS and Android versions form separate apps. Limits on native and hot update packages are applied <strong className="text-slate-700">per app</strong>.<br className="hidden sm:block" />
             Native packages are complete apk/ipa installs. Hot update packages are ppk files generated by the CLI (not what users download directly).<br className="hidden sm:block" />

@@ -1,16 +1,14 @@
 import Banner from "./Banner";
 import Page1 from "./Page1";
 import Page2 from "./Page2";
-import Showcase from "./Showcase";
 import Footer from "../Footer";
 
-function Home(props: any) {
+function Home() {
   return (
-    <div className="home-wrapper">
-      <Banner {...props} />
-      <Showcase />
-      <Page1 {...props} />
-      <Page2 {...props} />
+    <div className="home-wrapper cresc-home">
+      <Banner />
+      <Page1 />
+      <Page2 />
       <Footer />
     </div>
   );

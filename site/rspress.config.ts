@@ -25,8 +25,8 @@ export default defineConfig({
       { text: 'Documentation', link: '/docs/intro', activeMatch: '^/docs/' },
       { text: 'Pricing', link: '/pricing' },
       { text: 'FAQ', link: '/docs/faq' },
-      { text: 'Login', link: 'https://cresc-admin.reactnative.cn/#/user' },
-      { text: 'Register', link: 'https://cresc-admin.reactnative.cn/#/register' },
+      { text: 'Login', link: 'https://admin.cresc.dev' },
+      { text: 'Register', link: 'https://admin.cresc.dev/#/register' },
     ],
     sidebar: {
       '/docs/': [
