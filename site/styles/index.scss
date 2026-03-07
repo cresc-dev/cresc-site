@@ -36,18 +36,21 @@ html:not(.rp-dark) {
   --rp-home-background-bg:
     radial-gradient(42% 58% at 100% 0%, rgba(168, 132, 84, 0.14) 0%, transparent 100%),
     radial-gradient(42% 60% at 0% 0%, rgba(122, 59, 46, 0.12) 0%, transparent 100%),
+    repeating-linear-gradient(180deg, rgba(145, 108, 74, 0.045) 0, rgba(145, 108, 74, 0.045) 1px, transparent 1px, transparent 34px),
     linear-gradient(180deg, #fcf7ef 0%, #f1e6d6 100%);
   --rp-home-feature-bg: linear-gradient(135deg, rgba(255, 251, 244, 0.97), rgba(245, 236, 223, 0.92));
 }
 
 html:not(.rp-dark) body {
-  background: linear-gradient(180deg, #fcf7ef 0%, #f1e6d6 100%);
+  background: #fbf5ea;
   color: #2d1d15;
   font-family: "Crimson Pro", "Noto Serif SC", Georgia, serif;
 }
 
 html:not(.rp-dark) .rp-nav {
-  background: rgba(252, 247, 239, 0.92);
+  background:
+    linear-gradient(180deg, rgba(252, 247, 239, 0.95), rgba(246, 238, 225, 0.92)),
+    repeating-linear-gradient(180deg, rgba(145, 108, 74, 0.035) 0, rgba(145, 108, 74, 0.035) 1px, transparent 1px, transparent 26px);
   border-bottom: 1px solid rgba(168, 132, 84, 0.18);
   box-shadow: 0 12px 32px rgba(113, 88, 67, 0.1);
   backdrop-filter: blur(16px);
@@ -109,10 +112,14 @@ html:not(.rp-dark) .rp-nav-menu__others-mobile__container {
   box-shadow: 0 18px 42px rgba(113, 88, 67, 0.14);
 }
 
+html:not(.rp-dark) .rp-doc-layout {
+  background: #fbf5ea;
+}
+
 html:not(.rp-dark) .rp-doc-layout__doc-container,
 html:not(.rp-dark) .rp-doc-layout__sidebar,
 html:not(.rp-dark) .rp-doc-layout__outline {
-  background: transparent;
+  background: #fbf5ea;
 }
 
 html:not(.rp-dark) .rp-codeblock,

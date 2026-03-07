@@ -1,11 +1,5 @@
 import { Tooltip } from "antd";
-import {
-  CarOutlined,
-  CheckCircleFilled,
-  RocketOutlined,
-  SendOutlined,
-  SmileOutlined,
-} from "@ant-design/icons";
+import { CheckCircleFilled } from "@ant-design/icons";
 import type { ReactNode } from "react";
 
 const AppText = () => (
@@ -75,6 +69,58 @@ const FeatureItem = ({ children }: { children: ReactNode }) => (
   </li>
 );
 
+function DurationNote({
+  kind,
+}: {
+  kind: "eighth" | "quarter" | "half" | "whole";
+}) {
+  if (kind === "whole") {
+    return (
+      <svg viewBox="0 0 48 48" className="h-8 w-8" fill="none">
+        <ellipse
+          cx="24"
+          cy="26"
+          rx="11"
+          ry="7.6"
+          transform="rotate(-18 24 26)"
+          stroke="currentColor"
+          strokeWidth="3.1"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 48 48" className="h-8 w-8" fill="none">
+      <ellipse
+        cx="19.5"
+        cy="31"
+        rx="9.2"
+        ry="6.6"
+        transform="rotate(-18 19.5 31)"
+        fill={kind === "quarter" || kind === "eighth" ? "currentColor" : "#f5ecdf"}
+        stroke="currentColor"
+        strokeWidth="3"
+      />
+      <path
+        d="M27 28V10"
+        stroke="currentColor"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+      />
+      {kind === "eighth" && (
+        <path
+          d="M27 10C33 12.5 36.5 17.2 35.5 21.5C33.2 18.9 30 17.4 27 17.2"
+          stroke="currentColor"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      )}
+    </svg>
+  );
+}
+
 interface Plan {
   name: string;
   summary: string;
@@ -96,7 +142,7 @@ const plans: Plan[] = [
     summary: "Suitable for small apps or personal projects with light OTA needs.",
     price: "0",
     queryLimit: "1 Thousand",
-    icon: <SmileOutlined className="text-[26px]" />,
+    icon: <DurationNote kind="eighth" />,
     ctaLabel: "Get Started",
     ctaHref: "/docs/getting-started",
     emphasis: "light",
@@ -119,7 +165,7 @@ const plans: Plan[] = [
     price: "800",
     monthly: "¥100 / month",
     queryLimit: "10 Thousand",
-    icon: <CarOutlined className="text-[26px]" />,
+    icon: <DurationNote kind="quarter" />,
     ctaLabel: "Upgrade Now",
     ctaHref: "https://admin.cresc.dev",
     external: true,
@@ -144,7 +190,7 @@ const plans: Plan[] = [
     price: "2400",
     monthly: "¥300 / month",
     queryLimit: "100 Thousand",
-    icon: <SendOutlined className="text-[26px]" />,
+    icon: <DurationNote kind="half" />,
     ctaLabel: "Buy Now",
     ctaHref: "https://admin.cresc.dev",
     external: true,
@@ -172,7 +218,7 @@ const plans: Plan[] = [
     price: "7200",
     monthly: "¥900 / month",
     queryLimit: "1 Million",
-    icon: <RocketOutlined className="text-[26px]" />,
+    icon: <DurationNote kind="whole" />,
     ctaLabel: "Contact Us",
     ctaHref: "https://admin.cresc.dev",
     external: true,

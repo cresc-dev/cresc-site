@@ -1,9 +1,18 @@
 .cresc-home {
   background:
-    radial-gradient(circle at top, rgba(168, 132, 84, 0.12), transparent 26%),
+    radial-gradient(circle at 14% 0%, rgba(255, 252, 245, 0.58), transparent 28%),
+    radial-gradient(circle at 88% 10%, rgba(168, 132, 84, 0.14), transparent 24%),
+    repeating-linear-gradient(
+      180deg,
+      rgba(145, 108, 74, 0.05) 0,
+      rgba(145, 108, 74, 0.05) 1px,
+      transparent 1px,
+      transparent 34px
+    ),
     linear-gradient(180deg, #fbf5ea 0%, #f3e7d6 100%);
   color: #2d1d15;
   font-family: "Crimson Pro", "Noto Serif SC", Georgia, serif;
+  position: relative;
 }
 
 .cresc-home .cresc-display {
@@ -14,13 +23,27 @@
 
 .cresc-home .cresc-section {
   background:
-    linear-gradient(180deg, rgba(251, 245, 234, 0.94), rgba(243, 231, 214, 0.88)),
+    linear-gradient(180deg, rgba(251, 245, 234, 0.95), rgba(243, 231, 214, 0.9)),
+    repeating-linear-gradient(
+      180deg,
+      rgba(145, 108, 74, 0.028) 0,
+      rgba(145, 108, 74, 0.028) 1px,
+      transparent 1px,
+      transparent 34px
+    ),
     radial-gradient(circle at top, rgba(168, 132, 84, 0.08), transparent 45%);
 }
 
 .cresc-home .cresc-section-alt {
   background:
-    linear-gradient(180deg, rgba(247, 239, 226, 0.94), rgba(239, 227, 209, 0.88)),
+    linear-gradient(180deg, rgba(247, 239, 226, 0.95), rgba(239, 227, 209, 0.9)),
+    repeating-linear-gradient(
+      180deg,
+      rgba(145, 108, 74, 0.03) 0,
+      rgba(145, 108, 74, 0.03) 1px,
+      transparent 1px,
+      transparent 34px
+    ),
     radial-gradient(circle at top, rgba(122, 59, 46, 0.08), transparent 45%);
 }
 
@@ -90,6 +113,10 @@
     0 10px 24px rgba(113, 88, 67, 0.16);
 }
 
+.cresc-home .cresc-bare-logo {
+  filter: drop-shadow(0 10px 20px rgba(113, 88, 67, 0.16));
+}
+
 .cresc-home .cresc-grid::before {
   content: "";
   position: absolute;
@@ -119,6 +146,13 @@
 .cresc-home .cresc-stage-panel {
   background:
     radial-gradient(circle at 50% 26%, rgba(242, 210, 162, 0.12), transparent 38%),
+    repeating-linear-gradient(
+      180deg,
+      rgba(170, 126, 83, 0.06) 0,
+      rgba(170, 126, 83, 0.06) 1px,
+      transparent 1px,
+      transparent 22px
+    ),
     linear-gradient(180deg, rgba(38, 28, 21, 0.98), rgba(21, 15, 12, 0.98));
   border: 1px solid rgba(115, 82, 58, 0.55);
   box-shadow:
@@ -133,6 +167,10 @@
   border: 1px solid rgba(173, 136, 96, 0.22);
   border-radius: inherit;
   pointer-events: none;
+}
+
+.cresc-home .cresc-pearl-shell {
+  animation: cresc-pearl-shimmer 2.6s ease-in-out infinite;
 }
 
 .cresc-home .cresc-score-card {
@@ -176,8 +214,27 @@
   }
 }
 
+@keyframes cresc-pearl-shimmer {
+  0%,
+  100% {
+    box-shadow:
+      0 10px 28px rgba(244, 231, 189, 0.28),
+      0 12px 24px rgba(71, 44, 24, 0.24);
+  }
+  50% {
+    box-shadow:
+      0 14px 34px rgba(255, 238, 201, 0.34),
+      0 16px 26px rgba(71, 44, 24, 0.2);
+  }
+}
+
 @media (max-width: 640px) {
   .cresc-home .cresc-grid::before {
     background-size: 56px 56px;
+  }
+
+  .cresc-home .cresc-stage-aura {
+    width: 10rem;
+    height: 10rem;
   }
 }

@@ -14,7 +14,7 @@ export default defineConfig({
     light: '/images/logo.svg',
     dark: '/images/logo.svg',
   },
-  logoText: 'Cresc OTA',
+  logoText: 'Cresc',
   themeConfig: {
     socialLinks: [
       { icon: 'github', mode: 'link', content: 'https://github.com/reactnativecn/react-native-update' },

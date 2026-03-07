@@ -22,8 +22,8 @@ function Page2() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_18%,rgba(150,108,63,0.12),transparent_26%),radial-gradient(circle_at_84%_68%,rgba(122,59,46,0.08),transparent_24%)]" />
 
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="grid items-start gap-14 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
-          <div>
+        <div className="grid items-stretch gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <div className="flex flex-col">
             <p className="text-sm uppercase tracking-[0.4em] text-[#8b5a3c]">
               In Practice
             </p>
@@ -35,11 +35,11 @@ function Page2() {
               the same steady rhythm each time the app changes.
             </p>
 
-            <div className="mt-10 space-y-5">
+            <div className="mt-10 flex flex-1 flex-col gap-4">
               {workflowSteps.map((step) => (
                 <div
                   key={step.id}
-                  className="rounded-[28px] border border-[#ddcdb3] bg-[#fffaf4] p-6 shadow-[0_18px_40px_rgba(113,88,67,0.08)]"
+                  className="rounded-[28px] border border-[#ddcdb3] bg-[#fffaf4] px-6 py-5 shadow-[0_18px_40px_rgba(113,88,67,0.08)]"
                 >
                   <div className="flex items-start gap-4">
                     <div className="cresc-display flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#d6c0a0] bg-[#f5ecdf] text-[#7a3b2e]">
@@ -59,7 +59,7 @@ function Page2() {
             </div>
           </div>
 
-          <div className="cresc-manuscript rounded-[34px] border border-[#ddcdb3] p-8 sm:p-10">
+          <div className="cresc-manuscript flex h-full flex-col rounded-[34px] border border-[#ddcdb3] p-8 sm:p-10">
             <p className="text-sm uppercase tracking-[0.35em] text-[#8b5a3c]">
               First release
             </p>
@@ -80,7 +80,7 @@ cresc bundle --platform android`}
               carry the rest of the release cycle with much less effort.
             </p>
 
-            <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+            <div className="mt-auto flex flex-col gap-4 pt-10 sm:flex-row">
               <a
                 href="https://admin.cresc.dev"
                 target="_blank"
