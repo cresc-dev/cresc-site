@@ -1,58 +1,42 @@
-Cresc OTA
+Cresc
 
 # A steadier cadence for React Native updates.
 
 Named for the gradual rise in music, Cresc treats over-the-air publishing the same way: smaller packages, deliberate rollout, and recovery kept within reach when a change needs to be revised.
 
-[Open Dashboard](https://admin.cresc.dev)[Read Documentation](/docs/getting-started)[Open-source on GitHub](https://github.com/reactnativecn/react-native-update)Self-host friendly![Cresc Logo](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTA4IiBoZWlnaHQ9IjEwOCIgdmlld0JveD0iMCAwIDEwOCAxMDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImNyZXNjX3N0cm9rZSIgeDE9IjE2IiB5MT0iMTgiIHgyPSI5MCIgeTI9IjkwIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNEN0I1N0MiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIwLjU1IiBzdG9wLWNvbG9yPSIjQTg2QTQyIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzZFMzQyOCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxyYWRpYWxHcmFkaWVudCBpZD0iY3Jlc2NfcGVhcmwiIGN4PSIwIiBjeT0iMCIgcj0iMSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIGdyYWRpZW50VHJhbnNmb3JtPSJ0cmFuc2xhdGUoODQgNTApIHJvdGF0ZSg1Ni4zMSkgc2NhbGUoMTguNjAxMSkiPgogICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRkZGREY5Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMC41NiIgc3RvcC1jb2xvcj0iI0YwRTFDQSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNDN0EwNzIiLz4KICAgIDwvcmFkaWFsR3JhZGllbnQ+CiAgPC9kZWZzPgogIDxwYXRoCiAgICBkPSJNIDg4IDI1IEEgNDAgNDAgMCAxIDAgODggODMiCiAgICBzdHJva2U9InVybCgjY3Jlc2Nfc3Ryb2tlKSIKICAgIHN0cm9rZS13aWR0aD0iMTgiCiAgICBzdHJva2UtbGluZWNhcD0icm91bmQiCiAgLz4KICA8cGF0aAogICAgZD0iTSA4NiAzMSBBIDMyIDMyIDAgMSAwIDg2IDc3IgogICAgc3Ryb2tlPSIjRjRFNkNEIgogICAgc3Ryb2tlLW9wYWNpdHk9IjAuMjgiCiAgICBzdHJva2Utd2lkdGg9IjQiCiAgICBzdHJva2UtbGluZWNhcD0icm91bmQiCiAgLz4KICA8Y2lyY2xlIGN4PSI4OCIgY3k9IjU0IiByPSIxMCIgZmlsbD0idXJsKCNjcmVzY19wZWFybCkiIHN0cm9rZT0iI0I2ODY1NyIgc3Ryb2tlLXdpZHRoPSIxLjYiIC8+CiAgPGNpcmNsZSBjeD0iODQuMiIgY3k9IjQ5LjMiIHI9IjIuOCIgZmlsbD0iI0ZGRkZGRiIgZmlsbC1vcGFjaXR5PSIwLjg4IiAvPgo8L3N2Zz4K)Named for crescendo
+[Open Dashboard](https://admin.cresc.dev)[Read Documentation](/docs/getting-started)[Open-source on GitHub](https://github.com/reactnativecn/react-native-update)Self-host friendlyNamed for crescendo
 
-## Composed for careful release work.
+![Cresc Logo](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTA4IiBoZWlnaHQ9IjEwOCIgdmlld0JveD0iMCAwIDEwOCAxMDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImNyZXNjX3N0cm9rZSIgeDE9IjE2IiB5MT0iMTgiIHgyPSI5MCIgeTI9IjkwIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNEN0I1N0MiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIwLjU1IiBzdG9wLWNvbG9yPSIjQTg2QTQyIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzZFMzQyOCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxyYWRpYWxHcmFkaWVudCBpZD0iY3Jlc2NfcGVhcmwiIGN4PSIwIiBjeT0iMCIgcj0iMSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIGdyYWRpZW50VHJhbnNmb3JtPSJ0cmFuc2xhdGUoODQgNTApIHJvdGF0ZSg1Ni4zMSkgc2NhbGUoMTguNjAxMSkiPgogICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRkZGREY5Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMC41NiIgc3RvcC1jb2xvcj0iI0YwRTFDQSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNDN0EwNzIiLz4KICAgIDwvcmFkaWFsR3JhZGllbnQ+CiAgPC9kZWZzPgogIDxwYXRoCiAgICBkPSJNIDg4IDI1IEEgNDAgNDAgMCAxIDAgODggODMiCiAgICBzdHJva2U9InVybCgjY3Jlc2Nfc3Ryb2tlKSIKICAgIHN0cm9rZS13aWR0aD0iMTgiCiAgICBzdHJva2UtbGluZWNhcD0icm91bmQiCiAgLz4KICA8cGF0aAogICAgZD0iTSA4NiAzMSBBIDMyIDMyIDAgMSAwIDg2IDc3IgogICAgc3Ryb2tlPSIjRjRFNkNEIgogICAgc3Ryb2tlLW9wYWNpdHk9IjAuMjgiCiAgICBzdHJva2Utd2lkdGg9IjQiCiAgICBzdHJva2UtbGluZWNhcD0icm91bmQiCiAgLz4KICA8Y2lyY2xlIGN4PSI4OCIgY3k9IjU0IiByPSIxMCIgZmlsbD0idXJsKCNjcmVzY19wZWFybCkiIHN0cm9rZT0iI0I2ODY1NyIgc3Ryb2tlLXdpZHRoPSIxLjYiIC8+CiAgPGNpcmNsZSBjeD0iODQuMiIgY3k9IjQ5LjMiIHI9IjIuOCIgZmlsbD0iI0ZGRkZGRiIgZmlsbC1vcGFjaXR5PSIwLjg4IiAvPgo8L3N2Zz4K)## Composed for careful release work.
 
-The first native release establishes the full picture. After that, Cresc can deliver only the missing detail and let the device complete the scene locally.
+The full native release establishes the base. Every later update can arrive as a smaller addition, shaped only to the detail that changed.
 
-Measured cadence
+Small variation, same score
 
-Publish in smaller, deliberate steps instead of treating every release as a full reset.
-
-Light variations
-
-Diff-based delivery keeps each update closer to a new phrase than a whole score.
-
-Reliable return
-
-Rollback stays close at hand whenever a release needs to settle back into place.
+Cresc keeps the original release close, then lets each later patch arrive as a measured variation rather than a full repeat.
 
 Incremental Delivery
 
 ## Add the missing detail, not the whole canvas.
 
-Like a variation added to an existing score, each Cresc update arrives as a measured addition to what the device already holds.
+As you scroll, the missing earring stays marked while the pearl travels from the top logo into place.
 
-Current state
+![](/images/girl-with-pearl-earring.webp)App Updated!Movement I
 
-Base package present
+### Hold the full base
 
-0%
-
-The device already holds the full portrait. The scroll only introduces the pearl, mirroring how Cresc sends the missing patch instead of re-sending the whole release.
-
-Movement I
-
-### Set the full base package
-
-The first release carries the full picture the device needs before later over-the-air changes begin to arrive.
+The first release stays on device as the complete base, so later patches can remain much smaller.
 
 Movement II
 
-### Send only the new detail
+### Drop only the new pearl
 
-When the app changes, Cresc prepares a smaller patch instead of shipping the entire bundle again.
+When something changes, Cresc lifts just the missing part instead of repeating the whole bundle.
 
 Movement III
 
-### Complete the picture on device
+### Set it in place locally
 
-The client combines what it already has with the new patch, so the finished release appears with much less transfer.
+The client clicks the new patch into the existing base, then confirms the update in place.
 
 In Practice
 
