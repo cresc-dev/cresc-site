@@ -1,4 +1,10 @@
-import { useEffect, useEffectEvent, useRef, useState } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 const movements = [
   {
@@ -231,7 +237,10 @@ function Page1() {
   const [progress, setProgress] = useState(0);
   const [motionPoints, setMotionPoints] = useState<MotionPoints | null>(null);
   const [sequenceTop, setSequenceTop] = useState(88);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [completionHoldHeight, setCompletionHoldHeight] = useState<number | null>(null);
   const isCompletedRef = useRef(false);
+  const completionAnchorRef = useRef<number | null>(null);
 
   const measureMotionPoints = useEffectEvent(() => {
     const stage = stageRef.current;
@@ -302,21 +311,56 @@ function Page1() {
     const nextProgress = clamp((nextSequenceTop - sequenceRect.top) / scrollSpan, 0, 1);
 
     if (isCompletedRef.current) {
+      if (completionHoldHeight === null) {
+        setCompletionHoldHeight(sequenceRect.height);
+      }
+      if (!isCompleted) {
+        setIsCompleted(true);
+      }
       setProgress((current) => (current < 1 ? 1 : current));
       return;
     }
 
-    setProgress((current) =>
-      {
-        if (nextProgress >= 0.999) {
-          isCompletedRef.current = true;
-          return 1;
-        }
+    if (nextProgress >= 0.999) {
+      completionAnchorRef.current = stickyRect.top;
+      isCompletedRef.current = true;
+      setCompletionHoldHeight(sequenceRect.height);
+      setIsCompleted(true);
+      setProgress(1);
+      return;
+    }
 
-        return Math.abs(current - nextProgress) > 0.002 ? nextProgress : current;
-      },
+    setProgress((current) =>
+      Math.abs(current - nextProgress) > 0.002 ? nextProgress : current,
     );
   });
+
+  useLayoutEffect(() => {
+    if (
+      !isCompleted ||
+      completionHoldHeight === null ||
+      completionAnchorRef.current === null
+    ) {
+      return;
+    }
+
+    const sticky = stickyRef.current;
+
+    if (!sticky) {
+      completionAnchorRef.current = null;
+      setCompletionHoldHeight(null);
+      return;
+    }
+
+    const delta = sticky.getBoundingClientRect().top - completionAnchorRef.current;
+
+    if (Math.abs(delta) > 1) {
+      window.scrollBy(0, delta);
+    }
+
+    completionAnchorRef.current = null;
+    setCompletionHoldHeight(null);
+  }, [completionHoldHeight, isCompleted]);
 
   useEffect(() => {
     let rafId = 0;
@@ -345,6 +389,12 @@ function Page1() {
   const pearlScale = getPearlScale(progress);
   const toastReveal = easeOutCubic(getRevealProgress(progress, 0.955, 0.998));
   const activeIndex = progress < 0.43 ? 0 : progress < 0.66 ? 1 : 2;
+  const completedSequenceStyle =
+    isCompleted && completionHoldHeight !== null
+      ? {
+          minHeight: `${completionHoldHeight}px`,
+        }
+      : undefined;
 
   return (
     <section
@@ -386,12 +436,15 @@ function Page1() {
 
         <div
           ref={sequenceRef}
-          className="relative mt-16 lg:min-h-[250vh]"
+          className={`relative mt-16 ${isCompleted ? "" : "lg:min-h-[250vh]"}`}
+          style={completedSequenceStyle}
         >
           <div
             ref={stickyRef}
-            className="grid gap-10 lg:sticky lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.9fr)] lg:items-stretch"
-            style={{ top: `${sequenceTop}px` }}
+            className={`grid gap-10 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.9fr)] lg:items-stretch ${
+              isCompleted ? "" : "lg:sticky"
+            }`}
+            style={isCompleted ? undefined : { top: `${sequenceTop}px` }}
           >
             <div className="self-start">
               <div className="cresc-frame cresc-score-lines rounded-[38px] p-5 sm:p-6">

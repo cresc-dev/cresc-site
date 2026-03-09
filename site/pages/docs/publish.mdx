@@ -8,25 +8,28 @@ Now that your app can detect updates, let's learn how to publish and update it. 
 
 ```mermaid
 flowchart TD
-    codebase["🖥️&nbsp;&nbsp;Code Source Repository"]
-    subgraph Publishing Native Baseline Version
-    tagNativeVersion["🏷️&nbsp;&nbsp;Tag Native Version (in git)"]
-    newNativeVersion["🗂️&nbsp;&nbsp;New Native Baseline Version"]
-    nativePackage["📦&nbsp;&nbsp;Native Full Package (apk or ipa)"]
-    tagNativeVersion--"🔨&nbsp;&nbsp;Compile"-->nativePackage
-    nativePackage--"⬆️&nbsp;&nbsp;Upload using<br/>cresc uploadApk/uploadIpa"-->newNativeVersion
+    codebase["Code Source Repository"]
+    user["Users with matching native baseline version"]
+
+    subgraph nativeRelease["Publishing Native Baseline Version"]
+    tagNativeVersion["Tag Native Version in git"]
+    nativePackage["Native Full Package (apk or ipa)"]
+    newNativeVersion["New Native Baseline Version"]
+    tagNativeVersion -->|"Compile"| nativePackage
+    nativePackage -->|"Upload with cresc uploadApk/uploadIpa"| newNativeVersion
     end
-    subgraph Publishing Hot Update Version
-    tagBundleVersion["🏷️&nbsp;&nbsp;Tag Hot Update Version (in git)"]
-    bundlePackage["🎁&nbsp;&nbsp;JS Code and Assets (.ppk file)"]
-    tagBundleVersion--"🔨&nbsp;&nbsp;Generate and Upload using<br/>cresc bundle"-->bundlePackage
-    someNativeVersions["🗂️&nbsp;&nbsp;One or more Native Baseline Versions"]
-    bundlePackage--"🖇️&nbsp;&nbsp;Bind"-->someNativeVersions
+
+    subgraph hotUpdateRelease["Publishing Hot Update Version"]
+    tagBundleVersion["Tag Hot Update Version in git"]
+    bundlePackage["JS Code and Assets (.ppk file)"]
+    someNativeVersions["One or more Native Baseline Versions"]
+    tagBundleVersion -->|"Generate with cresc bundle"| bundlePackage
+    bundlePackage -->|"Bind"| someNativeVersions
     end
-    user["👨‍👩‍👧‍👦&nbsp;&nbsp;Users with corresponding native baseline version installed"]
-    codebase--"✏️&nbsp;&nbsp;Modify JS code,<br/>add/update JS components,<br/>or add/update assets referenced in JS"-->Publishing Hot Update Version
-    codebase--"🖊️&nbsp;&nbsp;Modify Native code/settings,<br/>add/update Native components,<br/>or add/update assets referenced in Native code"-->Publishing Native Baseline Version
-    Publishing Hot Update Version--"📲&nbsp;&nbsp;Push Incremental Hot Update (.diff file)"-->user
+
+    codebase -->|"Modify JS code, JS components, or JS assets"| hotUpdateRelease
+    codebase -->|"Modify native code, native settings, or native assets"| nativeRelease
+    hotUpdateRelease -->|"Push incremental hot update (.diff file)"| user
 ```
 
 1. We first need to build a native release version. Before building, ensure `react-native-update` is integrated, tested, and works correctly. For Android, [disable `crunchPngs`](/docs/getting-started#disabling-android-image-crunch-operations). See documentation for [iOS Build](https://reactnative.dev/docs/publishing-to-app-store) and [Android Build](https://reactnative.dev/docs/signed-apk-android). After building, run `cresc uploadIpa` or `cresc uploadApk` to upload the package to Cresc servers to serve as the baseline for delta comparisons. Keep a copy of this installation package; the package distributed to users `must be strictly identical` to the uploaded one. We recommend using git tags for native versioning (e.g., `v1.0.0`).
