@@ -239,24 +239,51 @@ function Page1() {
   const [sequenceTop, setSequenceTop] = useState(88);
   const [isCompleted, setIsCompleted] = useState(false);
   const [completionHoldHeight, setCompletionHoldHeight] = useState<number | null>(null);
+  const [isMobileLocked, setIsMobileLocked] = useState(false);
   const isCompletedRef = useRef(false);
   const completionAnchorRef = useRef<number | null>(null);
+  const progressRef = useRef(0);
+  const touchStartYRef = useRef<number | null>(null);
+  const mobileLockScrollYRef = useRef(0);
+  const isStageCenteredRef = useRef(false);
+
+  useEffect(() => {
+    progressRef.current = progress;
+  }, [progress]);
+
+  const completeSequence = useEffectEvent(
+    (isDesktop: boolean, stickyTop?: number, sequenceHeight?: number) => {
+      completionAnchorRef.current = isDesktop ? stickyTop ?? null : null;
+      isCompletedRef.current = true;
+      setCompletionHoldHeight(isDesktop ? sequenceHeight ?? null : null);
+      setIsCompleted(true);
+      setIsMobileLocked(false);
+      progressRef.current = 1;
+      setProgress(1);
+    },
+  );
 
   const measureMotionPoints = useEffectEvent(() => {
     const stage = stageRef.current;
-    const navLogo = document.querySelector(
-      ".rp-nav__title__link img",
+    const navLink = document.querySelector(
+      ".rp-nav__title__link",
     ) as HTMLElement | null;
+    const navLogo = navLink?.querySelector("img") as HTMLElement | null;
 
-    if (!stage || !navLogo) {
+    if (!stage || !navLink) {
       return null;
     }
 
     const stageRect = stage.getBoundingClientRect();
-    const logoRect = navLogo.getBoundingClientRect();
+    const logoRect = (navLogo ?? navLink).getBoundingClientRect();
+    const logoSize = Math.min(logoRect.width, logoRect.height);
     const start = {
-      x: logoRect.left + logoRect.width * (88 / 108),
-      y: logoRect.top + logoRect.height * (54 / 108),
+      x: navLogo
+        ? logoRect.left + logoRect.width * (88 / 108)
+        : logoRect.left + logoSize * 0.48,
+      y: navLogo
+        ? logoRect.top + logoRect.height * (54 / 108)
+        : logoRect.top + logoRect.height * 0.5,
     };
 
     return {
@@ -284,6 +311,48 @@ function Page1() {
     } satisfies MotionPoints;
   });
 
+  useEffect(() => {
+    const stage = stageRef.current;
+
+    if (!stage) {
+      return;
+    }
+
+    let observer: IntersectionObserver | null = null;
+
+    const updateObserver = () => {
+      observer?.disconnect();
+
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+      const bandTop = Math.round(viewportHeight * 0.42);
+      const bandBottom = Math.round(viewportHeight * 0.58);
+      const bottomMargin = Math.max(viewportHeight - bandBottom, 0);
+
+      observer = new IntersectionObserver(
+        ([entry]) => {
+          isStageCenteredRef.current = entry.isIntersecting;
+        },
+        {
+          root: null,
+          rootMargin: `-${bandTop}px 0px -${bottomMargin}px 0px`,
+          threshold: 0,
+        },
+      );
+
+      observer.observe(stage);
+    };
+
+    updateObserver();
+    window.addEventListener("resize", updateObserver);
+    window.visualViewport?.addEventListener("resize", updateObserver);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", updateObserver);
+      window.visualViewport?.removeEventListener("resize", updateObserver);
+    };
+  }, []);
+
   const updateAnimation = useEffectEvent(() => {
     const section = sectionRef.current;
     const sequence = sequenceRef.current;
@@ -300,18 +369,36 @@ function Page1() {
     }
 
     const sequenceRect = sequence.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
     const stickyRect = sticky.getBoundingClientRect();
-    const nextSequenceTop = Math.max(88, viewportHeight * 0.5 - stickyRect.height * 0.5);
-    setSequenceTop((current) =>
-      Math.abs(current - nextSequenceTop) > 1 ? nextSequenceTop : current,
+    const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+    const nextSequenceTop = Math.max(
+      88,
+      viewportHeight * 0.5 - stickyRect.height * 0.5,
     );
 
-    const scrollSpan = Math.max(sequenceRect.height - stickyRect.height, 1);
-    const nextProgress = clamp((nextSequenceTop - sequenceRect.top) / scrollSpan, 0, 1);
+    if (isDesktop) {
+      setSequenceTop((current) =>
+        Math.abs(current - nextSequenceTop) > 1 ? nextSequenceTop : current,
+      );
+    }
+
+    const stageRect = stage.getBoundingClientRect();
+    const isSequenceActive =
+      progressRef.current > 0.001 || isStageCenteredRef.current;
+    const nextProgress = isDesktop
+      ? isSequenceActive
+        ? clamp(
+            (nextSequenceTop - sequenceRect.top) /
+              Math.max(sequenceRect.height - stickyRect.height, 1),
+            0,
+            1,
+          )
+        : 0
+      : progressRef.current;
 
     if (isCompletedRef.current) {
-      if (completionHoldHeight === null) {
+      if (isDesktop && completionHoldHeight === null) {
         setCompletionHoldHeight(sequenceRect.height);
       }
       if (!isCompleted) {
@@ -322,17 +409,70 @@ function Page1() {
     }
 
     if (nextProgress >= 0.999) {
-      completionAnchorRef.current = stickyRect.top;
-      isCompletedRef.current = true;
-      setCompletionHoldHeight(sequenceRect.height);
-      setIsCompleted(true);
-      setProgress(1);
+      completeSequence(isDesktop, stickyRect.top, sequenceRect.height);
       return;
     }
 
     setProgress((current) =>
       Math.abs(current - nextProgress) > 0.002 ? nextProgress : current,
     );
+  });
+
+  const consumeMobileScroll = useEffectEvent((deltaY: number) => {
+    if (window.matchMedia("(min-width: 1024px)").matches || isCompletedRef.current) {
+      return false;
+    }
+
+    const stage = stageRef.current;
+
+    if (!stage) {
+      return false;
+    }
+
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+    const stageRect = stage.getBoundingClientRect();
+    const inLockZone =
+      progressRef.current > 0.001 ||
+      isStageCenteredRef.current;
+
+    if (!inLockZone) {
+      return false;
+    }
+
+    const current = progressRef.current;
+
+    if (deltaY < 0 && current <= 0.001) {
+      return false;
+    }
+
+    const scrubSpan = Math.max(stageRect.height * 1.55, viewportHeight * 1.08);
+    const next = clamp(current + deltaY / scrubSpan, 0, 1);
+
+    if (next >= 0.999) {
+      completeSequence(false);
+      return true;
+    }
+
+    if (next <= 0.001) {
+      if (current > 0.001) {
+        setIsMobileLocked(false);
+        progressRef.current = 0;
+        setProgress(0);
+        return true;
+      }
+
+      return false;
+    }
+
+    if (Math.abs(next - current) > 0.001) {
+      if (!isMobileLocked) {
+        setIsMobileLocked(true);
+      }
+      progressRef.current = next;
+      setProgress(next);
+    }
+
+    return true;
   });
 
   useLayoutEffect(() => {
@@ -380,6 +520,97 @@ function Page1() {
       cancelAnimationFrame(rafId);
       window.removeEventListener("scroll", scheduleUpdate);
       window.removeEventListener("resize", scheduleUpdate);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isMobileLocked) {
+      return;
+    }
+
+    const body = document.body;
+    const html = document.documentElement;
+    const previous = {
+      overflow: body.style.overflow,
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overscrollBehavior: html.style.overscrollBehavior,
+    };
+    const scrollY = window.scrollY;
+
+    mobileLockScrollYRef.current = scrollY;
+    body.style.overflow = "hidden";
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    html.style.overscrollBehavior = "none";
+
+    return () => {
+      body.style.overflow = previous.overflow;
+      body.style.position = previous.position;
+      body.style.top = previous.top;
+      body.style.left = previous.left;
+      body.style.right = previous.right;
+      body.style.width = previous.width;
+      html.style.overscrollBehavior = previous.overscrollBehavior;
+      window.scrollTo(0, mobileLockScrollYRef.current);
+    };
+  }, [isMobileLocked]);
+
+  useEffect(() => {
+    const handleWheel = (event: WheelEvent) => {
+      if (consumeMobileScroll(event.deltaY)) {
+        event.preventDefault();
+      }
+    };
+
+    const handleTouchStart = (event: TouchEvent) => {
+      touchStartYRef.current = event.touches[0]?.clientY ?? null;
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      const touchY = event.touches[0]?.clientY;
+
+      if (touchY === undefined) {
+        return;
+      }
+
+      if (touchStartYRef.current === null) {
+        touchStartYRef.current = touchY;
+        return;
+      }
+
+      const deltaY = touchStartYRef.current - touchY;
+      const isConsumed = consumeMobileScroll(deltaY);
+
+      if (isConsumed) {
+        event.preventDefault();
+      }
+
+      touchStartYRef.current = touchY;
+    };
+
+    const resetTouch = () => {
+      touchStartYRef.current = null;
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("touchend", resetTouch);
+    window.addEventListener("touchcancel", resetTouch);
+
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", resetTouch);
+      window.removeEventListener("touchcancel", resetTouch);
     };
   }, []);
 
