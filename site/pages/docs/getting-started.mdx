@@ -61,10 +61,6 @@ Note: If using Expo, please do NOT install `expo-updates` simultaneously, as it 
 </Tab>
 </Tabs>
 
-:::info
-If downloads are extremely slow or network errors occur, set an npm mirror.
-:::
-
 :::warning
 Please do not mix package managers like `npm/yarn/pnpm` and their associated `lock` files. Stick to one manager across your team and keep one format of the `lock` file.
 :::
@@ -78,7 +74,7 @@ Remember, any modifications under the `ios` or `android` directories require rec
 If RN version >= 0.60, you don't need this manual linking step.
 
 :::warning
-Note: If you have a mixed native-RN project, or monorepo, or any custom scenario, the auto-linking function might fail because custom configurations might be incomplete or not fit the standard RN directory structure. Even if RN version >= 0.60, you might still need manual link operation.
+Note: If you have a brownfield native-RN project, or monorepo, or any custom scenario, the auto-linking function might fail because custom configurations might be incomplete or not fit the standard RN directory structure. Even if RN version >= 0.60, you might still need manual link operation.
 :::
 
 #### iOS

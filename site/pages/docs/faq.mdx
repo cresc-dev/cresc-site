@@ -6,7 +6,7 @@ type: Misc
 
 
 
-If this page does not answer your question, you can submit an issue on our [GitHub repository](https://github.com/reactnativecn/react-native-update/issues), join our QQ Group 729013783, or email us at [hi@charmlot.com](mailto:hi@charmlot.com).
+If this page does not answer your question, open a thread in [GitHub Discussions](https://github.com/reactnativecn/react-native-update/discussions), report a bug in [GitHub Issues](https://github.com/reactnativecn/react-native-update/issues), or email us at [hi@cresc.dev](mailto:hi@cresc.dev).
 
 ### Business Questions
 
@@ -16,9 +16,9 @@ You might have heard mixed information, but extensive practical experience shows
 
 ---
 
-#### Can it be used overseas?
+#### Does Cresc support global deployments?
 
-Yes. We operate high-speed CDN nodes both domestically and internationally.
+Yes. Cresc is designed for globally distributed apps and delivers updates through international CDN routing.
 
 ---
 
@@ -61,7 +61,7 @@ For example, suppose I compile and upload `v1.0` (`Package 1A`). Later, for some
 Remember: Whenever compiling native releases: 1) increment the version string, 2) upload to Cresc servers. Only then can OTA updates function normally.
 
 :::info
-If you use the `Premium`, `Professional`, or `Enterprise VIP` plans, you can enable `"Ignore Build Timestamp"` in the dashboard's App Settings. This ignores timestamp comparisons entirely, checking only the version string. It opens more tolerant update flows, suitable for managing many distinct distribution channels, though it may consume extra traffic bandwidth.
+If you use the `Premium` tier or above, you can enable `"Ignore Build Timestamp"` in the dashboard's App Settings. This ignores timestamp comparisons entirely, checking only the version string. It opens more tolerant update flows for teams managing many distribution channels, though it may consume extra traffic bandwidth.
 :::
 
 ---
@@ -70,16 +70,15 @@ If you use the `Premium`, `Professional`, or `Enterprise VIP` plans, you can ena
 
 #### Which plan should I choose?
 
-There's no need to stress: start directly with a risk-free 7-day `Professional` trial upon verifying your registration. All plans use the same SDK and interface workflows. If your current limits don't meet your metrics later, you can seamlessly upgrade by paying only the prorated difference for the elapsed time period, without hidden fees.
+Start with `Free` if you want to verify the workflow end to end. Choose `Standard` or `Premium` for smaller production apps, and move to `Pro`, `Max`, or `Ultra` as your daily checks, package counts, and app count grow.
 
-Currently, the only gated exclusive feature is `Ignore Build Timestamp`, which permits wider distribution channels but may increase DNS calls. It is exclusively available to `Premium`, `Professional`, and `Enterprise VIP` tiers.
+`Ignore Build Timestamp` is currently available on `Premium` and higher tiers.
 
 ---
 
 #### Can I trial a paid version first to evaluate its effectiveness?
 
-Upon account verification, you will automatically receive a 7-day `Professional` trial. If you require a longer evaluation window, send your username, email, and company/personal title to hi@charmlot.com with the subject "Cresc Trial Extension Request" and we will consider extending it.
-During the trial, you can either renew Professional or upgrade. To purchase lower tiers, wait until the trial expires or contact support.
+If you need evaluation capacity beyond the published quotas, email [hi@cresc.dev](mailto:hi@cresc.dev) with your expected app count, daily checks, and rollout timeline.
 
 ---
 
@@ -108,7 +107,7 @@ If Total Daily Checks hit their cap, the API refuses queries and returns an empt
 
 #### Can I upgrade just a single limit item independently?
 
-If you only need to raise one specific limit without adopting an entire larger tier (applicable for Premium + accounts only), reach out via hi@charmlot.com or QQ Support (34731408). Provide requirements to receive bespoke quotes.
+If you only need to raise one specific limit without moving to the next public tier, email [hi@cresc.dev](mailto:hi@cresc.dev) with your required limits and expected traffic profile.
 
 ---
 
@@ -120,51 +119,10 @@ After expiration, accounts degrade automatically into the Free Plan tier limitat
 
 #### How do I receive dedicated human technical support?
 
-Email screenshots of your completed billing invoice detailing your username directly to hi@charmlot.com while noting your primary IM contact preference (QQ, WeChat, etc.). Once matched against database records, an integration engineer will friend request you directly.
+For product questions and implementation guidance, use [GitHub Discussions](https://github.com/reactnativecn/react-native-update/discussions). For bug reports, use [GitHub Issues](https://github.com/reactnativecn/react-native-update/issues). For billing, account, or private support requests, email [hi@cresc.dev](mailto:hi@cresc.dev).
 
 ---
 
-#### How do I claim Official Invoices (Fapiao)?
+#### Do you offer higher-volume enterprise plans?
 
-Email explicit invoice requests detailing company details to hi@charmlot.com accompanying email registrations + billing receipt snapshots. Regular automated e-Invoices issue normally to registered emails categorizing 'Software Services'. Direct physical postage requests must supply an address; cost applies towards receiver Cash-On-Delivery policies.
-Ping QQ 34731408 if no action manifests 3 business days post-email transmission.
-
----
-
-#### Can I execute manual wire transfers via Banking Networks?
-
-Yes. Refer to [Pricing Boards](/pricing), then wire required funds precisely toward:
-
-| Company Entity | Wuhan Qingluo Network Technologies Co., Ltd. |
-| ---------- | ------------------------ |
-| Account Identifier | 8888888048825564 |
-| Bank Name | Zhejiang MYBank |
-| Region Zone | Hangzhou City, Zhejiang Province |
-| Branch Identifier | Zhejiang MYBank Co., Ltd |
-| Internal Transit Id | 323331000001 |
-
-Email screenshots validating completed successful transfer transactions alongside account registration email pointers explicitly referencing hi@charmlot.com . Funds processing clears within 1 operational business day.
-
----
-
-#### Is monthly-recurring payment structure available?
-
-Users wanting monthly deductions must query QQ Support Rep 34731408 directly. Monthly tiers strictly cost Annual Rate / 8. Example: A tier costing 800 RMB yearly yields ~100 RMB monthly commitments. Monthly payers must eclipse 500 RMB threshold minimums to qualify for Official Invoices (Fapiao). `Enterprise VIP` tier prohibits monthly billing structures.
-
----
-
-#### Enterprise Placements
-
-Should your metrics scale past heavily populated DAU bases demanding over 1 Million daily queries consistently sweeping arrays of multi-channel deployments, we strongly endorse pivoting structures towards optimized `Enterprise VIP Placements`.
-`Enterprise` parallels fundamental constraints akin closely to Professional tier limits alongside significantly expanded Daily Aggregations thresholds.
-
-Prices follow:
-
-| Tier | Maximum Daily Aggregation Limit | Base Cost (RMB / Year) |
-| -------- | ------------------ | ------------- |
-| VIP1 | 10 Million Calls | 30000 |
-| VIP2 | 50 Million Calls | 60000 |
-| VIP3 | 100 Million Calls | 120000 |
-| VIP4 | 100 Million+ Unlimited Scaling | Inquire Direct |
-
-Execute queries & discussions handling integration frameworks connecting deeply toward backend interfaces by speaking against Sales @ QQ Support 34731408.
+Yes. If your traffic profile goes beyond `Ultra`, or you need tailored limits, rollout controls, or onboarding help, email [hi@cresc.dev](mailto:hi@cresc.dev) with your expected daily checks and app footprint.

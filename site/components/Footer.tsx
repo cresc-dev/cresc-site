@@ -3,8 +3,12 @@ function Footer() {
     {
       title: "Contact Us",
       links: [
-        { text: "Email hi@charmlot.com", href: "mailto:hi@charmlot.com" },
-        { text: "QQ Group 729013783" },
+        { text: "Email hi@cresc.dev", href: "mailto:hi@cresc.dev" },
+        {
+          text: "GitHub Discussions",
+          href: "https://github.com/reactnativecn/react-native-update/discussions",
+          external: true,
+        },
       ],
     },
     {
@@ -19,7 +23,7 @@ function Footer() {
       links: [
         { text: "FAQ", href: "/docs/faq" },
         {
-          text: "Issue Discussions",
+          text: "GitHub Issues",
           href: "https://github.com/reactnativecn/react-native-update/issues",
           external: true,
         },
@@ -29,8 +33,8 @@ function Footer() {
       title: "Links",
       links: [
         {
-          text: "React Native Chinese Site",
-          href: "https://reactnative.cn/",
+          text: "React Native",
+          href: "https://reactnative.dev/",
           external: true,
         },
         {
