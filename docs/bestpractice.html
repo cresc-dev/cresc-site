@@ -8,7 +8,7 @@
 <script defer src="/static/js/lib-react.1cf7a6c85f.js"></script>
 <script defer src="/static/js/lib-router.0084570b81.js"></script>
 <script defer src="/static/js/2917.6eb6202250.js"></script>
-<script defer src="/static/js/index.8c49e9c7b0.js"></script>
+<script defer src="/static/js/index.c2c2d735b4.js"></script>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="generator" content="Rspress v2.0.4">
 <meta property="og:keywords" content="OTA,hotupdate,no-review,fast-publish">
@@ -54,7 +54,7 @@
 <ol>
 <li>If the channel APKs have differences in their <code>JS code or initial assets</code> (no matter how slight, which results in different jsbundles), you must build separate APKs, upload, and bind them individually. You can write scripts to automate bulk operations using the CLI.</li>
 <li>If the <code>JS code and initial assets</code> across channel APKs are perfectly identical, consider using <a href="https://developer.android.com/studio/build/build-variants" target="_blank" rel="noopener noreferrer" class="rp-link">Flavor builds</a>, or other dynamic channel generation tools (like <a href="https://github.com/Tencent/VasDolly" target="_blank" rel="noopener noreferrer" class="rp-link">Tencent&#x27;s VasDolly</a> or <a href="https://github.com/Meituan-Dianping/walle" target="_blank" rel="noopener noreferrer" class="rp-link">Meituan&#x27;s walle</a>). In this approach, all channel APKs are generated from a single base APK (thus sharing the same build timestamp and jsbundle). This means you only need to upload one base APK, and hot updates applied to it will take effect across all channel APKs.</li>
-<li>If you are on the <code>Premium</code>, <code>Professional</code>, or <code>Enterprise VIP</code> plans, you can enable <code>Ignore Build Timestamp</code> in your app settings in the admin dashboard. This option only checks the version number and ignores the timestamp, providing a wider tolerance for updates, but it may consume more CDN traffic.</li>
+<li>If you are on the <code>Premium</code> tier or above, you can enable <code>Ignore Build Timestamp</code> in your app settings in the admin dashboard. This option only checks the version number and ignores the timestamp, providing a wider tolerance for updates, but it may consume more CDN traffic.</li>
 </ol>
 <h4 class="rp-toc-include" id="supporting-the-aab-format"><a href="#supporting-the-aab-format" class="rp-header-anchor rp-link" aria-hidden="true">#</a>Supporting the AAB Format</h4>
 <p>Update the <code>react-native-update-cli</code> to v2.6.0 or higher. You can then use the <code>cresc parseAab</code> and <code>cresc uploadAab</code> commands for <code>.aab</code> format support.</p>
@@ -64,7 +64,7 @@
 <ul>
 <li><strong>If your app has <a href="https://reactnative.dev/docs/linking#enabling-deep-links" target="_blank" rel="noopener noreferrer" class="rp-link">Deep Linking</a> enabled:</strong></li>
 </ul>
-<p>No code changes are required. Simply check &quot;Use Deep Link&quot; in the interface shown above, enter your app&#x27;s scheme (e.g., <code>cresc://</code>), and scan the QR code using your system camera or built-in scanner (Do not use WeChat&#x27;s scanner). The app will automatically open and trigger the update.</p>
+<p>No code changes are required. Simply check &quot;Use Deep Link&quot; in the interface shown above, enter your app&#x27;s scheme (e.g., <code>cresc://</code>), and scan the QR code using your system camera or a standard QR scanner that supports deep links. The app will automatically open and trigger the update.</p>
 <ul>
 <li><strong>If your app has a built-in barcode scanner:</strong></li>
 </ul>

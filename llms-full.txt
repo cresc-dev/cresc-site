@@ -4,7 +4,7 @@ url: /docs/api-token.md
 
 # API Token
 
-An API Token is an authentication method used to invoke the [Cresc API](https://update.reactnative.cn/api/openapi) within CI/CD pipelines or automated scripts. Compared to standard username/password logins, API Tokens are much more secure and easier to manage.
+An API Token is an authentication method used to invoke the [Cresc API](https://api.cresc.dev/openapi) within CI/CD pipelines or automated scripts. Compared to standard username/password logins, API Tokens are much more secure and easier to manage.
 
 ## Use Cases
 
@@ -43,7 +43,7 @@ You must select at least one permission when creating a Token. Applying the prin
 When calling the Cresc API, supply the token via the `x-api-token` HTTP header:
 
 ```bash
-curl -X GET "https://update.reactnative.cn/api/app/list" \
+curl -X GET "https://api.cresc.dev/app/list" \
   -H "x-api-token: YOUR_API_TOKEN"
 ```
 
@@ -390,8 +390,8 @@ Triggers an update check, returns `updateInfo` (Note: Before v10.26.0, `checkUpd
     hash: 'hash',
     description: 'Added Chat feature\nFixed store bugs',
     metaInfo: '{"silent":true}',
-    pdiffUrl: 'http://update-packages.reactnative.cn/hash',
-    diffUrl: 'http://update-packages.reactnative.cn/hash',
+    pdiffUrl: 'https://cdn.example.com/hash',
+    diffUrl: 'https://cdn.example.com/hash',
 }
 ```
 
@@ -560,7 +560,7 @@ The primary content of a hot update package is the JS bundle and its referenced 
 
 1. If the channel APKs have differences in their `JS code or initial assets` (no matter how slight, which results in different jsbundles), you must build separate APKs, upload, and bind them individually. You can write scripts to automate bulk operations using the CLI.
 2. If the `JS code and initial assets` across channel APKs are perfectly identical, consider using [Flavor builds](https://developer.android.com/studio/build/build-variants), or other dynamic channel generation tools (like [Tencent's VasDolly](https://github.com/Tencent/VasDolly) or [Meituan's walle](https://github.com/Meituan-Dianping/walle)). In this approach, all channel APKs are generated from a single base APK (thus sharing the same build timestamp and jsbundle). This means you only need to upload one base APK, and hot updates applied to it will take effect across all channel APKs.
-3. If you are on the `Premium`, `Professional`, or `Enterprise VIP` plans, you can enable `Ignore Build Timestamp` in your app settings in the admin dashboard. This option only checks the version number and ignores the timestamp, providing a wider tolerance for updates, but it may consume more CDN traffic.
+3. If you are on the `Premium` tier or above, you can enable `Ignore Build Timestamp` in your app settings in the admin dashboard. This option only checks the version number and ignores the timestamp, providing a wider tolerance for updates, but it may consume more CDN traffic.
 
 #### Supporting the AAB Format
 
@@ -573,7 +573,7 @@ Starting from version v10.11.2, you can use two quick QR code scanning methods t
 ![testqrcode](/static/image/testqrcode.24c22c1ebe.png)
 - **If your app has [Deep Linking](https://reactnative.dev/docs/linking#enabling-deep-links) enabled:**
 
-No code changes are required. Simply check "Use Deep Link" in the interface shown above, enter your app's scheme (e.g., `cresc://`), and scan the QR code using your system camera or built-in scanner (Do not use WeChat's scanner). The app will automatically open and trigger the update.
+No code changes are required. Simply check "Use Deep Link" in the interface shown above, enter your app's scheme (e.g., `cresc://`), and scan the QR code using your system camera or a standard QR scanner that supports deep links. The app will automatically open and trigger the update.
 
 - **If your app has a built-in barcode scanner:**
 
@@ -678,7 +678,7 @@ $ npm install -g react-native-update-cli
 
 Generates a hot update resource package (ppk). Automatically detects if frameworks like Expo or Taro are used and runs their packagers respectively. If detection is inaccurate or errors occur, try using `--rncli` to specify the official React Native CLI.
 
-- `platform`: `ios|android|harmony` The target platform.
+- `platform`: `ios|android` The target platform.
 - `entryFile`: The entry script file.
 - `intermediaDir`: Temporary file output directory.
 - `output`: Final ppk file output path.
@@ -723,12 +723,6 @@ Parses an `.apk` file and outputs associated data like version codes and build t
 
 ***
 
-#### cresc parseApp \[appFile]
-
-Parses an `.app` file and outputs associated data like version codes and build timestamps.
-
-***
-
 #### cresc parseAab \[aabFile]
 
 Parses an `.aab` file and outputs associated data like version codes and build timestamps.
@@ -746,16 +740,6 @@ Provide two `.ppk` files to generate a delta differential hot update package fro
 #### cresc diffFromApk \[apkFile]\[next]
 
 Provide an `.apk` file and a `.ppk` file to generate a diff update package from the `.apk` baseline to the next version.
-
-No need to run this manually if you use the managed platform.
-
-- `output`: Diff file output path.
-
-***
-
-#### cresc diffFromApp \[appFile]\[next]
-
-Provide an `.app` file and a `.ppk` file to generate a diff update package.
 
 No need to run this manually if you use the managed platform.
 
@@ -795,7 +779,7 @@ Checks if you are currently logged in, and displays account details.
 
 Creates a new remote app and instantly binds it to the current project directory. This action can also be completed via the web dashboard.
 
-- `platform`: `ios|android|harmony` The target platform.
+- `platform`: `ios|android` The target platform.
 - `name`: The application name.
 - `downloadUrl`: The remote URL where users go to download native package upgrades.
 
@@ -813,7 +797,7 @@ Deletes an existing app entirely. All related native packages and hot versions w
 
 List all established apps in your account. This action can also be completed via the web dashboard.
 
-- `platform`: `ios|android|harmony` The target platform filter.
+- `platform`: `ios|android` The target platform filter.
 
 ***
 
@@ -821,7 +805,7 @@ List all established apps in your account. This action can also be completed via
 
 Locally binds an existing app configuration to the current project folder.
 
-- `platform`: `ios|android|harmony` The target platform.
+- `platform`: `ios|android` The target platform.
 
 ***
 
@@ -834,12 +818,6 @@ Uploads an `.ipa` to the managed platform. (Requires CLI 1.24.0+)
 #### cresc uploadApk \[apkFile]
 
 Uploads an `.apk` to the managed platform. (Requires CLI 1.24.0+)
-
-***
-
-#### cresc uploadApp \[appFile]
-
-Uploads an `.app` to the managed platform. (Requires CLI 1.24.0+)
 
 ***
 
@@ -859,7 +837,7 @@ Extracts an `.apk` file from an `.aab` build envelope. (Requires CLI 2.6.0+)
 
 View all natively uploaded packages. This action can also be completed via the web dashboard.
 
-- `platform`: `ios|android|harmony` The target platform filter.
+- `platform`: `ios|android` The target platform filter.
 
 ***
 
@@ -876,7 +854,7 @@ Delete an uploaded native package baseline.
 
 Uploads and publishes a new hot update package (`.ppk` file).
 
-- `platform`: `ios|android|harmony`
+- `platform`: `ios|android`
 - `name`: Target name for the hot update version (its own version code).
 - `description`: Update description/changelog shown to users.
 - `metaInfo`: Custom meta info payload. Refer to [Best Practices](/docs/bestpractice.md#using-meta-info).
@@ -901,7 +879,7 @@ cresc publish .cresc/output/android.1750423283653.ppk --platform android --name 
 
 Paginates and lists available hot update versions. This action can also be completed via the web dashboard.
 
-- `platform`: `ios|android|harmony`
+- `platform`: `ios|android`
 
 ***
 
@@ -920,7 +898,7 @@ Binds and applies an active hot update version to a native package baseline. Thi
 
 From CLI v2.4.0 onward, a full rollout and a canary rollout can coexist simultaneously. Prior to 2.4.0 they overwrote each other depending on which was set last.
 
-- `platform`: `ios|android|harmony`
+- `platform`: `ios|android`
 - `versionId`: The Version ID of the hot update.
 - `rollout`: Phased canary rollout percentage (Int between 1 - 100). Default is 100 (Requires CLI v1.31.0+).
 - `dryRun`: Dry run preview only, prevents applying actual bindings (Requires CLI v1.45.4+).
@@ -1143,7 +1121,7 @@ url: /docs/faq.md
 
 # FAQ
 
-If this page does not answer your question, you can submit an issue on our [GitHub repository](https://github.com/reactnativecn/react-native-update/issues), join our QQ Group 729013783, or email us at [hi@charmlot.com](mailto:hi@charmlot.com).
+If this page does not answer your question, open a thread in [GitHub Discussions](https://github.com/reactnativecn/react-native-update/discussions), report a bug in [GitHub Issues](https://github.com/reactnativecn/react-native-update/issues), or email us at [hi@cresc.dev](mailto:hi@cresc.dev).
 
 ### Business Questions
 
@@ -1153,9 +1131,9 @@ You might have heard mixed information, but extensive practical experience shows
 
 ***
 
-#### Can it be used overseas?
+#### Does Cresc support global deployments?
 
-Yes. We operate high-speed CDN nodes both domestically and internationally.
+Yes. Cresc is designed for globally distributed apps and delivers updates through international CDN routing.
 
 ***
 
@@ -1198,7 +1176,7 @@ For example, suppose I compile and upload `v1.0` (`Package 1A`). Later, for some
 Remember: Whenever compiling native releases: 1) increment the version string, 2) upload to Cresc servers. Only then can OTA updates function normally.
 
 :::info
-If you use the `Premium`, `Professional`, or `Enterprise VIP` plans, you can enable `"Ignore Build Timestamp"` in the dashboard's App Settings. This ignores timestamp comparisons entirely, checking only the version string. It opens more tolerant update flows, suitable for managing many distinct distribution channels, though it may consume extra traffic bandwidth.
+If you use the `Premium` tier or above, you can enable `"Ignore Build Timestamp"` in the dashboard's App Settings. This ignores timestamp comparisons entirely, checking only the version string. It opens more tolerant update flows for teams managing many distribution channels, though it may consume extra traffic bandwidth.
 :::
 
 ***
@@ -1207,16 +1185,15 @@ If you use the `Premium`, `Professional`, or `Enterprise VIP` plans, you can ena
 
 #### Which plan should I choose?
 
-There's no need to stress: start directly with a risk-free 7-day `Professional` trial upon verifying your registration. All plans use the same SDK and interface workflows. If your current limits don't meet your metrics later, you can seamlessly upgrade by paying only the prorated difference for the elapsed time period, without hidden fees.
+Start with `Free` if you want to verify the workflow end to end. Choose `Standard` or `Premium` for smaller production apps, and move to `Pro`, `Max`, or `Ultra` as your daily checks, package counts, and app count grow.
 
-Currently, the only gated exclusive feature is `Ignore Build Timestamp`, which permits wider distribution channels but may increase DNS calls. It is exclusively available to `Premium`, `Professional`, and `Enterprise VIP` tiers.
+`Ignore Build Timestamp` is currently available on `Premium` and higher tiers.
 
 ***
 
 #### Can I trial a paid version first to evaluate its effectiveness?
 
-Upon account verification, you will automatically receive a 7-day `Professional` trial. If you require a longer evaluation window, send your username, email, and company/personal title to [hi@charmlot.com](mailto:hi@charmlot.com) with the subject "Cresc Trial Extension Request" and we will consider extending it.
-During the trial, you can either renew Professional or upgrade. To purchase lower tiers, wait until the trial expires or contact support.
+If you need evaluation capacity beyond the published quotas, email [hi@cresc.dev](mailto:hi@cresc.dev) with your expected app count, daily checks, and rollout timeline.
 
 ***
 
@@ -1245,7 +1222,7 @@ If Total Daily Checks hit their cap, the API refuses queries and returns an empt
 
 #### Can I upgrade just a single limit item independently?
 
-If you only need to raise one specific limit without adopting an entire larger tier (applicable for Premium + accounts only), reach out via [hi@charmlot.com](mailto:hi@charmlot.com) or QQ Support (34731408). Provide requirements to receive bespoke quotes.
+If you only need to raise one specific limit without moving to the next public tier, email [hi@cresc.dev](mailto:hi@cresc.dev) with your required limits and expected traffic profile.
 
 ***
 
@@ -1257,54 +1234,13 @@ After expiration, accounts degrade automatically into the Free Plan tier limitat
 
 #### How do I receive dedicated human technical support?
 
-Email screenshots of your completed billing invoice detailing your username directly to [hi@charmlot.com](mailto:hi@charmlot.com) while noting your primary IM contact preference (QQ, WeChat, etc.). Once matched against database records, an integration engineer will friend request you directly.
+For product questions and implementation guidance, use [GitHub Discussions](https://github.com/reactnativecn/react-native-update/discussions). For bug reports, use [GitHub Issues](https://github.com/reactnativecn/react-native-update/issues). For billing, account, or private support requests, email [hi@cresc.dev](mailto:hi@cresc.dev).
 
 ***
 
-#### How do I claim Official Invoices (Fapiao)?
+#### Do you offer higher-volume enterprise plans?
 
-Email explicit invoice requests detailing company details to [hi@charmlot.com](mailto:hi@charmlot.com) accompanying email registrations + billing receipt snapshots. Regular automated e-Invoices issue normally to registered emails categorizing 'Software Services'. Direct physical postage requests must supply an address; cost applies towards receiver Cash-On-Delivery policies.
-Ping QQ 34731408 if no action manifests 3 business days post-email transmission.
-
-***
-
-#### Can I execute manual wire transfers via Banking Networks?
-
-Yes. Refer to [Pricing Boards](/pricing.md), then wire required funds precisely toward:
-
-| Company Entity      | Wuhan Qingluo Network Technologies Co., Ltd. |
-| ------------------- | -------------------------------------------- |
-| Account Identifier  | 8888888048825564                             |
-| Bank Name           | Zhejiang MYBank                              |
-| Region Zone         | Hangzhou City, Zhejiang Province             |
-| Branch Identifier   | Zhejiang MYBank Co., Ltd                     |
-| Internal Transit Id | 323331000001                                 |
-
-Email screenshots validating completed successful transfer transactions alongside account registration email pointers explicitly referencing [hi@charmlot.com](mailto:hi@charmlot.com) . Funds processing clears within 1 operational business day.
-
-***
-
-#### Is monthly-recurring payment structure available?
-
-Users wanting monthly deductions must query QQ Support Rep 34731408 directly. Monthly tiers strictly cost Annual Rate / 8. Example: A tier costing 800 RMB yearly yields \~100 RMB monthly commitments. Monthly payers must eclipse 500 RMB threshold minimums to qualify for Official Invoices (Fapiao). `Enterprise VIP` tier prohibits monthly billing structures.
-
-***
-
-#### Enterprise Placements
-
-Should your metrics scale past heavily populated DAU bases demanding over 1 Million daily queries consistently sweeping arrays of multi-channel deployments, we strongly endorse pivoting structures towards optimized `Enterprise VIP Placements`.
-`Enterprise` parallels fundamental constraints akin closely to Professional tier limits alongside significantly expanded Daily Aggregations thresholds.
-
-Prices follow:
-
-| Tier | Maximum Daily Aggregation Limit | Base Cost (RMB / Year) |
-| ---- | ------------------------------- | ---------------------- |
-| VIP1 | 10 Million Calls                | 30000                  |
-| VIP2 | 50 Million Calls                | 60000                  |
-| VIP3 | 100 Million Calls               | 120000                 |
-| VIP4 | 100 Million+ Unlimited Scaling  | Inquire Direct         |
-
-Execute queries & discussions handling integration frameworks connecting deeply toward backend interfaces by speaking against Sales @ QQ Support 34731408.
+Yes. If your traffic profile goes beyond `Ultra`, or you need tailored limits, rollout controls, or onboarding help, email [hi@cresc.dev](mailto:hi@cresc.dev) with your expected daily checks and app footprint.
 
 
 
@@ -1361,9 +1297,6 @@ cd ios && pod install
 Note: If using Expo, please do NOT install `expo-updates` simultaneously, as it will cause update function conflicts. Also, New Architecture support in Expo versions under 51 is incomplete and might not work properly. It's recommended to use the latest version of Expo possible for New Architecture setups.
 :::
 
-:::info
-If downloads are extremely slow or network errors occur, set an npm mirror.
-:::
 :::warning
 Please do not mix package managers like `npm/yarn/pnpm` and their associated `lock` files. Stick to one manager across your team and keep one format of the `lock` file.
 :::
@@ -1373,7 +1306,7 @@ Remember, any modifications under the `ios` or `android` directories require rec
 ### Manual Link
 If RN version >= 0.60, you don't need this manual linking step.
 :::warning
-Note: If you have a mixed native-RN project, or monorepo, or any custom scenario, the auto-linking function might fail because custom configurations might be incomplete or not fit the standard RN directory structure. Even if RN version >= 0.60, you might still need manual link operation.
+Note: If you have a brownfield native-RN project, or monorepo, or any custom scenario, the auto-linking function might fail because custom configurations might be incomplete or not fit the standard RN directory structure. Even if RN version >= 0.60, you might still need manual link operation.
 :::
 #### iOS
 RN < 0.60 and using CocoaPods (Recommended)
@@ -1581,127 +1514,8 @@ public class MainApplication extends Application implements ReactApplication {
 :::info
 Remember, any modifications under the `ios` or `android` directories require recompilation (using `npx react-native run-ios/android` or compiling inside Xcode/Android Studio) to take effect.
 :::
-#### HarmonyOS
-Add the following to `harmony/entry/src/main/cpp/CMakeLists.txt`:
-```cmake
-add_subdirectory("${OH_MODULES}/cresc/src/main/cpp" ./cresc)
-target_link_libraries(rnoh_app PUBLIC rnoh_cresc)
-```
-Add dependencies sequentially over `harmony/entry/src/main/cpp/PackageProvider.cpp`:
-```cpp
-#include "RNOH/PackageProvider.h"
-#include "CrescPackage.h"
-using namespace rnoh;
-
-std::vector<std::shared_ptr<Package>> PackageProvider::getPackages(Package::Context ctx) {
-    return {
-         std::make_shared<CrescPackage>(ctx)
-    };
-}
-```
-Add inside `harmony/entry/oh-package.json5`:
-```json5
-"dependencies": {
-  "cresc": "file:../../node_modules/react-native-update/harmony/cresc",
-
-}
-```
-Insert into `harmony/build-profile.json5`:
-```json5
-  modules: [
-    // ↓↓↓ Add the nested property!
-    {
-      name: 'cresc',
-      srcPath: '../node_modules/react-native-update/harmony/cresc',
-    },
-  ],
-```
-Within `harmony/hvigor/hvigor-config.json5`, integrate dependencies:
-```json5
-{
-  dependencies: {
-    cresc: "file:../../node_modules/react-native-update/harmony/cresc",
-  },
-}
-```
-Set plugin hooks globally into `harmony/entry/hvigorfile.ts`:
-```ts
-import { hapTasks } from "@ohos/hvigor-ohos-plugin";
-import { reactNativeUpdatePlugin } from "cresc/hvigor-plugin";
-
-export default {
-  system: hapTasks /* Built-in plugin of Hvigor. It cannot be modified. */,
-  plugins: [
-    reactNativeUpdatePlugin(),
-  ] /* Custom plugin to extend the functionality of Hvigor. */,
-};
-```
-Export correctly from `harmony/entry/src/main/ets/RNPackagesFactory.ts`:
-```ts
-import type {
-  RNPackageContext,
-  RNPackage,
-} from "@rnoh/react-native-openharmony/ts";
-import { CrescPackage } from "cresc/ts";
-
-export function createRNPackages(ctx: RNPackageContext): RNPackage[] {
-  return [new CrescPackage(ctx)];
-}
-```
-And configure bindings upon `harmony/entry/src/main/ets/pages/Index.ets`:
-```ts
-// ... Other Code
-
-// ↓↓↓ Don't forget imports explicitly!
-import { CrescFileJSBundleProvider } from 'cresc/src/main/ets/CrescFileJSBundleProvider';
-// ↑↑↑
-
-@Entry
-@Component
-struct Index {
-  @StorageLink('RNOHCoreContext') private rnohCoreContext: RNOHCoreContext | undefined = undefined
-  @State shouldShow: boolean = false
-
-  aboutToAppear(): void {
-    this.shouldShow = true
-  }
-
-  onBackPress(): boolean | undefined {
-    // NOTE: this is required since `Ability`'s `onBackPressed` function always
-    // terminates or puts the app in the background, but we want Ark to ignore it completely
-    // when handled by RN
-    this.rnohCoreContext!.dispatchBackPress()
-
-    // this.preferences = preferences.getPreferencesSync(this.context, {name:'update'});
-    return true
-  }
-
-  build() {
-    Column() {
-      if (this.rnohCoreContext && this.shouldShow) {
-        RNApp({
-          // ... Other params
-          jsBundleProvider: new TraceJSBundleProviderDecorator(
-            new AnyJSBundleProvider([
-              // MetroJSBundleProvider.fromServerIp('127.0.0.1'),
-              // new ResourceJSBundleProvider(rnohCoreContext.uiAbilityContext.resourceManager, 'hermes_bundle.hbc'),
-              // ↓↓↓ Wrap strictly below sequence lines!
-              new CrescFileJSBundleProvider(this.rnohCoreContext.uiAbilityContext),
-
-              // Regardless of whether hermes bytecode executes or not, maintain the target identical name.
-              new ResourceJSBundleProvider(this.rnohCoreContext.uiAbilityContext.resourceManager, 'bundle.harmony.js')
-            ]),
-            this.rnohCoreContext.logger),
-        })
-      }
-    }
-    .height('100%')
-    .width('100%')
-  }
-}
-```
 :::info
-Remember, any modifications under the `ios`, `android`, or `harmony` directories require recompilation (using `npx react-native run-ios/android` or compiling inside Xcode/Android Studio/DevEco) to take effect.
+Remember, any modifications under the `ios` or `android` directories require recompilation (using `npx react-native run-ios/android` or compiling inside Xcode/Android Studio) to take effect.
 :::
 ### Overriding Android's onCreate
 If `react-native-screens` is installed (which `react-navigation` explicitly demands generally), Android targets display blank white states post application-update-reboots inherently occasionally natively securely securely smoothly implicitly. Overriding the Android `MainActivity` applying explicit `RNScreensFragmentFactory` components stabilizes UI generation preventing Fragment lifecycle crashes absolutely efficiently.
@@ -1849,8 +1663,6 @@ $ cresc createApp --platform ios
 App Name: <Desired Tag optimally cleanly efficiently happily broadly properly>
 $ cresc createApp --platform android
 App Name: <Target Moniker nicely clearly properly efficiently correctly properly>
-$ cresc createApp --platform harmony
-App Name: <Application Tag cleanly safely smoothly easily dynamically efficiently effectively properly quickly cleverly fluently appropriately securely>
 ```
 :::info
 Names effortlessly cleanly intelligently effortlessly creatively seamlessly cleanly neatly appropriately flawlessly nicely functionally effectively securely smoothly comfortably nicely functionally correctly efficiently intelligently correctly cleverly easily comfortably comfortably correctly duplicate precisely properly smoothly dependably smoothly elegantly explicitly elegantly creatively easily beautifully intuitively cleanly optimally effortlessly intelligently properly optimally nicely precisely.
@@ -1874,10 +1686,6 @@ Files structurally manifest natively internally neatly cleverly cleanly fluently
     "android": {
         "appId": 2,
         "appKey": "<Hash Data correctly smartly elegantly nicely creatively dependably explicitly optimally smoothly beautifully successfully gracefully dynamically comprehensively dynamically neatly fluently nicely >"
-    },
-    "harmony": {
-        "appId": 3,
-        "appKey": "<Key Sequences neatly correctly beautifully functionally effectively naturally safely safely comfortably exactly intelligently beautifully>"
     }
 }
 ```
@@ -2122,21 +1930,20 @@ url: /docs/intro.md
 
 Cresc (npm package: [`react-native-update`](https://www.npmjs.com/package/react-native-update)
  [![npm version](https://badge.fury.io/js/react-native-update.svg)](https://www.npmjs.com/package/react-native-update)) is a **professional Over-the-Air (OTA) update service**
- for React Native targeting global developers, exclusively developed and maintained by the [React Native Chinese Site](https://reactnative.cn)
- team. We are committed to providing the fastest, most stable, and most economical hot update experience for React Native developers worldwide.
+ for React Native teams shipping globally. It is designed to keep release workflows lean, stable, and cost-efficient from small apps to large production fleets.
 ## 🚀 Why Choose Cresc?
 
 ### Ultimate Update Experience
 
 - **🎯 Ultra-small update packages**: Incremental updates based on bsdiff/hdiff limits size to **tens to hundreds of KB**, saving 99%+ bandwidth compared to full-size updates.
-- **⚡️ Lightning Fast Distribution**: High-speed AliCloud CDN locally and intelligent Cloudflare routing globally ensure best-in-class coverage and a **99.9%+** update success rate.
+- **⚡️ Lightning Fast Distribution**: Global CDN delivery and incremental patch transport keep updates fast and reliable with a **99.9%+** success rate.
 - **🛡️ Secure and Reliable**: Built-in crash rollback mechanism automatically reverts failing patches, guaranteeing stability.
-- **🌐 Full Platform Support**: Flawless support for <span style={{whiteSpace: 'nowrap'}}><AppleOutlined style={{fontSize: '16px', color: '#555', marginRight: '6px'}} /> **iOS**</span> and <span style={{whiteSpace: 'nowrap'}}><AndroidOutlined style={{fontSize: '16px', color: '#3DDC84', marginRight: '6px'}} /> **Android**</span>, plus exclusive first-party support for <span style={{whiteSpace: 'nowrap'}}><HarmonyOSOutlined style={{fontSize: '16px', color: '#000', marginRight: '6px'}} /> **HarmonyOS**</span>.
+- **🌐 Full Platform Support**: Flawless support for <span style={{whiteSpace: 'nowrap'}}><AppleOutlined style={{fontSize: '16px', color: '#555', marginRight: '6px'}} /> **iOS**</span> and <span style={{whiteSpace: 'nowrap'}}><AndroidOutlined style={{fontSize: '16px', color: '#3DDC84', marginRight: '6px'}} /> **Android**</span>.
 - **🔍 Deep React Native Integration**:
   - ✅ **Expo** - Seamless integration
   - ✅ **New Architecture** - Immediate support
   - ✅ **Hermes** - Full bytecode translation
-- **📖 Open Source Ecosystem**: The client SDK, CLI tools, and admin UI are [fully open source](https://github.com/reactnativecn). Transparent and auditable logic means you can host your own servers without vendor lock-in.
+- **📖 Open Source Ecosystem**: The client SDK, CLI tools, and admin UI are [fully open source on GitHub](https://github.com/reactnativecn/react-native-update). Transparent and auditable logic means you can host your own servers without vendor lock-in.
 - **🔒 Data Security**: Intercept and handle data analytics yourself. You retain full control.
 - **💬 Professional Support**: Dedicated technical support to troubleshoot issues and keep your app stable.
 - **🏆 Proven Track Record**: Running reliably since 2016, powering numerous well-known apps and enterprises.
@@ -2147,11 +1954,9 @@ Compared to other alternatives, Cresc is more powerful yet highly affordable:
 
 | Feature              | Cresc                   | Expo Updates                  |
 | -------------------- | ----------------------- | ----------------------------- |
-| **Starting Price**   | ¥66/mo (or Free plan)   | \~$30/mo                      |
+| **Starting Price**   | Free plan or $19/mo     | \~$30/mo                      |
 | **Bandwidth Limits** | Built-in, no extra fees | Extra costs apply over limits |
 | **Package Size**     | KB scale (Incremental)  | MB scale (Full bundle)        |
-| **Speed in China**   | ⭐⭐⭐⭐⭐ Lightning Fast    | ⭐⭐ Slower                     |
-| **HarmonyOS**        | ✅ Supported             | ❌ Not Supported               |
 
 :::warning
 **Note**: Microsoft App Center (Code Push) officially shut down on March 31, 2025. If you are using Code Push, now is the best time to migrate to Cresc!
@@ -2193,7 +1998,7 @@ Only 3 steps to unlock instant OTA capabilities for your React Native app:
 3. **[Publish Updates](/docs/publish.md)** - One CLI command to push new versions
 
 :::info
-Not sure if this fits your project? Check our [FAQ](/docs/faq.md) or visit our [issues page](https://github.com/reactnativecn/react-native-update/issues). You can also join our QQ Group 729013783 or email us at [hi@charmlot.com](mailto:hi@charmlot.com).
+Not sure if this fits your project? Check our [FAQ](/docs/faq.md), start a thread in [GitHub Discussions](https://github.com/reactnativecn/react-native-update/discussions), or email us at [hi@cresc.dev](mailto:hi@cresc.dev).
 :::
 
 Start using Cresc today, and bring a professional OTA update workflow to your React Native app!
@@ -2279,23 +2084,9 @@ You can now publish this version to app markets or install it directly for testi
 
 If you rebuild native code later, you must **change the version number**, and `uploadApk` again. Otherwise, [hot updates will fail due to build timestamp mismatches](/docs/faq.md#error-hot-update-paused-reason-build-timestamp-mismatch).
 
-### Harmony
-
-Use DevEco-Studio and go to Build => Build Hap(s)/App(s) => Build App(s). The package will be in `harmony/build/outputs/default/harmony-default-unsigned.app`.
-
-Run:
-
-```bash
-$ cresc uploadApp harmony/build/outputs/default/harmony-default-unsigned.app
-```
-
-The App's `versionName` in `harmony/AppScope/app.json5` is recorded as the `packageVersion`.
-
-Publish to the Huawei AppGallery, or test on device via `hdc shell`. Rebuilds require version increments to [prevent build timestamp mismatches](/docs/faq.md#error-hot-update-paused-reason-build-timestamp-mismatch).
-
 ## Publishing Hot Update Version
 
-Modify a line of code, and run `cresc bundle --platform <ios|android|harmony>` to generate a new hot update version.
+Modify a line of code, and run `cresc bundle --platform <ios|android>` to generate a new hot update version.
 
 :::info
 If you use frameworks without `index.js` like modern `expo`, the `bundle` command will fail. Manually create an `index.js` file importing the framework's entry file, referring to `main` in `package.json`. For `expo`, `index.js` looks like:
@@ -2326,7 +2117,7 @@ Would you like to bind packages to this version?(Y/N)
 ```
 
 The version is stored on the server, but users cannot see it until you bind native packages to it.
-Input Y to bind immediately, or run `cresc update --platform <ios|android|harmony>` later to bind previously uploaded versions. You can also drag and drop native versions to matching hot updates on the web dashboard.
+Input Y to bind immediately, or run `cresc update --platform <ios|android>` later to bind previously uploaded versions. You can also drag and drop native versions to matching hot updates on the web dashboard.
 
 ```
 ┌────────────┬──────────────────────────────────────┐
@@ -2503,8 +2294,8 @@ USD$1699/ monthDaily queries100M / dayAppsSame limits as ProNative PackagesSame 
 
 ### Contact Us
 
-- [Email hi@charmlot.com](mailto:hi@charmlot.com)
-- QQ Group 729013783
+- [Email hi@cresc.dev](mailto:hi@cresc.dev)
+- [GitHub Discussions](https://github.com/reactnativecn/react-native-update/discussions)
 
 ### Terms & Policies
 
@@ -2514,11 +2305,11 @@ USD$1699/ monthDaily queries100M / dayAppsSame limits as ProNative PackagesSame 
 ### Help & Support
 
 - [FAQ](/docs/faq)
-- [Issue Discussions](https://github.com/reactnativecn/react-native-update/issues)
+- [GitHub Issues](https://github.com/reactnativecn/react-native-update/issues)
 
 ### Links
 
-- [React Native Chinese Site](https://reactnative.cn/)
+- [React Native](https://reactnative.dev/)
 - [ReactJS](https://react.dev/)
 
 © 2026 CHARMLOT PTE. LTD.
@@ -2592,8 +2383,8 @@ first releaseproduction lanerelease@studio~/crescendo-app$After the first baseli
 
 [Open Dashboard](https://admin.cresc.dev)[View Docs](/docs/getting-started)### Contact Us
 
-- [Email hi@charmlot.com](mailto:hi@charmlot.com)
-- QQ Group 729013783
+- [Email hi@cresc.dev](mailto:hi@cresc.dev)
+- [GitHub Discussions](https://github.com/reactnativecn/react-native-update/discussions)
 
 ### Terms & Policies
 
@@ -2603,11 +2394,11 @@ first releaseproduction lanerelease@studio~/crescendo-app$After the first baseli
 ### Help & Support
 
 - [FAQ](/docs/faq)
-- [Issue Discussions](https://github.com/reactnativecn/react-native-update/issues)
+- [GitHub Issues](https://github.com/reactnativecn/react-native-update/issues)
 
 ### Links
 
-- [React Native Chinese Site](https://reactnative.cn/)
+- [React Native](https://reactnative.dev/)
 - [ReactJS](https://react.dev/)
 
 © 2026 CHARMLOT PTE. LTD.

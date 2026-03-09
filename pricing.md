@@ -39,8 +39,8 @@ USD$1699/ monthDaily queries100M / dayAppsSame limits as ProNative PackagesSame 
 
 ### Contact Us
 
-- [Email hi@charmlot.com](mailto:hi@charmlot.com)
-- QQ Group 729013783
+- [Email hi@cresc.dev](mailto:hi@cresc.dev)
+- [GitHub Discussions](https://github.com/reactnativecn/react-native-update/discussions)
 
 ### Terms & Policies
 
@@ -50,11 +50,11 @@ USD$1699/ monthDaily queries100M / dayAppsSame limits as ProNative PackagesSame 
 ### Help & Support
 
 - [FAQ](/docs/faq)
-- [Issue Discussions](https://github.com/reactnativecn/react-native-update/issues)
+- [GitHub Issues](https://github.com/reactnativecn/react-native-update/issues)
 
 ### Links
 
-- [React Native Chinese Site](https://reactnative.cn/)
+- [React Native](https://reactnative.dev/)
 - [ReactJS](https://react.dev/)
 
 © 2026 CHARMLOT PTE. LTD.

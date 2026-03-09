@@ -47,9 +47,6 @@ cd ios && pod install
 Note: If using Expo, please do NOT install `expo-updates` simultaneously, as it will cause update function conflicts. Also, New Architecture support in Expo versions under 51 is incomplete and might not work properly. It's recommended to use the latest version of Expo possible for New Architecture setups.
 :::
 
-:::info
-If downloads are extremely slow or network errors occur, set an npm mirror.
-:::
 :::warning
 Please do not mix package managers like `npm/yarn/pnpm` and their associated `lock` files. Stick to one manager across your team and keep one format of the `lock` file.
 :::
@@ -59,7 +56,7 @@ Remember, any modifications under the `ios` or `android` directories require rec
 ### Manual Link
 If RN version >= 0.60, you don't need this manual linking step.
 :::warning
-Note: If you have a mixed native-RN project, or monorepo, or any custom scenario, the auto-linking function might fail because custom configurations might be incomplete or not fit the standard RN directory structure. Even if RN version >= 0.60, you might still need manual link operation.
+Note: If you have a brownfield native-RN project, or monorepo, or any custom scenario, the auto-linking function might fail because custom configurations might be incomplete or not fit the standard RN directory structure. Even if RN version >= 0.60, you might still need manual link operation.
 :::
 #### iOS
 RN < 0.60 and using CocoaPods (Recommended)
@@ -267,127 +264,8 @@ public class MainApplication extends Application implements ReactApplication {
 :::info
 Remember, any modifications under the `ios` or `android` directories require recompilation (using `npx react-native run-ios/android` or compiling inside Xcode/Android Studio) to take effect.
 :::
-#### HarmonyOS
-Add the following to `harmony/entry/src/main/cpp/CMakeLists.txt`:
-```cmake
-add_subdirectory("${OH_MODULES}/cresc/src/main/cpp" ./cresc)
-target_link_libraries(rnoh_app PUBLIC rnoh_cresc)
-```
-Add dependencies sequentially over `harmony/entry/src/main/cpp/PackageProvider.cpp`:
-```cpp
-#include "RNOH/PackageProvider.h"
-#include "CrescPackage.h"
-using namespace rnoh;
-
-std::vector<std::shared_ptr<Package>> PackageProvider::getPackages(Package::Context ctx) {
-    return {
-         std::make_shared<CrescPackage>(ctx)
-    };
-}
-```
-Add inside `harmony/entry/oh-package.json5`:
-```json5
-"dependencies": {
-  "cresc": "file:../../node_modules/react-native-update/harmony/cresc",
-
-}
-```
-Insert into `harmony/build-profile.json5`:
-```json5
-  modules: [
-    // ↓↓↓ Add the nested property!
-    {
-      name: 'cresc',
-      srcPath: '../node_modules/react-native-update/harmony/cresc',
-    },
-  ],
-```
-Within `harmony/hvigor/hvigor-config.json5`, integrate dependencies:
-```json5
-{
-  dependencies: {
-    cresc: "file:../../node_modules/react-native-update/harmony/cresc",
-  },
-}
-```
-Set plugin hooks globally into `harmony/entry/hvigorfile.ts`:
-```ts
-import { hapTasks } from "@ohos/hvigor-ohos-plugin";
-import { reactNativeUpdatePlugin } from "cresc/hvigor-plugin";
-
-export default {
-  system: hapTasks /* Built-in plugin of Hvigor. It cannot be modified. */,
-  plugins: [
-    reactNativeUpdatePlugin(),
-  ] /* Custom plugin to extend the functionality of Hvigor. */,
-};
-```
-Export correctly from `harmony/entry/src/main/ets/RNPackagesFactory.ts`:
-```ts
-import type {
-  RNPackageContext,
-  RNPackage,
-} from "@rnoh/react-native-openharmony/ts";
-import { CrescPackage } from "cresc/ts";
-
-export function createRNPackages(ctx: RNPackageContext): RNPackage[] {
-  return [new CrescPackage(ctx)];
-}
-```
-And configure bindings upon `harmony/entry/src/main/ets/pages/Index.ets`:
-```ts
-// ... Other Code
-
-// ↓↓↓ Don't forget imports explicitly!
-import { CrescFileJSBundleProvider } from 'cresc/src/main/ets/CrescFileJSBundleProvider';
-// ↑↑↑
-
-@Entry
-@Component
-struct Index {
-  @StorageLink('RNOHCoreContext') private rnohCoreContext: RNOHCoreContext | undefined = undefined
-  @State shouldShow: boolean = false
-
-  aboutToAppear(): void {
-    this.shouldShow = true
-  }
-
-  onBackPress(): boolean | undefined {
-    // NOTE: this is required since `Ability`'s `onBackPressed` function always
-    // terminates or puts the app in the background, but we want Ark to ignore it completely
-    // when handled by RN
-    this.rnohCoreContext!.dispatchBackPress()
-
-    // this.preferences = preferences.getPreferencesSync(this.context, {name:'update'});
-    return true
-  }
-
-  build() {
-    Column() {
-      if (this.rnohCoreContext && this.shouldShow) {
-        RNApp({
-          // ... Other params
-          jsBundleProvider: new TraceJSBundleProviderDecorator(
-            new AnyJSBundleProvider([
-              // MetroJSBundleProvider.fromServerIp('127.0.0.1'),
-              // new ResourceJSBundleProvider(rnohCoreContext.uiAbilityContext.resourceManager, 'hermes_bundle.hbc'),
-              // ↓↓↓ Wrap strictly below sequence lines!
-              new CrescFileJSBundleProvider(this.rnohCoreContext.uiAbilityContext),
-
-              // Regardless of whether hermes bytecode executes or not, maintain the target identical name.
-              new ResourceJSBundleProvider(this.rnohCoreContext.uiAbilityContext.resourceManager, 'bundle.harmony.js')
-            ]),
-            this.rnohCoreContext.logger),
-        })
-      }
-    }
-    .height('100%')
-    .width('100%')
-  }
-}
-```
 :::info
-Remember, any modifications under the `ios`, `android`, or `harmony` directories require recompilation (using `npx react-native run-ios/android` or compiling inside Xcode/Android Studio/DevEco) to take effect.
+Remember, any modifications under the `ios` or `android` directories require recompilation (using `npx react-native run-ios/android` or compiling inside Xcode/Android Studio) to take effect.
 :::
 ### Overriding Android's onCreate
 If `react-native-screens` is installed (which `react-navigation` explicitly demands generally), Android targets display blank white states post application-update-reboots inherently occasionally natively securely securely smoothly implicitly. Overriding the Android `MainActivity` applying explicit `RNScreensFragmentFactory` components stabilizes UI generation preventing Fragment lifecycle crashes absolutely efficiently.
@@ -535,8 +413,6 @@ $ cresc createApp --platform ios
 App Name: <Desired Tag optimally cleanly efficiently happily broadly properly>
 $ cresc createApp --platform android
 App Name: <Target Moniker nicely clearly properly efficiently correctly properly>
-$ cresc createApp --platform harmony
-App Name: <Application Tag cleanly safely smoothly easily dynamically efficiently effectively properly quickly cleverly fluently appropriately securely>
 ```
 :::info
 Names effortlessly cleanly intelligently effortlessly creatively seamlessly cleanly neatly appropriately flawlessly nicely functionally effectively securely smoothly comfortably nicely functionally correctly efficiently intelligently correctly cleverly easily comfortably comfortably correctly duplicate precisely properly smoothly dependably smoothly elegantly explicitly elegantly creatively easily beautifully intuitively cleanly optimally effortlessly intelligently properly optimally nicely precisely.
@@ -560,10 +436,6 @@ Files structurally manifest natively internally neatly cleverly cleanly fluently
     "android": {
         "appId": 2,
         "appKey": "<Hash Data correctly smartly elegantly nicely creatively dependably explicitly optimally smoothly beautifully successfully gracefully dynamically comprehensively dynamically neatly fluently nicely >"
-    },
-    "harmony": {
-        "appId": 3,
-        "appKey": "<Key Sequences neatly correctly beautifully functionally effectively naturally safely safely comfortably exactly intelligently beautifully>"
     }
 }
 ```

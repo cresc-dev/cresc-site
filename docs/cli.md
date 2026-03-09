@@ -12,7 +12,7 @@ $ npm install -g react-native-update-cli
 
 Generates a hot update resource package (ppk). Automatically detects if frameworks like Expo or Taro are used and runs their packagers respectively. If detection is inaccurate or errors occur, try using `--rncli` to specify the official React Native CLI.
 
-- `platform`: `ios|android|harmony` The target platform.
+- `platform`: `ios|android` The target platform.
 - `entryFile`: The entry script file.
 - `intermediaDir`: Temporary file output directory.
 - `output`: Final ppk file output path.
@@ -57,12 +57,6 @@ Parses an `.apk` file and outputs associated data like version codes and build t
 
 ***
 
-#### cresc parseApp \[appFile]
-
-Parses an `.app` file and outputs associated data like version codes and build timestamps.
-
-***
-
 #### cresc parseAab \[aabFile]
 
 Parses an `.aab` file and outputs associated data like version codes and build timestamps.
@@ -80,16 +74,6 @@ Provide two `.ppk` files to generate a delta differential hot update package fro
 #### cresc diffFromApk \[apkFile]\[next]
 
 Provide an `.apk` file and a `.ppk` file to generate a diff update package from the `.apk` baseline to the next version.
-
-No need to run this manually if you use the managed platform.
-
-- `output`: Diff file output path.
-
-***
-
-#### cresc diffFromApp \[appFile]\[next]
-
-Provide an `.app` file and a `.ppk` file to generate a diff update package.
 
 No need to run this manually if you use the managed platform.
 
@@ -129,7 +113,7 @@ Checks if you are currently logged in, and displays account details.
 
 Creates a new remote app and instantly binds it to the current project directory. This action can also be completed via the web dashboard.
 
-- `platform`: `ios|android|harmony` The target platform.
+- `platform`: `ios|android` The target platform.
 - `name`: The application name.
 - `downloadUrl`: The remote URL where users go to download native package upgrades.
 
@@ -147,7 +131,7 @@ Deletes an existing app entirely. All related native packages and hot versions w
 
 List all established apps in your account. This action can also be completed via the web dashboard.
 
-- `platform`: `ios|android|harmony` The target platform filter.
+- `platform`: `ios|android` The target platform filter.
 
 ***
 
@@ -155,7 +139,7 @@ List all established apps in your account. This action can also be completed via
 
 Locally binds an existing app configuration to the current project folder.
 
-- `platform`: `ios|android|harmony` The target platform.
+- `platform`: `ios|android` The target platform.
 
 ***
 
@@ -168,12 +152,6 @@ Uploads an `.ipa` to the managed platform. (Requires CLI 1.24.0+)
 #### cresc uploadApk \[apkFile]
 
 Uploads an `.apk` to the managed platform. (Requires CLI 1.24.0+)
-
-***
-
-#### cresc uploadApp \[appFile]
-
-Uploads an `.app` to the managed platform. (Requires CLI 1.24.0+)
 
 ***
 
@@ -193,7 +171,7 @@ Extracts an `.apk` file from an `.aab` build envelope. (Requires CLI 2.6.0+)
 
 View all natively uploaded packages. This action can also be completed via the web dashboard.
 
-- `platform`: `ios|android|harmony` The target platform filter.
+- `platform`: `ios|android` The target platform filter.
 
 ***
 
@@ -210,7 +188,7 @@ Delete an uploaded native package baseline.
 
 Uploads and publishes a new hot update package (`.ppk` file).
 
-- `platform`: `ios|android|harmony`
+- `platform`: `ios|android`
 - `name`: Target name for the hot update version (its own version code).
 - `description`: Update description/changelog shown to users.
 - `metaInfo`: Custom meta info payload. Refer to [Best Practices](/docs/bestpractice.md#using-meta-info).
@@ -235,7 +213,7 @@ cresc publish .cresc/output/android.1750423283653.ppk --platform android --name 
 
 Paginates and lists available hot update versions. This action can also be completed via the web dashboard.
 
-- `platform`: `ios|android|harmony`
+- `platform`: `ios|android`
 
 ***
 
@@ -254,7 +232,7 @@ Binds and applies an active hot update version to a native package baseline. Thi
 
 From CLI v2.4.0 onward, a full rollout and a canary rollout can coexist simultaneously. Prior to 2.4.0 they overwrote each other depending on which was set last.
 
-- `platform`: `ios|android|harmony`
+- `platform`: `ios|android`
 - `versionId`: The Version ID of the hot update.
 - `rollout`: Phased canary rollout percentage (Int between 1 - 100). Default is 100 (Requires CLI v1.31.0+).
 - `dryRun`: Dry run preview only, prevents applying actual bindings (Requires CLI v1.45.4+).

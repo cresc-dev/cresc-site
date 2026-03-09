@@ -1,6 +1,6 @@
 # API Token
 
-An API Token is an authentication method used to invoke the [Cresc API](https://update.reactnative.cn/api/openapi) within CI/CD pipelines or automated scripts. Compared to standard username/password logins, API Tokens are much more secure and easier to manage.
+An API Token is an authentication method used to invoke the [Cresc API](https://api.cresc.dev/openapi) within CI/CD pipelines or automated scripts. Compared to standard username/password logins, API Tokens are much more secure and easier to manage.
 
 ## Use Cases
 
@@ -39,7 +39,7 @@ You must select at least one permission when creating a Token. Applying the prin
 When calling the Cresc API, supply the token via the `x-api-token` HTTP header:
 
 ```bash
-curl -X GET "https://update.reactnative.cn/api/app/list" \
+curl -X GET "https://api.cresc.dev/app/list" \
   -H "x-api-token: YOUR_API_TOKEN"
 ```
 

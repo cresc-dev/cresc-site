@@ -73,23 +73,9 @@ You can now publish this version to app markets or install it directly for testi
 
 If you rebuild native code later, you must **change the version number**, and `uploadApk` again. Otherwise, [hot updates will fail due to build timestamp mismatches](/docs/faq.md#error-hot-update-paused-reason-build-timestamp-mismatch).
 
-### Harmony
-
-Use DevEco-Studio and go to Build => Build Hap(s)/App(s) => Build App(s). The package will be in `harmony/build/outputs/default/harmony-default-unsigned.app`.
-
-Run:
-
-```bash
-$ cresc uploadApp harmony/build/outputs/default/harmony-default-unsigned.app
-```
-
-The App's `versionName` in `harmony/AppScope/app.json5` is recorded as the `packageVersion`.
-
-Publish to the Huawei AppGallery, or test on device via `hdc shell`. Rebuilds require version increments to [prevent build timestamp mismatches](/docs/faq.md#error-hot-update-paused-reason-build-timestamp-mismatch).
-
 ## Publishing Hot Update Version
 
-Modify a line of code, and run `cresc bundle --platform <ios|android|harmony>` to generate a new hot update version.
+Modify a line of code, and run `cresc bundle --platform <ios|android>` to generate a new hot update version.
 
 :::info
 If you use frameworks without `index.js` like modern `expo`, the `bundle` command will fail. Manually create an `index.js` file importing the framework's entry file, referring to `main` in `package.json`. For `expo`, `index.js` looks like:
@@ -120,7 +106,7 @@ Would you like to bind packages to this version?(Y/N)
 ```
 
 The version is stored on the server, but users cannot see it until you bind native packages to it.
-Input Y to bind immediately, or run `cresc update --platform <ios|android|harmony>` later to bind previously uploaded versions. You can also drag and drop native versions to matching hot updates on the web dashboard.
+Input Y to bind immediately, or run `cresc update --platform <ios|android>` later to bind previously uploaded versions. You can also drag and drop native versions to matching hot updates on the web dashboard.
 
 ```
 ┌────────────┬──────────────────────────────────────┐

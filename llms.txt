@@ -12,7 +12,7 @@
 - [FAQ](/docs/faq.md)
 - [Installation & Config](/docs/getting-started.md)
 - [Code Integration](/docs/integration.md)
-- [Introduction](/docs/intro.md): Cresc (npm package: react-native-update <a href="https://www.npmjs.com/package/react-native-update"><img src="https://badge.fury.io/js/react-native-update.svg" alt="npm version" style={{display: 'inline', verticalAlign: 'middle', margin: '0 4px'}} /></a>) is a professional Over-the-Air (OTA) update service for React Native targeting global developers, exclusively developed and maintained by the React Native Chinese Site team. We are committed to providing the fastest, most stable, and most economical hot update experience for React Native developers worldwide.
+- [Introduction](/docs/intro.md): Cresc (npm package: react-native-update <a href="https://www.npmjs.com/package/react-native-update"><img src="https://badge.fury.io/js/react-native-update.svg" alt="npm version" style={{display: 'inline', verticalAlign: 'middle', margin: '0 4px'}} /></a>) is a professional Over-the-Air (OTA) update service for React Native teams shipping globally. It is designed to keep release workflows lean, stable, and cost-efficient from small apps to large production fleets.
 - [Publishing Hot Updates](/docs/publish.md)
 - [Install & Use Skills](/docs/skills.md)
 

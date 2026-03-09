@@ -41,7 +41,7 @@ The primary content of a hot update package is the JS bundle and its referenced 
 
 1. If the channel APKs have differences in their `JS code or initial assets` (no matter how slight, which results in different jsbundles), you must build separate APKs, upload, and bind them individually. You can write scripts to automate bulk operations using the CLI.
 2. If the `JS code and initial assets` across channel APKs are perfectly identical, consider using [Flavor builds](https://developer.android.com/studio/build/build-variants), or other dynamic channel generation tools (like [Tencent's VasDolly](https://github.com/Tencent/VasDolly) or [Meituan's walle](https://github.com/Meituan-Dianping/walle)). In this approach, all channel APKs are generated from a single base APK (thus sharing the same build timestamp and jsbundle). This means you only need to upload one base APK, and hot updates applied to it will take effect across all channel APKs.
-3. If you are on the `Premium`, `Professional`, or `Enterprise VIP` plans, you can enable `Ignore Build Timestamp` in your app settings in the admin dashboard. This option only checks the version number and ignores the timestamp, providing a wider tolerance for updates, but it may consume more CDN traffic.
+3. If you are on the `Premium` tier or above, you can enable `Ignore Build Timestamp` in your app settings in the admin dashboard. This option only checks the version number and ignores the timestamp, providing a wider tolerance for updates, but it may consume more CDN traffic.
 
 #### Supporting the AAB Format
 
@@ -54,7 +54,7 @@ Starting from version v10.11.2, you can use two quick QR code scanning methods t
 ![testqrcode](/static/image/testqrcode.24c22c1ebe.png)
 - **If your app has [Deep Linking](https://reactnative.dev/docs/linking#enabling-deep-links) enabled:**
 
-No code changes are required. Simply check "Use Deep Link" in the interface shown above, enter your app's scheme (e.g., `cresc://`), and scan the QR code using your system camera or built-in scanner (Do not use WeChat's scanner). The app will automatically open and trigger the update.
+No code changes are required. Simply check "Use Deep Link" in the interface shown above, enter your app's scheme (e.g., `cresc://`), and scan the QR code using your system camera or a standard QR scanner that supports deep links. The app will automatically open and trigger the update.
 
 - **If your app has a built-in barcode scanner:**
 

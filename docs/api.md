@@ -253,8 +253,8 @@ Triggers an update check, returns `updateInfo` (Note: Before v10.26.0, `checkUpd
     hash: 'hash',
     description: 'Added Chat feature\nFixed store bugs',
     metaInfo: '{"silent":true}',
-    pdiffUrl: 'http://update-packages.reactnative.cn/hash',
-    diffUrl: 'http://update-packages.reactnative.cn/hash',
+    pdiffUrl: 'https://cdn.example.com/hash',
+    diffUrl: 'https://cdn.example.com/hash',
 }
 ```
 
