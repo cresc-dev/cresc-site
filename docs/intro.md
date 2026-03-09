@@ -1,9 +1,5 @@
 # Cresc - Professional Over-the-Air Update Solution
 
-:::info
-**Now fully supports HarmonyOS and the React Native New Architecture!**
-:::
-
 Cresc (npm package: [`react-native-update`](https://www.npmjs.com/package/react-native-update)
  [![npm version](https://badge.fury.io/js/react-native-update.svg)](https://www.npmjs.com/package/react-native-update)) is a **professional Over-the-Air (OTA) update service**
  for React Native targeting global developers, exclusively developed and maintained by the [React Native Chinese Site](https://reactnative.cn)

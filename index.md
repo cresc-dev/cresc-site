@@ -18,7 +18,7 @@ Incremental Delivery
 
 ## Add the missing detail, not the whole canvas.
 
-As you scroll, the missing earring stays marked while the pearl travels from the top logo into place.
+The missing change is carried into the existing app and set in place locally, instead of replacing the whole package.
 
 ![](/images/girl-with-pearl-earring.webp)App Updated!Movement I
 
@@ -56,19 +56,7 @@ III### Publish the update
 
 Bundle JavaScript and assets, then release the update through the dashboard or your CI flow.
 
-First release
-
-
-````
-npm i -g react-native-update-cli
-
-cresc uploadIpa ios-release.ipa
-cresc uploadApk android-release.apk
-
-cresc bundle --platform ios
-cresc bundle --platform android
-````
-After the first baseline is in place, the dashboard and CLI can carry the rest of the release cycle with much less effort.
+first releaseproduction lanerelease@studio~/crescendo-app$After the first baseline is in place, the dashboard and CLI can carry the rest of the release cycle with much less effort.
 
 [Open Dashboard](https://admin.cresc.dev)[View Docs](/docs/getting-started)### Contact Us
 
@@ -90,6 +78,5 @@ After the first baseline is in place, the dashboard and CLI can carry the rest o
 - [React Native Chinese Site](https://reactnative.cn/)
 - [ReactJS](https://react.dev/)
 
-React Native Chinese Site © 2026 Wuhan Qingluo Network Technology Co., Ltd.
+© 2026 CHARMLOT PTE. LTD.
 
-|[E ICP Bei 20002031-3](https://beian.miit.gov.cn/)[![](https://img.alicdn.com/tfs/TB1..50QpXXXXX7XpXXXXXXXXXX-40-40.png)E Gongwang Anbei 42011202001821](http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=42011202001821)
