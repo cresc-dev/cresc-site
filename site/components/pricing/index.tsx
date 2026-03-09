@@ -1,9 +1,11 @@
 import { Tooltip } from "antd";
-import { CheckCircleFilled } from "@ant-design/icons";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
+
+import { quotas } from "./quota";
 
 const AppText = () => (
-  <Tooltip title="iOS and Android versions count as separate apps. You can delete unused apps to reclaim your quota.">
+  <Tooltip title="iOS and Android versions count as separate apps. You can delete unused apps to reclaim quota.">
     <span className="cursor-help border-b border-dashed border-[#c8b28f] text-[#7a3b2e] transition-colors hover:text-[#5f2a20]">
       Apps
     </span>
@@ -28,347 +30,496 @@ const HotUpdateText = () => (
   </Tooltip>
 );
 
-const CheckLimitText = ({ children }: { children: ReactNode }) => (
-  <div className="mt-6 rounded-[20px] border border-[#e3d5c0] bg-[#f7efe2] px-4 py-4">
-    <p className="text-xs uppercase tracking-[0.28em] text-[#8b5a3c]">
-      Across all apps combined
-    </p>
-    <div className="mt-2 flex items-center gap-1 text-sm text-[#5f483c]">
-      Up to
-      <Tooltip
-        title={
-          <div>
-            Refers to the number of times client devices query the server for
-            updates, regardless of whether a new version exists. If your daily
-            queries exceed one million, check out our{" "}
-            <a
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-bold text-white underline"
-              href="/docs/faq#大客户方案"
-            >
-              Enterprise Solutions
-            </a>
-            .
-          </div>
-        }
-      >
-        <span className="cursor-help border-b border-dashed border-[#c8b28f] font-semibold text-[#7a3b2e]">
-          {children}
-        </span>
-      </Tooltip>
-      queries daily
+const DailyQueriesText = () => (
+  <Tooltip
+    title="Daily queries counts how many times client devices ask the server whether an update is available, regardless of whether a new version exists."
+  >
+    <span className="cursor-help border-b border-dashed border-[#c8b28f] text-[#7a3b2e] transition-colors hover:text-[#5f2a20]">
+      Daily queries
+    </span>
+  </Tooltip>
+);
+
+const MetricRow = ({
+  label,
+  value,
+  valueClassName = "",
+}: {
+  label: ReactNode;
+  value: ReactNode;
+  valueClassName?: string;
+}) => (
+  <div className="grid grid-cols-[minmax(0,1fr)_minmax(11rem,auto)] items-center gap-4 rounded-[18px] border border-[#eadbc7] bg-[#fffdf9]/92 px-4 py-3 transition-all duration-300 group-hover:border-[#d3b38c] group-hover:bg-[#fffdf9]">
+    <span className="text-base leading-7 text-[#6a5245]">{label}</span>
+    <div
+      className={`min-w-0 text-right text-base font-semibold leading-7 text-[#2d1d15] ${valueClassName}`}
+    >
+      {value}
     </div>
   </div>
 );
 
-const FeatureItem = ({ children }: { children: ReactNode }) => (
-  <li className="flex items-start gap-3 text-[#5f483c]">
-    <CheckCircleFilled className="mt-1 text-[#8b5a3c]" />
-    <span className="leading-7">{children}</span>
-  </li>
-);
+type TierKey = keyof typeof quotas;
+type TierQuota = (typeof quotas)[TierKey];
 
-function DurationNote({
-  kind,
-}: {
-  kind: "eighth" | "quarter" | "half" | "whole";
-}) {
-  if (kind === "whole") {
-    return (
-      <svg viewBox="0 0 48 48" className="h-8 w-8" fill="none">
-        <ellipse
-          cx="24"
-          cy="26"
-          rx="11"
-          ry="7.6"
-          transform="rotate(-18 24 26)"
-          stroke="currentColor"
-          strokeWidth="3.1"
-        />
-      </svg>
-    );
+interface Tone {
+  accent: string;
+  accentSoft: string;
+  border: string;
+  glow: string;
+  cta: string;
+  ctaHover: string;
+}
+
+interface TierMeta {
+  summary: string;
+  tone: Tone;
+  badge?: string;
+}
+
+const tierMeta: Record<TierKey, TierMeta> = {
+  free: {
+    summary: "A quiet starting point for personal apps and small release loops.",
+    tone: {
+      accent: "#b07d54",
+      accentSoft: "rgba(214, 184, 147, 0.26)",
+      border: "#dbc6aa",
+      glow: "radial-gradient(circle_at_top_right, rgba(209,171,126,0.30), transparent 58%)",
+      cta: "#fff8ef",
+      ctaHover: "#f2e1cb",
+    },
+  },
+  standard: {
+    summary: "For growing apps shipping on a steady monthly rhythm.",
+    tone: {
+      accent: "#91503b",
+      accentSoft: "rgba(190, 123, 96, 0.24)",
+      border: "#d7bea5",
+      glow: "radial-gradient(circle_at_top_right, rgba(196,128,98,0.28), transparent 58%)",
+      cta: "#7a3b2e",
+      ctaHover: "#683024",
+    },
+  },
+  premium: {
+    summary: "The main tier for production apps with regular release traffic.",
+    badge: "Popular",
+    tone: {
+      accent: "#8e4330",
+      accentSoft: "rgba(205, 145, 102, 0.26)",
+      border: "#c98c62",
+      glow: "radial-gradient(circle_at_top_right, rgba(214,150,93,0.34), transparent 58%)",
+      cta: "#7a3b2e",
+      ctaHover: "#5f2a20",
+    },
+  },
+  pro: {
+    summary: "For larger teams that need room for heavier binaries and scale.",
+    tone: {
+      accent: "#5e3427",
+      accentSoft: "rgba(111, 78, 61, 0.24)",
+      border: "#cbb59b",
+      glow: "radial-gradient(circle_at_top_right, rgba(130,100,80,0.26), transparent 58%)",
+      cta: "#4f2a20",
+      ctaHover: "#3c1f17",
+    },
+  },
+  max: {
+    summary: "For high-volume apps that query often and carry wider fleets.",
+    tone: {
+      accent: "#744935",
+      accentSoft: "rgba(149, 114, 87, 0.24)",
+      border: "#d4bca3",
+      glow: "radial-gradient(circle_at_top_right, rgba(184,138,97,0.28), transparent 58%)",
+      cta: "#6d3729",
+      ctaHover: "#5d2f22",
+    },
+  },
+  ultra: {
+    summary: "For very large distribution footprints and sustained daily traffic.",
+    tone: {
+      accent: "#5d2f28",
+      accentSoft: "rgba(122, 77, 66, 0.24)",
+      border: "#ccb39c",
+      glow: "radial-gradient(circle_at_top_right, rgba(159,110,90,0.30), transparent 58%)",
+      cta: "#4f2a20",
+      ctaHover: "#3f2018",
+    },
+  },
+};
+
+const compactFormatter = new Intl.NumberFormat("en-US", {
+  notation: "compact",
+  maximumFractionDigits: 0,
+});
+
+function formatSize(size: string) {
+  const amount = Number.parseInt(size, 10);
+
+  if (!Number.isFinite(amount)) {
+    return size.toUpperCase();
   }
 
+  if (amount >= 1000) {
+    const gigabytes = amount / 1000;
+    return Number.isInteger(gigabytes)
+      ? `${gigabytes} GB`
+      : `${gigabytes.toFixed(1)} GB`;
+  }
+
+  return `${amount} MB`;
+}
+
+function formatQueries(value: number) {
+  return `${compactFormatter.format(value)} / day`;
+}
+
+function formatQuota(count: number, size: string) {
+  return `${count} / app · ${formatSize(size)} ea`;
+}
+
+function QueryValue({
+  value,
+}: {
+  value: number;
+}) {
   return (
-    <svg viewBox="0 0 48 48" className="h-8 w-8" fill="none">
-      <ellipse
-        cx="19.5"
-        cy="31"
-        rx="9.2"
-        ry="6.6"
-        transform="rotate(-18 19.5 31)"
-        fill={kind === "quarter" || kind === "eighth" ? "currentColor" : "#f5ecdf"}
-        stroke="currentColor"
-        strokeWidth="3"
-      />
-      <path
-        d="M27 28V10"
-        stroke="currentColor"
-        strokeWidth="3.2"
-        strokeLinecap="round"
-      />
-      {kind === "eighth" && (
-        <path
-          d="M27 10C33 12.5 36.5 17.2 35.5 21.5C33.2 18.9 30 17.4 27 17.2"
-          stroke="currentColor"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      )}
-    </svg>
+    <div className="min-w-[8.6rem] text-right text-[1.62rem] font-semibold leading-none text-[#7a3b2e] sm:text-[1.75rem]">
+      <span className="block">
+        {formatQueries(value)}
+      </span>
+    </div>
   );
 }
 
-interface Plan {
-  name: string;
-  summary: string;
-  price: string;
-  monthly?: string;
-  queryLimit: string;
-  icon: ReactNode;
-  ctaLabel: string;
-  ctaHref: string;
-  external?: boolean;
-  featured?: boolean;
-  emphasis?: "light" | "solid" | "dark";
-  features: ReactNode[];
+function formatMetricValue(
+  tierKey: TierKey,
+  kind: "app" | "package" | "bundle",
+  quota: TierQuota,
+) {
+  if ((tierKey === "max" || tierKey === "ultra") && kind !== "app") {
+    return "Same limits as Pro";
+  }
+
+  if ((tierKey === "max" || tierKey === "ultra") && kind === "app") {
+    return "Same limits as Pro";
+  }
+
+  if (kind === "app") {
+    return `Up to ${quota.app}`;
+  }
+
+  if (kind === "package") {
+    return formatQuota(quota.package, quota.packageSize);
+  }
+
+  return formatQuota(quota.bundle, quota.bundleSize);
 }
 
-const plans: Plan[] = [
-  {
-    name: "Free",
-    summary: "Suitable for small apps or personal projects with light OTA needs.",
-    price: "0",
-    queryLimit: "1 Thousand",
-    icon: <DurationNote kind="eighth" />,
-    ctaLabel: "Get Started",
-    ctaHref: "/docs/getting-started",
-    emphasis: "light",
-    features: [
-      <>
-        Up to 3 <AppText />
-      </>,
-      <>
-        30 <PackageText /> / App (Max 30M ea)
-      </>,
-      <>
-        30 <HotUpdateText /> / App (Max 3M ea)
-      </>,
-      <strong className="text-[#6e3428]">Unlimited CDN Bandwidth</strong>,
-    ],
-  },
-  {
-    name: "Standard",
-    summary: "For general apps with moderate iteration and update frequency.",
-    price: "800",
-    monthly: "¥100 / month",
-    queryLimit: "10 Thousand",
-    icon: <DurationNote kind="quarter" />,
-    ctaLabel: "Upgrade Now",
-    ctaHref: "https://admin.cresc.dev",
-    external: true,
-    emphasis: "solid",
-    features: [
-      <>
-        Up to 5 <AppText />
-      </>,
-      <>
-        50 <PackageText /> / App (Max 150M ea)
-      </>,
-      <>
-        50 <HotUpdateText /> / App (Max 15M ea)
-      </>,
-      <strong className="text-[#6e3428]">Unlimited CDN Bandwidth</strong>,
-      "Dedicated Technical Support",
-    ],
-  },
-  {
-    name: "Premium",
-    summary: "For medium-large commercial apps needing fast, reliable live patches.",
-    price: "2400",
-    monthly: "¥300 / month",
-    queryLimit: "100 Thousand",
-    icon: <DurationNote kind="half" />,
-    ctaLabel: "Buy Now",
-    ctaHref: "https://admin.cresc.dev",
-    external: true,
-    featured: true,
-    emphasis: "solid",
-    features: [
-      <>
-        Up to 10 <AppText />
-      </>,
-      <>
-        60 <PackageText /> / App (Max 500M ea)
-      </>,
-      <>
-        60 <HotUpdateText /> / App (Max 50M ea)
-      </>,
-      <strong className="text-[#6e3428]">Unlimited CDN Bandwidth</strong>,
-      <>
-        <strong className="text-[#6e3428]">Priority</strong> Technical Support
-      </>,
-    ],
-  },
-  {
-    name: "Professional",
-    summary: "For enterprise multi-business-line applications with extreme limits.",
-    price: "7200",
-    monthly: "¥900 / month",
-    queryLimit: "1 Million",
-    icon: <DurationNote kind="whole" />,
-    ctaLabel: "Contact Us",
-    ctaHref: "https://admin.cresc.dev",
-    external: true,
-    emphasis: "dark",
-    features: [
-      <>
-        Up to 50 <AppText />
-      </>,
-      <>
-        100 <PackageText /> / App (Max 2000M ea)
-      </>,
-      <>
-        100 <HotUpdateText /> / App (Max 200M ea)
-      </>,
-      <strong className="text-[#6e3428]">Unlimited CDN Bandwidth</strong>,
-      <>
-        <strong className="text-[#6e3428]">Highest Tier</strong> Enterprise Support
-      </>,
-    ],
-  },
-];
+function cardStyle(tone: Tone): CSSProperties {
+  return {
+    borderColor: tone.border,
+    backgroundImage: tone.glow,
+  };
+}
 
-function Pricing() {
+function glowStyle(tone: Tone): CSSProperties {
+  return {
+    background: tone.accentSoft,
+  };
+}
+
+function ctaStyle(tone: Tone, isFree: boolean): CSSProperties {
+  return isFree
+    ? {
+        borderColor: tone.border,
+        backgroundColor: tone.cta,
+        color: "#3f2b21",
+      }
+    : {
+        borderColor: "#7a3b2e",
+        backgroundColor: "#7a3b2e",
+        color: "#fffaf4",
+      };
+}
+
+function ctaHoverStyle(tone: Tone, isFree: boolean): CSSProperties {
+  return {
+    backgroundColor: isFree ? tone.ctaHover : "#5f2a20",
+    borderColor: isFree ? tone.accent : "#5f2a20",
+  };
+}
+
+const tiers = (Object.entries(quotas) as [TierKey, TierQuota][])
+  .map(([key, quota]) => ({
+    key,
+    quota,
+    meta: tierMeta[key],
+  }))
+  .sort((left, right) => left.quota.monthlyPrice - right.quota.monthlyPrice);
+
+const freeTier = tiers.find((tier) => tier.key === "free");
+const standardTier = tiers.find((tier) => tier.key === "standard");
+const premiumTier = tiers.find((tier) => tier.key === "premium");
+const advancedTiers = tiers.filter(
+  (tier) =>
+    tier.key === "pro" || tier.key === "max" || tier.key === "ultra",
+);
+
+function PricingCard({
+  tierKey,
+  quota,
+  meta,
+}: {
+  tierKey: TierKey;
+  quota: TierQuota;
+  meta: TierMeta;
+}) {
+  const isFree = quota.monthlyPrice === 0;
+
   return (
-    <div className="relative overflow-hidden bg-[linear-gradient(180deg,#fbf5ea_0%,#f1e6d6_100%)] px-4 py-24 sm:px-6 lg:px-8">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[28rem] overflow-hidden">
-        <div className="absolute -left-[8%] top-[-12%] h-72 w-72 rounded-full bg-[#d9c0a2]/45 blur-3xl" />
-        <div className="absolute right-[-4%] top-[8%] h-80 w-80 rounded-full bg-[#c99079]/18 blur-3xl" />
+    <section
+      className="group relative flex h-full flex-col overflow-hidden rounded-[30px] border bg-[#fffaf4]/96 p-5 shadow-[0_18px_36px_rgba(113,88,67,0.08)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_24px_56px_rgba(113,88,67,0.14)] sm:p-6"
+      style={cardStyle(meta.tone)}
+    >
+      <div
+        className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full blur-3xl transition-transform duration-700 group-hover:scale-125 group-hover:-translate-y-2"
+        style={glowStyle(meta.tone)}
+      />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.18),transparent_42%,rgba(255,255,255,0.12))] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+
+      <div className="relative">
+        <div className="flex items-center gap-3">
+          <h2 className="cresc-display text-[2.5rem] leading-none text-[#2d1d15]">
+            {quota.title}
+          </h2>
+          {meta.badge && (
+            <span className="rounded-full border border-[#d8bf9b] bg-[#fbf1e5] px-3 py-1 text-[0.7rem] uppercase tracking-[0.28em] text-[#8b5a3c]">
+              {meta.badge}
+            </span>
+          )}
+        </div>
+        <p className="mt-3 max-w-[22rem] text-base leading-7 text-[#6a5245]">
+          {meta.summary}
+        </p>
       </div>
 
-      <div className="relative mx-auto max-w-7xl">
+      <div className="relative mt-6 border-t border-[#eadbc7] pt-5">
+        <div className="flex items-end gap-2 text-[#2d1d15]">
+          <span className="pb-1 text-base uppercase tracking-[0.22em] text-[#8b5a3c]">
+            USD
+          </span>
+          <span className="text-5xl font-semibold tracking-tight">
+            ${quota.monthlyPrice}
+          </span>
+          <span className="pb-1 text-base text-[#6a5245]">/ month</span>
+        </div>
+      </div>
+
+      <div className="relative mt-6 grid gap-3">
+        <MetricRow
+          label={<DailyQueriesText />}
+          value={<QueryValue value={quota.pv} />}
+          valueClassName="flex justify-end"
+        />
+        <MetricRow
+          label={<AppText />}
+          value={formatMetricValue(tierKey, "app", quota)}
+        />
+        <MetricRow
+          label={<PackageText />}
+          value={formatMetricValue(tierKey, "package", quota)}
+        />
+        <MetricRow
+          label={<HotUpdateText />}
+          value={formatMetricValue(tierKey, "bundle", quota)}
+        />
+      </div>
+
+      <a
+        href={isFree ? "/docs/getting-started" : "https://admin.cresc.dev"}
+        {...(isFree ? {} : { target: "_blank", rel: "noopener noreferrer" })}
+        className="group relative mt-6 inline-flex items-center justify-center gap-2 rounded-full border px-6 py-4 text-base font-semibold transition-all duration-300 hover:-translate-y-1 hover:gap-3"
+        style={ctaStyle(meta.tone, isFree)}
+        onMouseEnter={(event) => {
+          Object.assign(
+            (event.currentTarget as HTMLAnchorElement).style,
+            ctaHoverStyle(meta.tone, isFree),
+          );
+        }}
+        onMouseLeave={(event) => {
+          Object.assign(
+            (event.currentTarget as HTMLAnchorElement).style,
+            ctaStyle(meta.tone, isFree),
+          );
+        }}
+      >
+        <span>{isFree ? "Start free" : "Subscribe"}</span>
+        <span className="transition-transform duration-300 group-hover:translate-x-1">
+          +
+        </span>
+      </a>
+
+      <p
+        className="relative mt-4 text-sm uppercase tracking-[0.22em] text-[#8b7568]"
+      >
+        CDN delivery included
+      </p>
+    </section>
+  );
+}
+
+function CompactFreeRow({ quota }: { quota: TierQuota }) {
+  return (
+    <section className="rounded-[24px] border border-[#e7dbcd] bg-[#f8f1e7]/82 px-4 py-3.5 text-[#86776d] shadow-[0_10px_20px_rgba(113,88,67,0.04)] sm:px-5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[0.94rem] text-[#7a685c]">
+          <span className="cresc-display text-[1.82rem] leading-none text-[#6e5f55]">
+            {quota.title}
+          </span>
+          <span className="uppercase tracking-[0.14em] text-[#948478]">
+            USD ${quota.monthlyPrice}/mo
+          </span>
+          <span className="text-[1.45rem] font-semibold leading-none text-[#7a3b2e]">
+            {compactFormatter.format(quota.pv)}/day
+          </span>
+          <span>{quota.app} apps</span>
+          <span>{quota.package} base pkgs · {formatSize(quota.packageSize)}</span>
+          <span>{quota.bundle} updates · {formatSize(quota.bundleSize)}</span>
+          <span className="uppercase tracking-[0.18em] text-[#9c8a7d]">
+            CDN delivery included
+          </span>
+        </div>
+        <a
+          href="/docs/getting-started"
+          className="inline-flex shrink-0 items-center rounded-full border border-[#d8c9b8] bg-[#fbf6ef] px-5 py-2.5 text-base font-semibold text-[#75665c] transition-all duration-300 hover:-translate-y-0.5 hover:border-[#baa287] hover:text-[#5f473a] lg:ml-4"
+        >
+          Start free
+        </a>
+      </div>
+    </section>
+  );
+}
+
+function Pricing() {
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const advancedRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const node = advancedRef.current;
+
+    if (!node) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setShowAdvanced(true);
+          observer.disconnect();
+        }
+      },
+      {
+        threshold: 0.3,
+        rootMargin: "0px 0px -10% 0px",
+      },
+    );
+
+    observer.observe(node);
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div className="relative overflow-hidden bg-[linear-gradient(180deg,#fbf5ea_0%,#f0e4d1_100%)] px-4 py-16 sm:px-6 lg:px-8">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[22rem] overflow-hidden">
+        <div className="absolute left-[-6%] top-[-18%] h-72 w-72 rounded-full bg-[#d9c0a2]/35 blur-3xl" />
+        <div className="absolute right-[-3%] top-[10%] h-80 w-80 rounded-full bg-[#c99079]/14 blur-3xl" />
+      </div>
+
+      <div className="relative mx-auto max-w-6xl">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-sm uppercase tracking-[0.42em] text-[#8b5a3c]">
-            Pricing
-          </p>
-          <h1 className="cresc-display mt-5 text-5xl text-[#2d1d15] sm:text-6xl">
-            Plans shaped for a steadier release pace.
+          <h1 className="cresc-display text-4xl text-[#2d1d15] sm:text-5xl">
+            Simple monthly tiers, arranged by release volume.
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[#5f483c]">
-            Every new account begins with a{" "}
-            <Tooltip title="Send your username and company (or personal) name to hi@charmlot.com to request an extended trial evaluation period.">
-              <span className="cursor-help border-b border-dashed border-[#c8b28f] font-semibold text-[#7a3b2e]">
-                7-day
-              </span>
-            </Tooltip>{" "}
-            trial of the Professional plan. After the trial ends, the account
-            returns to Free. For monthly billing or enterprise arrangements,
-            please contact QQ Customer Service 34731408.
+          <p className="mx-auto mt-5 w-auto text-lg leading-8 text-[#5f483c]">
+            Choose a plan based on your release traffic and the amount
+            of app history you need to keep available.
           </p>
+          <div className="mx-auto mt-5 flex max-w-3xl flex-wrap items-center justify-center gap-x-4 gap-y-2 text-base text-[#6a5245]">
+            <span className="hidden h-1 w-1 rounded-full bg-[#c8b28f] sm:block" />
+            <span>CDN delivery included on every plan.</span>
+            <span className="hidden h-1 w-1 rounded-full bg-[#c8b28f] md:block" />
+            <span>Unused resources can be removed to reclaim quota.</span>
+          </div>
         </div>
 
-        <div className="mx-auto mt-12 max-w-5xl rounded-[30px] border border-[#ddcdb3] bg-[#fffaf4]/90 px-8 py-7 text-center shadow-[0_18px_40px_rgba(113,88,67,0.08)]">
-          <p className="text-sm uppercase tracking-[0.32em] text-[#8b5a3c]">
-            Billing note
-          </p>
-          <p className="mt-3 text-lg leading-8 text-[#5f483c]">
-            All tiers include CDN bandwidth. Storage limits apply per app, and
-            unused apps or packages can be removed at any time to free quota.
-          </p>
+        {freeTier && (
+          <div className="mx-auto mt-10 max-w-5xl">
+            <CompactFreeRow quota={freeTier.quota} />
+          </div>
+        )}
+
+        <div className="mx-auto mt-5 grid max-w-5xl grid-cols-1 gap-5 lg:grid-cols-2">
+          <div className="flex flex-col gap-5">
+            {standardTier && (
+              <PricingCard
+                tierKey={standardTier.key}
+                quota={standardTier.quota}
+                meta={standardTier.meta}
+              />
+            )}
+          </div>
+
+          <div>
+            {premiumTier && (
+              <PricingCard
+                tierKey={premiumTier.key}
+                quota={premiumTier.quota}
+                meta={premiumTier.meta}
+              />
+            )}
+          </div>
         </div>
 
-        <div className="mt-14 grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-4">
-          {plans.map((plan) => {
-            const ctaClassName =
-              plan.emphasis === "light"
-                ? "border border-[#d6c0a0] bg-[#fffaf2] text-[#3f2b21] hover:border-[#7a3b2e] hover:text-[#7a3b2e]"
-                : plan.emphasis === "dark"
-                  ? "border border-[#4f2a20] bg-[#4f2a20] text-[#fffaf4] hover:bg-[#3f2018]"
-                  : "border border-[#7a3b2e] bg-[#7a3b2e] text-[#fffaf4] hover:bg-[#6a3025]";
+        <div
+          ref={advancedRef}
+          className="relative mx-auto mt-10 max-w-6xl"
+        >
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-xs uppercase tracking-[0.34em] text-[#8b5a3c]">
+              Higher Volume
+            </p>
+            <h2 className="cresc-display mt-4 text-3xl text-[#2d1d15] sm:text-[2.7rem]">
+              Pro and above.
+            </h2>
+          </div>
 
-            return (
-              <div
-                key={plan.name}
-                className={`relative flex h-full flex-col rounded-[32px] border p-8 shadow-[0_18px_40px_rgba(113,88,67,0.08)] transition-transform duration-300 hover:-translate-y-1 ${
-                  plan.featured
-                    ? "border-[#b78057] bg-[#fff9f1]"
-                    : "border-[#ddcdb3] bg-[#fffaf4]/95"
-                }`}
-              >
-                {plan.featured && (
-                  <div className="absolute left-8 top-0 -translate-y-1/2 rounded-full border border-[#cfaa82] bg-[#f7ecdd] px-4 py-1 text-xs uppercase tracking-[0.3em] text-[#7a3b2e]">
-                    Recommended
-                  </div>
-                )}
-
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="cresc-display text-4xl text-[#2d1d15]">
-                      {plan.name}
-                    </h2>
-                    <p className="mt-3 min-h-16 text-sm leading-7 text-[#6a5245]">
-                      {plan.summary}
-                    </p>
-                  </div>
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-[#d6c0a0] bg-[#f5ecdf] text-[#7a3b2e]">
-                    {plan.icon}
-                  </div>
-                </div>
-
-                <div className="mt-8 border-t border-[#eadbc7] pt-7">
-                  <div className="flex items-baseline text-[#2d1d15]">
-                    <span className="text-3xl font-semibold">¥</span>
-                    <span className="ml-1 text-5xl font-semibold tracking-tight">
-                      {plan.price}
-                    </span>
-                    <span className="ml-2 text-base text-[#6a5245]">/ year</span>
-                  </div>
-                  {plan.monthly && (
-                    <p className="mt-3 text-sm text-[#8b7568]">{plan.monthly}</p>
-                  )}
-                </div>
-
-                <ul className="mt-8 flex-1 space-y-4">
-                  {plan.features.map((feature, index) => (
-                    <FeatureItem key={`${plan.name}-${index}`}>{feature}</FeatureItem>
-                  ))}
-                </ul>
-
-                <CheckLimitText>{plan.queryLimit}</CheckLimitText>
-
-                <a
-                  href={plan.ctaHref}
-                  {...(plan.external
-                    ? { target: "_blank", rel: "noopener noreferrer" }
-                    : {})}
-                  className={`mt-8 inline-flex items-center justify-center rounded-full px-6 py-4 text-base font-semibold transition duration-300 hover:-translate-y-1 ${ctaClassName}`}
-                >
-                  {plan.ctaLabel}
-                </a>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="mx-auto mt-16 max-w-4xl rounded-[28px] border border-[#ddcdb3] bg-[#f7efe2] px-8 py-7 text-center shadow-[0_18px_40px_rgba(113,88,67,0.06)]">
-          <p className="text-base leading-8 text-[#5f483c]">
-            Native packages are complete apk or ipa base builds. Hot update
-            packages are the ppk bundles generated by the CLI rather than the
-            files end users download directly.
-          </p>
-          <p className="mt-4 text-base leading-8 text-[#5f483c]">
-            Questions about billing or payments can be answered in our{" "}
-            <a
-              className="font-semibold text-[#7a3b2e] underline decoration-[#c8b28f] underline-offset-4"
-              href="/docs/faq#%E4%BB%98%E8%B4%B9%E9%97%AE%E9%A2%98"
+          <div
+            className={`relative mt-6 overflow-hidden rounded-[34px] border border-[#dcc9ae] bg-[#f8efe2]/72 px-4 py-5 shadow-[0_16px_36px_rgba(113,88,67,0.06)] transition-all duration-700 sm:px-5 ${
+              showAdvanced ? "max-h-[2600px]" : "max-h-24"
+            }`}
+          >
+            <div
+              className={`grid grid-cols-1 gap-5 transition-all duration-700 md:grid-cols-2 xl:grid-cols-3 ${
+                showAdvanced
+                  ? "translate-y-0 scale-100 opacity-100"
+                  : "translate-y-10 scale-[0.985] opacity-40"
+              }`}
             >
-              FAQ
-            </a>
-            .
-          </p>
+              {advancedTiers.map((tier) => (
+                <PricingCard
+                  key={tier.key}
+                  tierKey={tier.key}
+                  quota={tier.quota}
+                  meta={tier.meta}
+                />
+              ))}
+            </div>
+
+            {!showAdvanced && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-[linear-gradient(180deg,rgba(248,239,226,0)_0%,rgba(248,239,226,0.96)_100%)]" />
+            )}
+          </div>
         </div>
       </div>
     </div>

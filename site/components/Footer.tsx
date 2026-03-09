@@ -82,31 +82,7 @@ function Footer() {
       <div className="border-t border-[#ddcdb3]">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-sm text-[#7a6558]">
-            <p>React Native Chinese Site © {new Date().getFullYear()} Wuhan Qingluo Network Technology Co., Ltd.</p>
-            <span className="hidden sm:inline text-[#c8b28f]">|</span>
-            <div className="flex items-center gap-3">
-              <a
-                href="https://beian.miit.gov.cn/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-[#7a3b2e] transition-colors"
-              >
-                E ICP Bei 20002031-3
-              </a>
-              <a
-                href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=42011202001821"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 hover:text-[#7a3b2e] transition-colors"
-              >
-                <img
-                  src="https://img.alicdn.com/tfs/TB1..50QpXXXXX7XpXXXXXXXXXX-40-40.png"
-                  alt=""
-                  className="w-4 h-4"
-                />
-                E Gongwang Anbei 42011202001821
-              </a>
-            </div>
+            <p>© {new Date().getFullYear()} CHARMLOT PTE. LTD.</p>
           </div>
         </div>
       </div>

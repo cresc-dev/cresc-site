@@ -154,46 +154,7 @@ function PortraitFigure({ progress }: { progress: number }) {
         opacity="0.95"
         transform={`translate(${PORTRAIT_PEARL.x} ${PORTRAIT_PEARL.y})`}
       >
-        {/* <path
-          d="M-18 -18C-9 -27 3 -27 12 -19C10 -4 6 9 -2 16C-11 11 -16 -2 -18 -18Z"
-          fill="#513830"
-        /> */}
         <ellipse cx="0" cy="0" rx="18" ry="20" fill="#644a3e" fillOpacity="0.78" />
-      </g>
-
-      <g
-        opacity={expression}
-        style={{
-          mixBlendMode: "screen",
-        }}
-      >
-        <ellipse cx="211" cy="234" rx="38" ry="32" fill="#e3a493" opacity={cheekGlow} />
-        <path
-          d={`M160 ${208 - expression * 0.4}C170 ${204 - expression} 182 ${203 - expression} 191 ${206 - expression * 0.3}`}
-          fill="none"
-          stroke="#fff8f0"
-          strokeOpacity={eyeGlow * 0.52}
-          strokeWidth="2.1"
-          strokeLinecap="round"
-        />
-        <path
-          d={`M223 ${212 - expression * 0.3}C236 ${208 - expression * 0.9} 249 ${209 - expression * 0.8} 260 ${212 - expression * 0.15}`}
-          fill="none"
-          stroke="#fff8f0"
-          strokeOpacity={eyeGlow * 0.56}
-          strokeWidth="2.1"
-          strokeLinecap="round"
-        />
-        <circle cx="172.4" cy="212.6" r="1.5" fill="#fffef7" fillOpacity={eyeGlow * 0.9} />
-        <circle cx="245.8" cy="214.5" r="1.4" fill="#fffef7" fillOpacity={eyeGlow} />
-        <path
-          d={`M171 ${273 - mouthLift * 0.1}C188 ${280 - mouthLift} 206 ${280 - mouthLift} 223 ${274 - mouthLift * 0.14}`}
-          fill="none"
-          stroke="#c74e42"
-          strokeOpacity={0.14 + expression * 0.2}
-          strokeWidth="2.6"
-          strokeLinecap="round"
-        />
       </g>
 
       <g
@@ -264,9 +225,13 @@ function PortraitFigure({ progress }: { progress: number }) {
 
 function Page1() {
   const sectionRef = useRef<HTMLElement>(null);
+  const sequenceRef = useRef<HTMLDivElement>(null);
+  const stickyRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
   const [motionPoints, setMotionPoints] = useState<MotionPoints | null>(null);
+  const [sequenceTop, setSequenceTop] = useState(88);
+  const isCompletedRef = useRef(false);
 
   const measureMotionPoints = useEffectEvent(() => {
     const stage = stageRef.current;
@@ -312,24 +277,44 @@ function Page1() {
 
   const updateAnimation = useEffectEvent(() => {
     const section = sectionRef.current;
+    const sequence = sequenceRef.current;
+    const sticky = stickyRef.current;
+    const stage = stageRef.current;
     const nextPoints = measureMotionPoints();
 
     if (nextPoints) {
       setMotionPoints(nextPoints);
     }
 
-    if (!section) {
+    if (!section || !sequence || !sticky || !stage) {
       return;
     }
 
-    const rect = section.getBoundingClientRect();
+    const sequenceRect = sequence.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
-    const start = viewportHeight * 0.78;
-    const end = -rect.height * 0.22;
-    const nextProgress = clamp((start - rect.top) / (start - end), 0, 1);
+    const stickyRect = sticky.getBoundingClientRect();
+    const nextSequenceTop = Math.max(88, viewportHeight * 0.5 - stickyRect.height * 0.5);
+    setSequenceTop((current) =>
+      Math.abs(current - nextSequenceTop) > 1 ? nextSequenceTop : current,
+    );
+
+    const scrollSpan = Math.max(sequenceRect.height - stickyRect.height, 1);
+    const nextProgress = clamp((nextSequenceTop - sequenceRect.top) / scrollSpan, 0, 1);
+
+    if (isCompletedRef.current) {
+      setProgress((current) => (current < 1 ? 1 : current));
+      return;
+    }
 
     setProgress((current) =>
-      Math.abs(current - nextProgress) > 0.002 ? nextProgress : current,
+      {
+        if (nextProgress >= 0.999) {
+          isCompletedRef.current = true;
+          return 1;
+        }
+
+        return Math.abs(current - nextProgress) > 0.002 ? nextProgress : current;
+      },
     );
   });
 
@@ -364,7 +349,7 @@ function Page1() {
   return (
     <section
       ref={sectionRef}
-      className="cresc-section relative overflow-hidden py-24"
+      className="cresc-section relative py-24"
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(168,132,84,0.12),transparent_28%),repeating-linear-gradient(180deg,rgba(137,98,66,0.035)_0,rgba(137,98,66,0.035)_1px,transparent_1px,transparent_34px),radial-gradient(circle_at_bottom_right,rgba(122,59,46,0.08),transparent_30%)]" />
 
@@ -394,84 +379,93 @@ function Page1() {
             Add the missing detail, not the whole canvas.
           </h2>
           <p className="mt-6 text-lg leading-8 text-[#5f483c]">
-            As you scroll, the missing earring stays marked while the pearl
-            travels from the top logo into place.
+            The missing change is carried into the existing app and set in
+            place locally, instead of replacing the whole package.
           </p>
         </div>
 
-        <div className="mt-16 grid gap-10 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.9fr)] lg:items-stretch">
-          <div className="self-start lg:sticky lg:top-24">
-            <div className="cresc-frame cresc-score-lines rounded-[38px] p-5 sm:p-6">
-              <div className="cresc-stage-panel relative overflow-hidden rounded-[30px] p-4 sm:p-6">
-                <div
-                  ref={stageRef}
-                  className="relative aspect-[13/16] overflow-hidden rounded-[26px] bg-[#09070f]"
-                >
-                  <img
-                    src="/images/girl-with-pearl-earring.webp"
-                    alt=""
-                    aria-hidden="true"
-                    loading="lazy"
-                    decoding="async"
-                    className="block h-full w-full object-cover"
-                  />
-                  <PortraitFigure progress={progress} />
-                </div>
+        <div
+          ref={sequenceRef}
+          className="relative mt-16 lg:min-h-[250vh]"
+        >
+          <div
+            ref={stickyRef}
+            className="grid gap-10 lg:sticky lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.9fr)] lg:items-stretch"
+            style={{ top: `${sequenceTop}px` }}
+          >
+            <div className="self-start">
+              <div className="cresc-frame cresc-score-lines rounded-[38px] p-5 sm:p-6">
+                <div className="cresc-stage-panel relative overflow-hidden rounded-[30px] p-4 sm:p-6">
+                  <div
+                    ref={stageRef}
+                    className="relative aspect-[13/16] overflow-hidden rounded-[26px] bg-[#09070f]"
+                  >
+                    <img
+                      src="/images/girl-with-pearl-earring.webp"
+                      alt=""
+                      aria-hidden="true"
+                      loading="lazy"
+                      decoding="async"
+                      className="block h-full w-full object-cover"
+                    />
+                    <PortraitFigure progress={progress} />
+                  </div>
 
-                <div
-                  className="pointer-events-none absolute bottom-14 left-1/2 flex items-center gap-2 rounded-full border border-[#d6c0a0] bg-[linear-gradient(180deg,rgba(255,249,239,0.96),rgba(244,234,220,0.92))] px-4 py-2 text-sm text-[#4d3528] shadow-[0_16px_30px_rgba(71,44,24,0.18)]"
-                  style={{
-                    opacity: toastReveal,
-                    transform: `translate(-50%, ${(1 - toastReveal) * 34}px) scale(${0.96 + toastReveal * 0.04})`,
-                    filter: `blur(${(1 - toastReveal) * 8}px)`,
-                  }}
-                >
-                  <span className="h-2.5 w-2.5 rounded-full bg-[#7a3b2e]" />
-                  <span className="font-medium tracking-[0.06em]">
-                    App Updated!
-                  </span>
+                  <div
+                    className="pointer-events-none absolute bottom-14 left-1/2 flex items-center gap-2 rounded-full border border-[#d6c0a0] bg-[linear-gradient(180deg,rgba(255,249,239,0.96),rgba(244,234,220,0.92))] px-4 py-2 text-sm text-[#4d3528] shadow-[0_16px_30px_rgba(71,44,24,0.18)]"
+                    style={{
+                      opacity: toastReveal,
+                      transform: `translate(-50%, ${(1 - toastReveal) * 34}px) scale(${0.96 + toastReveal * 0.04})`,
+                      filter: `blur(${(1 - toastReveal) * 8}px)`,
+                    }}
+                  >
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#7a3b2e]" />
+                    <span className="font-medium tracking-[0.06em]">
+                      App Updated!
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex flex-col gap-3 lg:h-full lg:self-stretch lg:justify-between">
-            {movements.map((movement, index) => {
-              const reveal = easeOutCubic(
-                getRevealProgress(
-                  progress,
-                  0.22 + index * 0.21,
-                  0.42 + index * 0.21,
-                ),
-              );
-              const isActive = index === activeIndex;
+            <div className="flex flex-col gap-3 lg:h-full lg:self-stretch lg:justify-between">
+              {movements.map((movement, index) => {
+                const reveal = easeOutCubic(
+                  getRevealProgress(
+                    progress,
+                    0.22 + index * 0.21,
+                    0.42 + index * 0.21,
+                  ),
+                );
+                const isActive = index === activeIndex;
 
-              return (
-                <article
-                  key={movement.label}
-                  className={`cresc-score-card flex min-h-[9.75rem] flex-col justify-center rounded-[28px] border px-6 py-5 lg:min-h-0 lg:flex-1 lg:px-7 ${
-                    isActive
-                      ? "border-[#c89a6a] bg-[#fff9f1] shadow-[0_20px_44px_rgba(113,88,67,0.1)]"
-                      : "border-[#ddcdb3] bg-[#fffaf4]"
-                  } ${reveal > 0.02 ? "" : "pointer-events-none"}`}
-                  style={{
-                    opacity: reveal,
-                    transform: `translateY(${(1 - reveal) * 64}px) scale(${0.955 + reveal * 0.045})`,
-                    filter: `blur(${(1 - reveal) * 12}px)`,
-                  }}
-                >
-                  <p className="text-xs uppercase tracking-[0.36em] text-[#8b5a3c]">
-                    {movement.label}
-                  </p>
-                  <h3 className="cresc-display mt-3 text-[2rem] leading-[1.02] text-[#2d1d15] lg:text-[2.15rem]">
-                    {movement.title}
-                  </h3>
-                  <p className="mt-3 text-[0.98rem] leading-6 text-[#5f483c]">
-                    {movement.desc}
-                  </p>
-                </article>
-              );
-            })}
+                return (
+                  <article
+                    key={movement.label}
+                    className={`cresc-score-card flex min-h-[9.75rem] flex-col justify-center rounded-[28px] border px-6 py-5 lg:min-h-0 lg:flex-1 lg:px-7 ${
+                      isActive
+                        ? "border-[#c89a6a] bg-[#fff9f1] shadow-[0_20px_44px_rgba(113,88,67,0.1)]"
+                        : "border-[#ddcdb3] bg-[#fffaf4]"
+                    } ${reveal > 0.02 ? "" : "pointer-events-none"}`}
+                    style={{
+                      opacity: reveal,
+                      transform: `translateY(${(1 - reveal) * 64}px) scale(${0.955 + reveal * 0.045})`,
+                      filter: `blur(${(1 - reveal) * 12}px)`,
+                    }}
+                  >
+                    <p className="text-xs uppercase tracking-[0.36em] text-[#8b5a3c]">
+                      {movement.label}
+                    </p>
+                    <h3 className="cresc-display mt-3 text-[2rem] leading-[1.02] text-[#2d1d15] lg:text-[2.15rem]">
+                      {movement.title}
+                    </h3>
+                    <p className="mt-3 text-[0.98rem] leading-6 text-[#5f483c]">
+                      {movement.desc}
+                    </p>
+                  </article>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

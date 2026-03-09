@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from "react";
+
 const workflowSteps = [
   {
     id: "I",
@@ -16,7 +18,89 @@ const workflowSteps = [
   },
 ];
 
+const terminalTranscript = [
+  {
+    prompt: "release@studio",
+    cwd: "~/crescendo-app",
+    command: "npm i -g react-native-update-cli",
+    result: "added 1 package in 2s",
+  },
+  {
+    prompt: "release@studio",
+    cwd: "~/crescendo-app",
+    command: "cresc uploadIpa ios-release.ipa",
+    result: "baseline uploaded for iOS",
+  },
+  {
+    prompt: "release@studio",
+    cwd: "~/crescendo-app",
+    command: "cresc uploadApk android-release.apk",
+    result: "baseline uploaded for Android",
+  },
+  {
+    prompt: "release@studio",
+    cwd: "~/crescendo-app",
+    command: "cresc bundle --platform ios",
+    result: "incremental patch ready",
+  },
+];
+
 function Page2() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [typedLength, setTypedLength] = useState(0);
+  const [showResult, setShowResult] = useState(false);
+  const [history, setHistory] = useState<typeof terminalTranscript>([]);
+  const terminalScreenRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const currentEntry = terminalTranscript[activeIndex];
+
+    if (!currentEntry) {
+      return;
+    }
+
+    const isFirstBeat =
+      activeIndex === 0 && typedLength === 0 && showResult === false;
+
+    const timeout = window.setTimeout(() => {
+      if (typedLength < currentEntry.command.length) {
+        setTypedLength((current) => current + 1);
+        return;
+      }
+
+      if (!showResult) {
+        setShowResult(true);
+        return;
+      }
+
+      const nextIndex = (activeIndex + 1) % terminalTranscript.length;
+
+      setHistory((current) =>
+        nextIndex === 0 ? [] : [...current, currentEntry].slice(-3),
+      );
+      setActiveIndex(nextIndex);
+
+      setTypedLength(0);
+      setShowResult(false);
+    }, isFirstBeat ? 460 : typedLength < currentEntry.command.length ? 38 : showResult ? 980 : 440);
+
+    return () => window.clearTimeout(timeout);
+  }, [activeIndex, showResult, typedLength]);
+
+  useEffect(() => {
+    const node = terminalScreenRef.current;
+
+    if (!node) {
+      return;
+    }
+
+    node.scrollTop = node.scrollHeight;
+  }, [activeIndex, showResult, typedLength]);
+
+  const completedEntries = history;
+  const activeEntry = terminalTranscript[activeIndex];
+  const typedCommand = activeEntry?.command.slice(0, typedLength) ?? "";
+
   return (
     <section className="cresc-section cresc-section-alt relative overflow-hidden py-24">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_18%,rgba(150,108,63,0.12),transparent_26%),radial-gradient(circle_at_84%_68%,rgba(122,59,46,0.08),transparent_24%)]" />
@@ -35,7 +119,7 @@ function Page2() {
               the same steady rhythm each time the app changes.
             </p>
 
-            <div className="mt-10 flex flex-1 flex-col gap-4">
+            <div className="mt-10 flex flex-col gap-4">
               {workflowSteps.map((step) => (
                 <div
                   key={step.id}
@@ -57,44 +141,88 @@ function Page2() {
                 </div>
               ))}
             </div>
+
           </div>
 
           <div className="cresc-manuscript flex h-full flex-col rounded-[34px] border border-[#ddcdb3] p-8 sm:p-10">
-            <p className="text-sm uppercase tracking-[0.35em] text-[#8b5a3c]">
-              First release
-            </p>
-            <div className="mt-6 rounded-[24px] border border-[#d6c0a0] bg-[#f9f2e8] p-6">
-              <pre className="overflow-x-auto whitespace-pre-wrap font-mono text-sm leading-8 text-[#4e382d]">
-{`npm i -g react-native-update-cli
+            <div className="cresc-terminal overflow-hidden rounded-[24px] border border-[#6f5240]">
+              <div className="cresc-terminal__chrome flex items-center px-5 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-[#d7a978]" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-[#b86f57]" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-[#8d4e40]" />
+                </div>
+              </div>
 
-cresc uploadIpa ios-release.ipa
-cresc uploadApk android-release.apk
+              <div
+                ref={terminalScreenRef}
+                className="cresc-terminal__screen px-5 py-5 font-mono text-[0.95rem] leading-8 sm:px-6"
+              >
+                <div className="mb-4 flex flex-wrap items-center gap-3 text-[0.76rem] uppercase tracking-[0.24em] text-[#b89d85]">
+                  <span>first release</span>
+                  <span className="h-1 w-1 rounded-full bg-[#6e5443]" />
+                  <span>production lane</span>
+                </div>
 
-cresc bundle --platform ios
-cresc bundle --platform android`}
-              </pre>
+                <div className="space-y-4">
+                  {completedEntries.map((entry) => (
+                    <div key={entry.command} className="space-y-1.5">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[#efe2d2]">
+                        <span className="text-[#ccab88]">{entry.prompt}</span>
+                        <span className="text-[#8d7462]">{entry.cwd}</span>
+                        <span className="text-[#c6a374]">$</span>
+                        <span className="text-[#fff7ec]">{entry.command}</span>
+                      </div>
+                      <div className="pl-0 text-[#b79f8c] sm:pl-[9.4rem]">
+                        {entry.result}
+                      </div>
+                    </div>
+                  ))}
+
+                  {activeEntry && (
+                    <div className="space-y-1.5">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[#efe2d2]">
+                        <span className="text-[#ccab88]">{activeEntry.prompt}</span>
+                        <span className="text-[#8d7462]">{activeEntry.cwd}</span>
+                        <span className="text-[#c6a374]">$</span>
+                        <span className="flex items-center gap-1 text-[#fff7ec]">
+                          <span>{typedCommand}</span>
+                          <span className="cresc-terminal__cursor h-5 w-2 rounded-[2px] bg-[#e8d2bb]" />
+                        </span>
+                      </div>
+                      {showResult && (
+                        <div className="cresc-terminal__result pl-0 text-[#b79f8c] sm:pl-[9.4rem]">
+                          {activeEntry.result}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
-            <p className="mt-8 text-lg leading-8 text-[#5f483c]">
-              After the first baseline is in place, the dashboard and CLI can
-              carry the rest of the release cycle with much less effort.
-            </p>
+            <div className="mt-auto pt-6">
+              <p className="text-lg leading-8 text-[#5f483c]">
+                After the first baseline is in place, the dashboard and CLI can
+                carry the rest of the release cycle with much less effort.
+              </p>
 
-            <div className="mt-auto flex flex-col gap-4 pt-10 sm:flex-row">
-              <a
-                href="https://admin.cresc.dev"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-full border border-[#7a3b2e] bg-[#7a3b2e] px-7 py-4 text-base font-semibold text-[#fffaf4] transition duration-300 hover:-translate-y-1 hover:bg-[#6a3025]"
-              >
-                Open Dashboard
-              </a>
-              <a
-                href="/docs/getting-started"
-                className="inline-flex items-center justify-center rounded-full border border-[#c8b28f] bg-[#fffaf2] px-7 py-4 text-base font-semibold text-[#3f2b21] transition duration-300 hover:-translate-y-1 hover:border-[#7a3b2e] hover:text-[#7a3b2e]"
-              >
-                View Docs
-              </a>
+              <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+                <a
+                  href="https://admin.cresc.dev"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center rounded-full border border-[#7a3b2e] bg-[#7a3b2e] px-7 py-4 text-base font-semibold text-[#fffaf4] transition duration-300 hover:-translate-y-1 hover:bg-[#6a3025]"
+                >
+                  Open Dashboard
+                </a>
+                <a
+                  href="/docs/getting-started"
+                  className="inline-flex items-center justify-center rounded-full border border-[#c8b28f] bg-[#fffaf2] px-7 py-4 text-base font-semibold text-[#3f2b21] transition duration-300 hover:-translate-y-1 hover:border-[#7a3b2e] hover:text-[#7a3b2e]"
+                >
+                  View Docs
+                </a>
+              </div>
             </div>
           </div>
         </div>
