@@ -44,8 +44,8 @@ USD$1699/ monthDaily queries100M / dayAppsSame limits as ProNative PackagesSame 
 
 ### Terms & Policies
 
-- [User Agreement](/agreement/)
-- [Privacy Policy](/agreement/#privacy)
+- [User Agreement](https://cresc.dev/policy/)
+- [Privacy Policy](https://cresc.dev/policy/#privacy)
 
 ### Help & Support
 

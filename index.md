@@ -65,8 +65,8 @@ first releaseproduction lanerelease@studio~/crescendo-app$After the first baseli
 
 ### Terms & Policies
 
-- [User Agreement](/agreement/)
-- [Privacy Policy](/agreement/#privacy)
+- [User Agreement](https://cresc.dev/policy/)
+- [Privacy Policy](https://cresc.dev/policy/#privacy)
 
 ### Help & Support
 
