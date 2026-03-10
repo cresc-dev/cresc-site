@@ -14,8 +14,8 @@ function Footer() {
     {
       title: "Terms & Policies",
       links: [
-        { text: "User Agreement", href: "/agreement/", external: true },
-        { text: "Privacy Policy", href: "/agreement/#privacy", external: true },
+        { text: "User Agreement", href: "https://cresc.dev/policy/" },
+        { text: "Privacy Policy", href: "https://cresc.dev/policy/#privacy" },
       ],
     },
     {
