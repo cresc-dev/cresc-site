@@ -6,10 +6,6 @@ type: Quick Start
 
 import { Steps, Tabs, Tab } from "@rspress/core/theme";
 
-:::info
-Please note that the API has been completely rebuilt. It is incompatible with legacy versions (under v10.0). If you need access to the old documentation, click [here](https://v9--cresc-site.netlify.app/).
-:::
-
 First, you should have an application developed based on React Native. We refer to the directory containing `package.json` as your application's `root directory`.
 If you haven't initialized an application yet, please see [Getting Started with React Native](https://reactnative.dev/docs/getting-started).
 
@@ -97,8 +93,8 @@ pod 'react-native-update', path: '../node_modules/react-native-update'
 <summary>RN &lt; 0.60 without CocoaPods</summary>
 
 1. In Xcode's Project Navigator, right click `Libraries` ➜ `Add Files to [Your Project Name]`
-2. Go to `node_modules` ➜ `react-native-update` ➜ `ios` and select `RCTCresc.xcodeproj`
-3. In Xcode's Project Navigator, select your project. Under `Build Phases` ➜ `Link Binary With Libraries`, add `libRCTCresc.a`, `libz.tbd`, `libbz2.1.0.tbd`.
+2. Go to `node_modules` ➜ `react-native-update` ➜ `ios` and select `RCTPushy.xcodeproj`
+3. In Xcode's Project Navigator, select your project. Under `Build Phases` ➜ `Link Binary With Libraries`, add `libRCTPushy.a`, `libz.tbd`, `libbz2.1.0.tbd`.
 4. Under `Build Settings`, search for `Header Search Path`, add `$(SRCROOT)/../node_modules/react-native-update/ios`, and check `recursive`.
 5. Under `Build Phases`, add a `New Run Script Phase` with the following content:
 
@@ -106,10 +102,10 @@ pod 'react-native-update', path: '../node_modules/react-native-update'
 #!/bin/bash
 set -x
 DEST="../node_modules/react-native-update/ios/"
-date +%s > "$DEST/cresc_build_time.txt"
+date +%s > "$DEST/pushy_build_time.txt"
 ```
 
-7. Attempt compilation. If successful, a `cresc_build_time.txt` file is generated inside `../node_modules/react-native-update/ios/`. Then, add the resulting `cresc_build_time.txt` into `Copy Bundle Resources`.
+7. Attempt compilation. If successful, a `pushy_build_time.txt` file is generated inside `../node_modules/react-native-update/ios/`. Then, add the resulting `pushy_build_time.txt` into `Copy Bundle Resources`.
 
 </details>
 
@@ -158,11 +154,11 @@ Note: If your project mixes native apps with RN, ensure you **do not directly as
 // ... Other code
 #import "AppDelegate.h"
 
-#import "RCTCresc.h"  // <-- Add this header import outside of any conditionals
+#import "RCTPushy.h"  // <-- Add this header import outside of any conditionals
 
 // Sometimes there are conditionals for flipper
 // #if DEBUG
-// Do NOT place #import "RCTCresc.h" inside conditionals here
+// Do NOT place #import "RCTPushy.h" inside conditionals here
 // #import <FlipperKit/FlipperClient.h>
 // ...
 // #endif
@@ -175,7 +171,7 @@ Note: If your project mixes native apps with RN, ensure you **do not directly as
   // Leave DEBUG config as is
   return [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@"index"];
 #else
-  return [RCTCresc bundleURL];  // <--  Replace the non-DEBUG section with our hot update bundle URL provider
+  return [RCTPushy bundleURL];  // <--  Replace the non-DEBUG section with our hot update bundle URL provider
 #endif
 }
 
@@ -187,7 +183,7 @@ Note: If your project mixes native apps with RN, ensure you **do not directly as
   // Leave DEBUG config as is
   return [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@"index"];
 #else
-  return [RCTCresc bundleURL];  // <--  Replace the non-DEBUG section with our hot update bundle URL provider
+  return [RCTPushy bundleURL];  // <--  Replace the non-DEBUG section with our hot update bundle URL provider
 #endif
 }
 
@@ -201,7 +197,7 @@ import UIKit
 import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
-import react_native_update    // <-- Import here. Requires Cresc v10.22.0+
+import react_native_update    
 
 
 @main
@@ -213,7 +209,7 @@ class AppDelegate: RCTAppDelegate {
     // Leave DEBUG config as is (meaning you cannot OTA test in DEBUG)
     RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
 #else
-    RCTCresc.bundleURL()  // <-- Replace the non-DEBUG section with our hot update bundle URL provider
+    RCTPushy.bundleURL()  // <-- Replace the non-DEBUG section with our hot update bundle URL provider
 #endif
   }
 }
