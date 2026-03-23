@@ -1,48 +1,49 @@
-Cresc
 
-# A steadier cadence for React Native updates.
+React Native OTA Updates
 
-Named for the gradual rise in music, Cresc treats over-the-air publishing the same way: smaller packages, deliberate rollout, and recovery kept within reach when a change needs to be revised.
+# React Native OTA updates with smaller patches and safer rollouts.
 
-[Open Dashboard](https://admin.cresc.dev)[Read Documentation](/docs/getting-started)[Open-source on GitHub](https://github.com/reactnativecn/react-native-update)Self-host friendlyNamed for crescendo
+Cresc is a CodePush and App Center alternative for teams that need delta patches, rollback protection, CI-friendly publishing, and a clear path across React Native, Expo, Hermes, and Harmony builds.
 
-![Cresc Logo](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTA4IiBoZWlnaHQ9IjEwOCIgdmlld0JveD0iMCAwIDEwOCAxMDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImNyZXNjX3N0cm9rZSIgeDE9IjE2IiB5MT0iMTgiIHgyPSI5MCIgeTI9IjkwIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNEN0I1N0MiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIwLjU1IiBzdG9wLWNvbG9yPSIjQTg2QTQyIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzZFMzQyOCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxyYWRpYWxHcmFkaWVudCBpZD0iY3Jlc2NfcGVhcmwiIGN4PSIwIiBjeT0iMCIgcj0iMSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIGdyYWRpZW50VHJhbnNmb3JtPSJ0cmFuc2xhdGUoODQgNTApIHJvdGF0ZSg1Ni4zMSkgc2NhbGUoMTguNjAxMSkiPgogICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRkZGREY5Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMC41NiIgc3RvcC1jb2xvcj0iI0YwRTFDQSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNDN0EwNzIiLz4KICAgIDwvcmFkaWFsR3JhZGllbnQ+CiAgPC9kZWZzPgogIDxwYXRoCiAgICBkPSJNIDg4IDI1IEEgNDAgNDAgMCAxIDAgODggODMiCiAgICBzdHJva2U9InVybCgjY3Jlc2Nfc3Ryb2tlKSIKICAgIHN0cm9rZS13aWR0aD0iMTgiCiAgICBzdHJva2UtbGluZWNhcD0icm91bmQiCiAgLz4KICA8cGF0aAogICAgZD0iTSA4NiAzMSBBIDMyIDMyIDAgMSAwIDg2IDc3IgogICAgc3Ryb2tlPSIjRjRFNkNEIgogICAgc3Ryb2tlLW9wYWNpdHk9IjAuMjgiCiAgICBzdHJva2Utd2lkdGg9IjQiCiAgICBzdHJva2UtbGluZWNhcD0icm91bmQiCiAgLz4KICA8Y2lyY2xlIGN4PSI4OCIgY3k9IjU0IiByPSIxMCIgZmlsbD0idXJsKCNjcmVzY19wZWFybCkiIHN0cm9rZT0iI0I2ODY1NyIgc3Ryb2tlLXdpZHRoPSIxLjYiIC8+CiAgPGNpcmNsZSBjeD0iODQuMiIgY3k9IjQ5LjMiIHI9IjIuOCIgZmlsbD0iI0ZGRkZGRiIgZmlsbC1vcGFjaXR5PSIwLjg4IiAvPgo8L3N2Zz4K)## Composed for careful release work.
+[Start Free](https://admin.cresc.dev/#/register)[Migrate From CodePush](/codepush-alternative)[Open-source on GitHub](https://github.com/reactnativecn/react-native-update)Delta patchesSelf-host friendlyApp Center migrationNamed for crescendo
 
-The full native release establishes the base. Every later update can arrive as a smaller addition, shaped only to the detail that changed.
+![Cresc Logo](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTA4IiBoZWlnaHQ9IjEwOCIgdmlld0JveD0iMCAwIDEwOCAxMDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImNyZXNjX3N0cm9rZSIgeDE9IjE2IiB5MT0iMTgiIHgyPSI5MCIgeTI9IjkwIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNEN0I1N0MiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIwLjU1IiBzdG9wLWNvbG9yPSIjQTg2QTQyIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzZFMzQyOCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxyYWRpYWxHcmFkaWVudCBpZD0iY3Jlc2NfcGVhcmwiIGN4PSIwIiBjeT0iMCIgcj0iMSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIGdyYWRpZW50VHJhbnNmb3JtPSJ0cmFuc2xhdGUoODQgNTApIHJvdGF0ZSg1Ni4zMSkgc2NhbGUoMTguNjAxMSkiPgogICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRkZGREY5Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMC41NiIgc3RvcC1jb2xvcj0iI0YwRTFDQSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNDN0EwNzIiLz4KICAgIDwvcmFkaWFsR3JhZGllbnQ+CiAgPC9kZWZzPgogIDxwYXRoCiAgICBkPSJNIDg4IDI1IEEgNDAgNDAgMCAxIDAgODggODMiCiAgICBzdHJva2U9InVybCgjY3Jlc2Nfc3Ryb2tlKSIKICAgIHN0cm9rZS13aWR0aD0iMTgiCiAgICBzdHJva2UtbGluZWNhcD0icm91bmQiCiAgLz4KICA8cGF0aAogICAgZD0iTSA4NiAzMSBBIDMyIDMyIDAgMSAwIDg2IDc3IgogICAgc3Ryb2tlPSIjRjRFNkNEIgogICAgc3Ryb2tlLW9wYWNpdHk9IjAuMjgiCiAgICBzdHJva2Utd2lkdGg9IjQiCiAgICBzdHJva2UtbGluZWNhcD0icm91bmQiCiAgLz4KICA8Y2lyY2xlIGN4PSI4OCIgY3k9IjU0IiByPSIxMCIgZmlsbD0idXJsKCNjcmVzY19wZWFybCkiIHN0cm9rZT0iI0I2ODY1NyIgc3Ryb2tlLXdpZHRoPSIxLjYiIC8+CiAgPGNpcmNsZSBjeD0iODQuMiIgY3k9IjQ5LjMiIHI9IjIuOCIgZmlsbD0iI0ZGRkZGRiIgZmlsbC1vcGFjaXR5PSIwLjg4IiAvPgo8L3N2Zz4K)## Built for release teams that need OTA updates to stay boring.
 
-Small variation, same score
+The native build becomes the baseline. Every later React Native update ships only the changed business logic, keeping downloads smaller and emergency fixes much faster.
 
-Cresc keeps the original release close, then lets each later patch arrive as a measured variation rather than a full repeat.
+CodePush replacement, without the dead end
+
+Cresc keeps the original release as the base and turns later OTA releases into measured diffs instead of full-bundle repeats.
 
 Incremental Delivery
 
-## Add the missing detail, not the whole canvas.
+## React Native OTA updates should ship the delta, not the whole bundle.
 
-The missing change is carried into the existing app and set in place locally, instead of replacing the whole package.
+Cresc keeps the installed build as the base, then carries only the missing JavaScript and asset changes into place locally.
 
 ![](/images/girl-with-pearl-earring.webp)App Updated!Movement I
 
 ### Hold the full base
 
-The first release stays on device as the complete base, so later patches can remain much smaller.
+The first native release stays on device as the baseline, so later React Native OTA patches can remain much smaller.
 
 Movement II
 
 ### Drop only the new pearl
 
-When something changes, Cresc lifts just the missing part instead of repeating the whole bundle.
+When something changes, Cresc ships only the delta instead of repeating the whole JavaScript bundle.
 
 Movement III
 
 ### Set it in place locally
 
-The client clicks the new patch into the existing base, then confirms the update in place.
+The client applies the patch against the installed baseline and confirms the update in place.
 
 In Practice
 
-## Three steps, kept in time.
+## Ship React Native OTA updates in three steps.
 
-Install the CLI, upload the baseline, and publish the update with the same steady rhythm each time the app changes.
+Install the CLI, upload the baseline build, and publish the next delta update through the dashboard or CI whenever the app changes.
 
 I### Install the CLI
 
@@ -56,9 +57,33 @@ III### Publish the update
 
 Bundle JavaScript and assets, then release the update through the dashboard or your CI flow.
 
-first releaseproduction lanerelease@studio~/crescendo-app$After the first baseline is in place, the dashboard and CLI can carry the rest of the release cycle with much less effort.
+first releaseproduction lanerelease@studio~/crescendo-app$Once the baseline is uploaded, the dashboard and CLI can handle the rest of the OTA release cycle with much less effort.
 
-[Open Dashboard](https://admin.cresc.dev)[View Docs](/docs/getting-started)### Contact Us
+[Open Dashboard](https://admin.cresc.dev)[View Docs](/docs/getting-started)Search Paths
+
+## Start from the question your team already has.
+
+Cresc is easiest to evaluate when the page matches the rollout or migration problem you are solving right now. Pick the path that fits your release workflow.
+
+Migration
+
+### Replacing CodePush or App Center
+
+See the migration path, rollout model, and why Cresc fits React Native teams that still need OTA updates after App Center's retirement.
+
+[Open Migration Guide](/codepush-alternative)Comparison
+
+### Expo Updates vs Cresc
+
+Compare bundle size, delta delivery, self-hosting flexibility, and when each workflow makes sense.
+
+[Compare Options](/expo-updates-vs-cresc)Overview
+
+### React Native OTA updates
+
+Get the practical overview: what OTA updates can change, what still needs a native release, and how Cresc fits the release pipeline.
+
+[Read The Guide](/react-native-ota-updates)### Contact Us
 
 - [Email hi@cresc.dev](mailto:hi@cresc.dev)
 - [GitHub Discussions](https://github.com/reactnativecn/react-native-update/discussions)
@@ -71,10 +96,17 @@ first releaseproduction lanerelease@studio~/crescendo-app$After the first baseli
 ### Help & Support
 
 - [FAQ](/docs/faq)
+- [CodePush Alternative](/codepush-alternative)
+- [CodePush Migration](/codepush-migration-checklist)
+- [Expo Updates vs Cresc](/expo-updates-vs-cresc)
 - [GitHub Issues](https://github.com/reactnativecn/react-native-update/issues)
 
 ### Links
 
+- [React Native OTA Guide](/react-native-ota-updates)
+- [Expo Pricing vs Cresc](/expo-pricing-vs-cresc)
+- [llms.txt](/llms.txt)
+- [llms-full.txt](/llms-full.txt)
 - [React Native](https://reactnative.dev/)
 - [ReactJS](https://react.dev/)
 

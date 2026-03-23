@@ -1,0 +1,92 @@
+
+# Expo Updates vs Cresc for React Native OTA
+
+Expo Updates and Cresc both help React Native teams ship JavaScript changes outside a full app-store release. The difference is mostly about delivery model and control: Expo Updates keeps you closer to the Expo service model, while Cresc focuses on delta patches, migration friendliness, and self-host flexibility.
+
+## Short answer
+
+- Choose **Expo Updates** if your team is heavily standardized on Expo services and prefers the default Expo release path.
+- Choose **Cresc** if your team wants smaller delta updates, a CodePush-style migration path, or more control over how OTA delivery fits your release system.
+
+## Comparison table
+
+| Topic                               | Expo Updates             | Cresc            |
+| ----------------------------------- | ------------------------ | ---------------- |
+| OTA updates for React Native        | Yes                      | Yes              |
+| Expo-oriented workflow              | Strong default fit       | Supported        |
+| Delta patch delivery                | Not the main positioning | Core positioning |
+| Self-host friendliness              | More service-oriented    | Stronger         |
+| CodePush/App Center migration story | Indirect                 | Direct           |
+| CLI and CI publishing               | Yes                      | Yes              |
+| Rollback handling                   | Yes                      | Yes              |
+
+## When Cresc is the better fit
+
+- You are moving off CodePush or App Center and want the workflow to feel familiar.
+- You care about shrinking update payloads with delta patches.
+- You want to keep the option to self-host parts of the stack.
+- You want a release flow that is not tightly coupled to the rest of the Expo platform story.
+
+## When Expo Updates is the better fit
+
+- Your team already uses Expo services end to end.
+- You do not need a migration-focused replacement path.
+- Delta patch size is less important than keeping everything on the default Expo stack.
+
+## What this means in practice
+
+Cresc is usually the better choice when release engineering, bandwidth efficiency, and migration risk are top concerns. Expo Updates is usually the better choice when operational simplicity inside Expo matters more than patch granularity or hosting flexibility.
+
+## If pricing is the deciding factor
+
+See [Expo pricing vs Cresc](/expo-pricing-vs-cresc.md). As checked on March 23, 2026, Expo Starter and Cresc Standard are both `$19/mo`, but Cresc becomes cheaper at production scale and avoids EAS Update's updated-user plus bandwidth overage model.
+
+## Related documentation
+
+- [Installation and configuration](/docs/getting-started.md)
+- [Code integration](/docs/integration.md)
+- [Pricing](/pricing.md)
+
+## FAQ
+
+### Can Cresc work in Expo projects?
+
+Yes. Cresc documents an Expo installation path and also explains where it conflicts with `expo-updates`.
+
+### Why does delta delivery matter?
+
+Smaller patches reduce bandwidth usage and make emergency fixes cheaper and faster to distribute, especially on large fleets or constrained networks.
+
+### Which option is easier to migrate to from CodePush?
+
+Cresc is the more direct migration target because that replacement story is already part of its positioning and documentation.
+
+### Contact Us
+
+- [Email hi@cresc.dev](mailto:hi@cresc.dev)
+- [GitHub Discussions](https://github.com/reactnativecn/react-native-update/discussions)
+
+### Terms & Policies
+
+- [User Agreement](https://cresc.dev/policy/)
+- [Privacy Policy](https://cresc.dev/policy/#privacy)
+
+### Help & Support
+
+- [FAQ](/docs/faq)
+- [CodePush Alternative](/codepush-alternative)
+- [CodePush Migration](/codepush-migration-checklist)
+- [Expo Updates vs Cresc](/expo-updates-vs-cresc)
+- [GitHub Issues](https://github.com/reactnativecn/react-native-update/issues)
+
+### Links
+
+- [React Native OTA Guide](/react-native-ota-updates)
+- [Expo Pricing vs Cresc](/expo-pricing-vs-cresc)
+- [llms.txt](/llms.txt)
+- [llms-full.txt](/llms-full.txt)
+- [React Native](https://reactnative.dev/)
+- [ReactJS](https://react.dev/)
+
+© 2026 CHARMLOT PTE. LTD.
+

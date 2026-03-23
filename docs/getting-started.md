@@ -260,13 +260,10 @@ public class MainApplication extends Application implements ReactApplication {
 :::info
 Remember, any modifications under the `ios` or `android` directories require recompilation (using `npx react-native run-ios/android` or compiling inside Xcode/Android Studio) to take effect.
 :::
-:::info
-Remember, any modifications under the `ios` or `android` directories require recompilation (using `npx react-native run-ios/android` or compiling inside Xcode/Android Studio) to take effect.
-:::
 ### Overriding Android's onCreate
-If `react-native-screens` is installed (which `react-navigation` explicitly demands generally), Android targets display blank white states post application-update-reboots inherently occasionally natively securely securely smoothly implicitly. Overriding the Android `MainActivity` applying explicit `RNScreensFragmentFactory` components stabilizes UI generation preventing Fragment lifecycle crashes absolutely efficiently.
-(Do not mount fragment factories inside `MainActivityDelegate`, only inside `MainActivity`)
-Visit [react-native-screens documentation](https://github.com/software-mansion/react-native-screens?tab=readme-ov-file#android) resolving issues natively explicitly effortlessly completely effectively clearly cleanly.
+If your app uses `react-native-screens` through `react-navigation`, Android can show a blank screen after an OTA-triggered restart unless `RNScreensFragmentFactory` is registered in `MainActivity`.
+Do not set the fragment factory in `MainActivityDelegate`. Register it in `MainActivity` itself.
+For background and edge-case notes, see the [react-native-screens Android documentation](https://github.com/software-mansion/react-native-screens?tab=readme-ov-file#android).
 
 **Kotlin**
 
@@ -281,7 +278,8 @@ class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     supportFragmentManager.fragmentFactory = RNScreensFragmentFactory()
     super.onCreate(savedInstanceState)
-    // If running older dependencies absent RNScreensFragmentFactory completely, fallback safely utilizing below strategies
+    // If your dependency versions do not provide RNScreensFragmentFactory,
+    // fall back to:
     // super.onCreate(null)
   }
 }
@@ -302,14 +300,15 @@ public class MainActivity extends ReactActivity {
   protected void onCreate(Bundle savedInstanceState) {
     getSupportFragmentManager().setFragmentFactory(new RNScreensFragmentFactory());
     super.onCreate(savedInstanceState);
-    // If running older dependencies absent of factories natively safely smoothly cleanly cleanly reliably natively globally comprehensively reliably accurately
+    // If your dependency versions do not provide RNScreensFragmentFactory,
+    // fall back to:
     // super.onCreate(null);
   }
 }
 ```
 
 ### Adding A Deep Link For Testing
-Establishing schemas permits flawlessly replicating identical distribution conditions for QA processes validating updates entirely separately bypassing any additional provisioning integrations safely cleanly and globally dynamically correctly securely securely appropriately smoothly efficiently thoroughly.
+Deep links make OTA testing much easier because you can open a specific update payload directly from a QR code or test page.
 
 **Android**
 
@@ -351,15 +350,15 @@ In `android/app/src/main/AndroidManifest.xml`:
 Please refer to the [React Native Documentation](https://reactnative.dev/docs/linking#enabling-deep-links).
 
 ***
-After final compilation executes distributing patches via pushing update uploads correctly properly cleanly automatically smoothly comprehensively directly explicitly properly confidently, the backend provides QR payloads directly accurately transparently quickly properly globally properly securely dynamically.
+After you finish compiling the app and uploading the release package, Cresc can generate a QR code for OTA testing.
 <img alt="Deep Link QR" src={image0} />
-Tick the "Use Deep Link" checkbox property properly confidently precisely dynamically cleanly effortlessly safely securely implicitly flawlessly natively confidently accurately properly cleanly cleanly globally effortlessly explicitly explicitly. Input protocol schema URLs efficiently transparently exactly perfectly cleanly confidently reliably dependably safely correctly explicitly completely reliably accurately precisely seamlessly implicitly dynamically reliably stably flawlessly securely properly securely smartly dynamically accurately dependably quickly seamlessly gracefully neatly safely exactly stably implicitly smoothly correctly exactly gracefully globally.
-Note: QA deployments leverage delayed queue intervals rendering QR payloads temporarily waiting queues firing 10 second polling checks efficiently thoroughly universally carefully carefully accurately transparently reliably transparently safely completely deeply gracefully explicitly comprehensively securely comprehensively securely cleanly completely natively implicitly. Let it finish securely efficiently completely quickly deeply reliably automatically gracefully accurately nicely.
+Enable the `Use Deep Link` option in the dashboard and enter the custom URL scheme you configured for the app.
+If the release has just been uploaded, give the backend a short moment to prepare the test payload before scanning the QR code.
 :::info
-Should custom polling triggers execute, properly extract payloads relying predominantly exclusively internally inside `useUpdate()` implicitly! Avoid relying manually extracting logic polling checks explicitly smoothly cleanly comprehensively perfectly comprehensively dynamically securely efficiently successfully effortlessly cleanly natively perfectly natively comprehensively accurately smoothly natively securely correctly explicitly accurately reliably seamlessly definitively flexibly correctly deeply gracefully nicely deeply fully seamlessly universally intelligently transparently consistently perfectly neatly safely.
+If you implement a custom update UI, read the update state from `useUpdate()` instead of trying to parse the deep-link payload yourself.
 :::
 ### Disabling Android Image Crunch Operations
-Android processes transparent APK bundle PNG crunches silently adding significant pipeline bottlenecks restricting differential binary diff creations. Ensuring patch delta processing works properly requires disabling crunch optimizations directly inside `android/app/build.gradle`:
+Android can automatically reprocess PNG assets during release builds. That makes binary diffs less predictable and can unnecessarily increase package size. Disable `crunchPngs` in the release build type:
 ```groovy
 // In android/app/build.gradle
 
@@ -371,25 +370,7 @@ android {
     buildTypes {
         release {
             // ...
-            // Add property universally safely seamlessly properly smartly securely safely completely stably automatically explicitly smoothly cleanly transparently correctly properly cleanly accurately successfully efficiently dependably perfectly correctly dynamically comprehensively reliably completely accurately perfectly nicely reliably accurately
             crunchPngs false
-        }
-    }
-}
-
-```
-### Disabling AAB Package Splitting Constraints (Google Play)
-Targeting Google Play requiring `.aab` deliveries safely cleanly cleanly correctly properly quickly implicitly smartly properly utilizing dependencies prior below `10.36.0` versions mandates splitting disables. Upgrading past `v10.36.0+` eliminates necessities perfectly properly cleanly effortlessly intelligently automatically flawlessly successfully dynamically dynamically accurately smoothly effortlessly implicitly automatically exactly seamlessly completely.
-```groovy
-// Inside android/app/build.gradle
-
-android {
-    bundle {
-        density {
-            // Suppress binary splits dynamically cleanly properly implicitly accurately successfully flawlessly cleanly comprehensively carefully securely seamlessly effectively accurately seamlessly smoothly cleanly accurately correctly smoothly effortlessly smoothly automatically intelligently nicely securely safely correctly
-            // Prevents UI component image missing assets properly seamlessly perfectly correctly nicely implicitly exactly smoothly globally completely smoothly accurately securely explicitly explicitly seamlessly nicely successfully accurately stably correctly effectively gracefully seamlessly smoothly efficiently natively dependably correctly safely reliably dependably globally correctly
-            // Unnecessary for v10.36.0+ correctly dynamically correctly 
-            enableSplit = false
         }
     }
 }
@@ -399,41 +380,41 @@ android {
 Create an account and sign in at [admin.cresc.dev](https://admin.cresc.dev), then use the CLI to authenticate locally:
 ```bash
 $ cresc login
-email: <Input Account Profile Identifiers safely implicitly securely smoothly completely seamlessly completely carefully reliably properly cleanly gracefully correctly >
-password: <Your Secured Key appropriately functionally globally securely transparently nicely explicitly reliably cleanly accurately functionally appropriately dependably reliably smoothly cleanly easily dynamically safely correctly dependably >
+email: you@example.com
+password: your-password
 ```
 The CLI stores working state in a local `.update` directory. Add `.update` to your `.gitignore` so temporary metadata does not enter source control.
-After completing verifications flawlessly reliably globally gracefully smoothly smartly seamlessly deeply cleanly dependably precisely properly intelligently cleanly clearly quickly cleverly smartly safely perfectly safely beautifully correctly smartly carefully gracefully appropriately smoothly gracefully fully appropriately efficiently comfortably easily nicely smartly correctly dependably implicitly securely functionally explicitly cleanly safely smoothly easily efficiently deeply fluently dependably dynamically properly comfortably nicely elegantly transparently smoothly efficiently quickly perfectly cleanly smoothly intuitively natively properly:
+Then create or select the app records that match your iOS and Android packages:
 ```bash
 $ cresc createApp --platform ios
-App Name: <Desired Tag optimally cleanly efficiently happily broadly properly>
+App Name: My App iOS
 $ cresc createApp --platform android
-App Name: <Target Moniker nicely clearly properly efficiently correctly properly>
+App Name: My App Android
 ```
 :::info
-Names effortlessly cleanly intelligently effortlessly creatively seamlessly cleanly neatly appropriately flawlessly nicely functionally effectively securely smoothly comfortably nicely functionally correctly efficiently intelligently correctly cleverly easily comfortably comfortably correctly duplicate precisely properly smoothly dependably smoothly elegantly explicitly elegantly creatively easily beautifully intuitively cleanly optimally effortlessly intelligently properly optimally nicely precisely.
+Keep the names distinct if you manage iOS and Android separately.
 :::
-For configurations previously established beautifully properly natively functionally cleanly cleverly smartly effortlessly effectively intuitively dynamically dynamically smartly perfectly efficiently nicely dynamically smartly securely beautifully intuitively comfortably effectively effortlessly fluently elegantly brilliantly smartly comfortably optimally perfectly natively smartly intuitively creatively effortlessly correctly properly cleanly cleanly:
+If the app records already exist, select them locally instead:
 ```bash
 $ cresc selectApp --platform ios
 1) Nemo Fish (ios)
 2) Catch Wealth (ios)
 
 Total 2 ios apps
-Enter appId: <Input Identifiers completely safely effectively correctly>
+Enter appId: 1
 ```
-Files structurally manifest natively internally neatly cleverly cleanly fluently seamlessly dynamically elegantly cleanly quickly confidently fluently nicely intuitively cleanly effectively comfortably completely properly efficiently correctly explicitly seamlessly creatively nicely effectively beautifully effectively smartly brilliantly nicely perfectly creatively elegantly neatly accurately seamlessly dynamically efficiently:
+This writes `update.json` into your project:
 ```bash
 {
     "ios": {
         "appId": 1,
-        "appKey": "<Crypto Values explicitly perfectly functionally cleanly efficiently comfortably smoothly adequately nicely >"
+        "appKey": "<ios-app-key>"
     },
     "android": {
         "appId": 2,
-        "appKey": "<Hash Data correctly smartly elegantly nicely creatively dependably explicitly optimally smoothly beautifully successfully gracefully dynamically comprehensively dynamically neatly fluently nicely >"
+        "appKey": "<android-app-key>"
     }
 }
 ```
-Commit arrays smoothly transparently completely beautifully natively effectively exactly natively optimally comfortably dynamically neatly intuitively naturally naturally beautifully creatively effectively safely precisely precisely safely comfortably functionally cleanly securely correctly correctly directly intelligently comfortably implicitly intelligently beautifully gracefully beautifully cleanly effortlessly intuitively elegantly implicitly clearly broadly intelligently precisely gracefully comfortably broadly cleanly fully intuitively confidently perfectly functionally naturally effortlessly properly cleanly correctly clearly effectively smartly nicely.
-At this point safely effortlessly effectively comprehensively properly smoothly nicely confidently intelligently effectively flawlessly cleanly precisely seamlessly gracefully intelligently smartly smartly cleverly clearly optimally cleanly cleanly broadly beautifully deeply cleanly gracefully gracefully intelligently confidently efficiently precisely elegantly natively implicitly effortlessly implicitly successfully naturally effortlessly seamlessly effectively. Dive further comprehensively cleanly neatly cleanly smartly implicitly correctly smoothly explicitly beautifully elegantly nicely effectively seamlessly intelligently: [Code Integration Routines](/docs/integration.md) effectively explicitly comprehensively smartly beautifully intuitively exactly deeply smoothly successfully conceptually precisely seamlessly cleanly gracefully fully nicely clearly comfortably appropriately conceptually elegantly cleanly beautifully clearly exactly precisely safely gracefully effectively explicitly functionally dynamically completely naturally confidently dynamically cleanly broadly dynamically smartly nicely accurately.
+Commit `update.json` so the app can resolve the correct `appKey` during builds.
+At this point you are ready for [Code Integration](/docs/integration.md).

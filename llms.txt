@@ -1,21 +1,32 @@
-# Cresc Over-the-Air Updates
+# Cresc
 
-> Cresc Over-the-Air Updates
+> React Native OTA updates with delta patches, rollback safety, CI/CD publishing, and migration paths for CodePush or App Center teams.
+
+## CodePush Alternative
+
+- [Cresc as a CodePush and App Center alternative](/codepush-alternative.md): Cresc gives React Native teams a practical CodePush and App Center alternative with delta OTA updates, rollback support, CI/CD publishing, and self-hosting flexibility.
 
 ## Documentation
 
-- [API Token](/docs/api-token.md): An API Token is an authentication method used to invoke the Cresc API within CI/CD pipelines or automated scripts. Compared to standard username/password logins, API Tokens are much more secure and easier to manage.
+- [Introduction](/docs/intro.md): Cresc (npm package: react-native-update <a href="https://www.npmjs.com/package/react-native-update"><img src="https://badge.fury.io/js/react-native-update.svg" alt="npm version" style={{display: 'inline', verticalAlign: 'middle', margin: '0 4px'}} /></a>) is a professional Over-the-Air (OTA) update service for React Native teams shipping globally. It is designed to keep release workflows lean, stable, and cost-efficient from small apps to large production fleets.
+- [Installation & Config](/docs/getting-started.md)
+- [Code Integration](/docs/integration.md): Integrate Cresc into a React Native or Expo app, choose update strategies, and build a custom OTA update UI with useUpdate.
+- [Publishing Hot Updates](/docs/publish.md)
 - [API Reference](/docs/api.md)
-- [Best Practices](/docs/bestpractice.md)
+- [API Token](/docs/api-token.md): An API Token is an authentication method used to invoke the Cresc API within CI/CD pipelines or automated scripts. Compared to standard username/password logins, API Tokens are much more secure and easier to manage.
 - [CLI Tools (Built-in)](/docs/cli.md)
 - [CLI Tools (Custom Modules)](/docs/cli_module.md)
-- [FAQ](/docs/faq.md)
-- [Installation & Config](/docs/getting-started.md)
-- [Code Integration](/docs/integration.md)
-- [Introduction](/docs/intro.md): Cresc (npm package: react-native-update <a href="https://www.npmjs.com/package/react-native-update"><img src="https://badge.fury.io/js/react-native-update.svg" alt="npm version" style={{display: 'inline', verticalAlign: 'middle', margin: '0 4px'}} /></a>) is a professional Over-the-Air (OTA) update service for React Native teams shipping globally. It is designed to keep release workflows lean, stable, and cost-efficient from small apps to large production fleets.
-- [Publishing Hot Updates](/docs/publish.md)
+- [Best Practices](/docs/bestpractice.md)
 - [Install & Use Skills](/docs/skills.md)
+- [FAQ](/docs/faq.md)
 
 ## Pricing
 
-- [Pricing](/pricing.md)
+- [Pricing](/pricing.md): Compare Cresc pricing for React Native OTA updates, from a free plan to high-volume tiers with larger package limits and daily update checks.
+
+## Others
+
+- [CodePush migration checklist for Cresc](/codepush-migration-checklist.md): Use this practical checklist to migrate from CodePush or App Center to Cresc without losing your React Native OTA workflow.
+- [Expo pricing vs Cresc for React Native OTA](/expo-pricing-vs-cresc.md): Compare Expo EAS Update pricing and Cresc pricing for React Native OTA workflows, including Starter, Production, Enterprise, and usage-based overages.
+- [Expo Updates vs Cresc for React Native OTA](/expo-updates-vs-cresc.md): Compare Expo Updates and Cresc for React Native OTA workflows, including delta patches, hosting flexibility, migration fit, and release pipeline tradeoffs.
+- [React Native OTA updates with Cresc](/react-native-ota-updates.md): Learn how React Native OTA updates work, what can be updated safely, what still needs a native release, and how Cresc handles delta delivery and rollback.
