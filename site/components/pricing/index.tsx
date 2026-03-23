@@ -173,6 +173,14 @@ function formatQueries(value: number) {
   return `${compactFormatter.format(value)} / day`;
 }
 
+function formatUnitRate(value: number) {
+  if (value >= 100) {
+    return `$${Math.round(value)}`;
+  }
+
+  return `$${value.toFixed(2).replace(/\.00$/, "")}`;
+}
+
 function formatQuota(count: number, size: string) {
   return `${count} / app · ${formatSize(size)} ea`;
 }
@@ -189,6 +197,11 @@ function QueryValue({
       </span>
     </div>
   );
+}
+
+function pricePerMillionDailyQueries(quota: TierQuota) {
+  const rate = quota.monthlyPrice / (quota.pv / 1_000_000);
+  return `${formatUnitRate(rate)} / 1M daily queries`;
 }
 
 function formatMetricValue(
@@ -264,6 +277,31 @@ const advancedTiers = tiers.filter(
   (tier) =>
     tier.key === "pro" || tier.key === "max" || tier.key === "ultra",
 );
+const scaleEconomicsTiers = tiers.filter(
+  (tier) =>
+    tier.key === "premium" ||
+    tier.key === "pro" ||
+    tier.key === "max" ||
+    tier.key === "ultra",
+);
+
+const expoPricingRows = [
+  {
+    title: "Starter",
+    price: "$19/mo + usage",
+    included: "3K MAUs + 500 GiB",
+  },
+  {
+    title: "Production",
+    price: "$199/mo + usage",
+    included: "50K MAUs + 1 TiB",
+  },
+  {
+    title: "Enterprise",
+    price: "Starts $1,999/mo + usage",
+    included: "1M MAUs + 40 TiB",
+  },
+];
 
 function PricingCard({
   tierKey,
@@ -480,6 +518,110 @@ function Pricing() {
             )}
           </div>
         </div>
+
+        <section className="mx-auto mt-10 max-w-5xl rounded-[34px] border border-[#dcc9ae] bg-[#f8efe2]/80 px-5 py-6 shadow-[0_16px_36px_rgba(113,88,67,0.06)] sm:px-7 sm:py-8">
+          <div className="max-w-3xl">
+            <p className="text-xs uppercase tracking-[0.34em] text-[#8b5a3c]">
+              Cost Shape
+            </p>
+            <h2 className="cresc-display mt-4 text-3xl text-[#2d1d15] sm:text-[2.4rem]">
+              Same easy entry, cheaper much earlier at scale.
+            </h2>
+            <p className="mt-4 text-base leading-8 text-[#5f483c]">
+              Expo and Cresc do not meter the exact same thing. Expo EAS Update
+              combines plan pricing with updated-user and bandwidth overages,
+              while Cresc uses fixed monthly tiers with CDN delivery included.
+              The sales point is predictability: Cresc is easier to budget as
+              release traffic grows.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+            <div className="rounded-[28px] border border-[#e4d3bd] bg-[#fffaf4] p-5">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="cresc-display text-[2rem] text-[#2d1d15]">
+                  Expo public pricing
+                </h3>
+                <span className="text-xs uppercase tracking-[0.2em] text-[#8b5a3c]">
+                  Checked 2026-03-23
+                </span>
+              </div>
+
+              <div className="mt-5 grid gap-3">
+                {expoPricingRows.map((row) => (
+                  <div
+                    key={row.title}
+                    className="grid grid-cols-[minmax(0,1fr)_auto] gap-4 rounded-[20px] border border-[#eadbc7] bg-[#fffdf9] px-4 py-3"
+                  >
+                    <div>
+                      <p className="font-semibold text-[#2d1d15]">{row.title}</p>
+                      <p className="mt-1 text-sm leading-6 text-[#6a5245]">
+                        {row.included}
+                      </p>
+                    </div>
+                    <p className="text-right text-sm font-semibold leading-6 text-[#7a3b2e]">
+                      {row.price}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <p className="mt-4 text-sm leading-7 text-[#6a5245]">
+                Expo officially bills EAS Update overages by updated user and
+                by GiB of edge bandwidth.
+              </p>
+            </div>
+
+            <div className="rounded-[28px] border border-[#e4d3bd] bg-[#fffaf4] p-5">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="cresc-display text-[2rem] text-[#2d1d15]">
+                  Cresc unit economics
+                </h3>
+                <span className="text-xs uppercase tracking-[0.2em] text-[#8b5a3c]">
+                  CDN included
+                </span>
+              </div>
+
+              <div className="mt-5 grid gap-3">
+                {scaleEconomicsTiers.map((tier) => (
+                  <div
+                    key={tier.key}
+                    className="grid grid-cols-[minmax(0,1fr)_auto] gap-4 rounded-[20px] border border-[#eadbc7] bg-[#fffdf9] px-4 py-3"
+                  >
+                    <div>
+                      <p className="font-semibold text-[#2d1d15]">
+                        {tier.quota.title}
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-[#6a5245]">
+                        {formatQueries(tier.quota.pv)} included
+                      </p>
+                    </div>
+                    <p className="text-right text-sm font-semibold leading-6 text-[#7a3b2e]">
+                      {pricePerMillionDailyQueries(tier.quota)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <p className="mt-4 text-sm leading-7 text-[#6a5245]">
+                Cresc keeps the same $19 entry price as Expo Starter, then gets
+                materially cheaper from production scale upward.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm leading-7 text-[#6a5245]">
+              Want the detailed breakdown, including Expo's own overage example?
+            </p>
+            <a
+              href="/expo-pricing-vs-cresc"
+              className="inline-flex items-center justify-center rounded-full border border-[#7a3b2e] bg-[#7a3b2e] px-6 py-3 text-sm font-semibold text-[#fffaf4] transition duration-300 hover:-translate-y-1 hover:bg-[#5f2a20]"
+            >
+              Read pricing comparison
+            </a>
+          </div>
+        </section>
 
         <div
           ref={advancedRef}

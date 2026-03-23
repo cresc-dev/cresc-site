@@ -10,17 +10,17 @@ const movements = [
   {
     label: "Movement I",
     title: "Hold the full base",
-    desc: "The first release stays on device as the complete base, so later patches can remain much smaller.",
+    desc: "The first native release stays on device as the baseline, so later React Native OTA patches can remain much smaller.",
   },
   {
     label: "Movement II",
     title: "Drop only the new pearl",
-    desc: "When something changes, Cresc lifts just the missing part instead of repeating the whole bundle.",
+    desc: "When something changes, Cresc ships only the delta instead of repeating the whole JavaScript bundle.",
   },
   {
     label: "Movement III",
     title: "Set it in place locally",
-    desc: "The client clicks the new patch into the existing base, then confirms the update in place.",
+    desc: "The client applies the patch against the installed baseline and confirms the update in place.",
   },
 ];
 
@@ -657,11 +657,11 @@ function Page1() {
             Incremental Delivery
           </p>
           <h2 className="cresc-display mt-5 text-4xl text-[#2d1d15] sm:text-5xl">
-            Add the missing detail, not the whole canvas.
+            React Native OTA updates should ship the delta, not the whole bundle.
           </h2>
           <p className="mt-6 text-lg leading-8 text-[#5f483c]">
-            The missing change is carried into the existing app and set in
-            place locally, instead of replacing the whole package.
+            Cresc keeps the installed build as the base, then carries only the
+            missing JavaScript and asset changes into place locally.
           </p>
         </div>
 

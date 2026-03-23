@@ -112,11 +112,11 @@ function Page2() {
               In Practice
             </p>
             <h2 className="cresc-display mt-5 text-4xl text-[#2d1d15] sm:text-5xl">
-              Three steps, kept in time.
+              Ship React Native OTA updates in three steps.
             </h2>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-[#5f483c]">
-              Install the CLI, upload the baseline, and publish the update with
-              the same steady rhythm each time the app changes.
+              Install the CLI, upload the baseline build, and publish the next
+              delta update through the dashboard or CI whenever the app changes.
             </p>
 
             <div className="mt-10 flex flex-col gap-4">
@@ -203,8 +203,8 @@ function Page2() {
 
             <div className="mt-auto pt-6">
               <p className="text-lg leading-8 text-[#5f483c]">
-                After the first baseline is in place, the dashboard and CLI can
-                carry the rest of the release cycle with much less effort.
+                Once the baseline is uploaded, the dashboard and CLI can handle
+                the rest of the OTA release cycle with much less effort.
               </p>
 
               <div className="mt-8 flex flex-col gap-4 sm:flex-row">

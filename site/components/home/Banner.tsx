@@ -10,31 +10,31 @@ function Banner() {
       <div className="relative z-10 mx-auto grid max-w-7xl gap-16 px-4 sm:px-6 lg:grid-cols-[minmax(0,1.06fr)_460px] lg:items-center lg:px-8">
         <div className="max-w-3xl">
           <p className="text-xs uppercase tracking-[0.45em] text-[#7a3b2e]">
-            Cresc
+            React Native OTA Updates
           </p>
           <h1 className="cresc-display mt-6 text-5xl leading-[0.94] text-[#2d1d15] sm:text-6xl lg:text-7xl">
-            A steadier cadence for React Native updates.
+            React Native OTA updates with smaller patches and safer rollouts.
           </h1>
           <p className="mt-7 max-w-2xl text-xl leading-9 text-[#5f483c]">
-            Named for the gradual rise in music, Cresc treats over-the-air
-            publishing the same way: smaller packages, deliberate rollout, and
-            recovery kept within reach when a change needs to be revised.
+            Cresc is a CodePush and App Center alternative for teams that need
+            delta patches, rollback protection, CI-friendly publishing, and a
+            clear path across React Native, Expo, Hermes, and Harmony builds.
           </p>
 
           <div className="mt-10 flex flex-col gap-4 sm:flex-row">
             <a
-              href="https://admin.cresc.dev"
+              href="https://admin.cresc.dev/#/register"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-full border border-[#7a3b2e] bg-[#7a3b2e] px-8 py-4 text-base font-semibold text-[#fffaf4] transition duration-300 hover:-translate-y-1 hover:bg-[#6a3025]"
             >
-              Open Dashboard
+              Start Free
             </a>
             <a
-              href="/docs/getting-started"
+              href="/codepush-alternative"
               className="inline-flex items-center justify-center rounded-full border border-[#c8b28f] bg-[#fffaf2] px-8 py-4 text-base font-semibold text-[#3f2b21] transition duration-300 hover:-translate-y-1 hover:border-[#7a3b2e] hover:text-[#7a3b2e]"
             >
-              Read Documentation
+              Migrate From CodePush
             </a>
           </div>
 
@@ -49,7 +49,11 @@ function Banner() {
               Open-source on GitHub
             </a>
             <span className="hidden h-1 w-1 rounded-full bg-[#a37d58] sm:block" />
+            <span>Delta patches</span>
+            <span className="hidden h-1 w-1 rounded-full bg-[#a37d58] sm:block" />
             <span>Self-host friendly</span>
+            <span className="hidden h-1 w-1 rounded-full bg-[#a37d58] sm:block" />
+            <span>App Center migration</span>
           </div>
         </div>
 
@@ -68,23 +72,23 @@ function Banner() {
 
               <div>
                 <h2 className="cresc-display text-5xl leading-[0.92] text-[#2d1d15] sm:text-6xl">
-                  Composed for careful release work.
+                  Built for release teams that need OTA updates to stay boring.
                 </h2>
                 <p className="mt-6 text-base leading-8 text-[#5f483c]">
-                  The full native release establishes the base. Every later
-                  update can arrive as a smaller addition, shaped only to the
-                  detail that changed.
+                  The native build becomes the baseline. Every later React
+                  Native update ships only the changed business logic, keeping
+                  downloads smaller and emergency fixes much faster.
                 </p>
               </div>
             </div>
 
             <div className="mt-7 rounded-[24px] border border-[#ddcdb3] bg-[#fffaf4]/84 px-5 py-5">
               <p className="text-xs uppercase tracking-[0.32em] text-[#8b5a3c]">
-                Small variation, same score
+                CodePush replacement, without the dead end
               </p>
               <p className="mt-3 text-sm leading-7 text-[#6a5245]">
-                Cresc keeps the original release close, then lets each later
-                patch arrive as a measured variation rather than a full repeat.
+                Cresc keeps the original release as the base and turns later OTA
+                releases into measured diffs instead of full-bundle repeats.
               </p>
             </div>
           </div>

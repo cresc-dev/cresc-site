@@ -1,10 +1,27 @@
 ---
 pageType: custom
 title: Pricing
+description: Compare Cresc pricing for React Native OTA updates, from a free plan to high-volume tiers with larger package limits and daily update checks.
+head:
+  - - link
+    - rel: canonical
+      href: https://cresc.dev/pricing
+  - - meta
+    - property: og:url
+      content: https://cresc.dev/pricing
+  - - meta
+    - property: og:title
+      content: Cresc Pricing | React Native OTA updates
+  - - meta
+    - property: og:description
+      content: Compare Cresc pricing for React Native OTA updates, from a free plan to high-volume tiers with larger package limits and daily update checks.
 ---
 
 import Pricing from "../components/pricing";
 import Footer from "../components/Footer";
+import JsonLd from "../components/seo/JsonLd";
+import { pricingSchema } from "../lib/schema";
 
+<JsonLd data={pricingSchema} />
 <Pricing />
 <Footer />

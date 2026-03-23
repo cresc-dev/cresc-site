@@ -1,0 +1,97 @@
+---
+title: CodePush migration checklist for Cresc
+description: Use this practical checklist to migrate from CodePush or App Center to Cresc without losing your React Native OTA workflow.
+pageType: doc-wide
+sidebar: false
+footer: false
+head:
+  - - link
+    - rel: canonical
+      href: https://cresc.dev/codepush-migration-checklist
+  - - meta
+    - property: og:url
+      content: https://cresc.dev/codepush-migration-checklist
+  - - meta
+    - property: og:title
+      content: CodePush migration checklist for Cresc
+  - - meta
+    - property: og:description
+      content: Use this practical checklist to migrate from CodePush or App Center to Cresc without losing your React Native OTA workflow.
+  - - meta
+    - name: keywords
+      content: codepush migration checklist, app center migration react native, codepush to cresc
+---
+
+import Footer from "../components/Footer";
+import JsonLd from "../components/seo/JsonLd";
+import { codepushChecklistSchema } from "../lib/schema";
+
+<JsonLd data={codepushChecklistSchema} />
+
+# CodePush migration checklist for Cresc
+
+Use this checklist if your React Native team is moving away from CodePush or App Center and wants the cleanest path onto Cresc.
+
+## 1. Audit your current OTA workflow
+
+Write down:
+
+- which apps still use CodePush or App Center
+- which channels or rollout groups exist
+- how often you publish JavaScript updates
+- which CI jobs publish or promote releases today
+
+## 2. Integrate Cresc in the app
+
+- install the SDK
+- wire the native bundle URL
+- confirm a release build can boot with Cresc enabled
+
+Start here: [Installation & Config](/docs/getting-started)
+
+## 3. Upload the exact baseline build
+
+Before publishing OTA patches, upload the exact APK or IPA that matches the build users actually install. Cresc uses that build as the baseline for later delta comparisons.
+
+## 4. Recreate the release workflow
+
+Move the old publishing path onto Cresc:
+
+- CLI login or API token
+- build artifact upload
+- OTA package build
+- release or promote step in CI
+
+See: [Publishing Hot Updates](/docs/publish) and [API Token](/docs/api-token)
+
+## 5. Test a real OTA release end to end
+
+- publish a small JavaScript-only change
+- verify the update prompt or silent strategy
+- verify the switch version behavior
+- verify rollback on failure
+
+## 6. Watch the first production rollout closely
+
+Track:
+
+- update adoption
+- rollback events
+- app-open check behavior
+- package size and release cadence
+
+## 7. Remove the old operational dependency
+
+Once Cresc is working in production:
+
+- remove old OTA credentials from CI
+- document the new workflow
+- point engineers to the Cresc dashboard and docs
+
+## Quick links
+
+- [CodePush alternative](/codepush-alternative)
+- [React Native OTA updates](/react-native-ota-updates)
+- [Expo pricing vs Cresc](/expo-pricing-vs-cresc)
+
+<Footer />

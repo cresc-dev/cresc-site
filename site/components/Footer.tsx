@@ -22,6 +22,9 @@ function Footer() {
       title: "Help & Support",
       links: [
         { text: "FAQ", href: "/docs/faq" },
+        { text: "CodePush Alternative", href: "/codepush-alternative" },
+        { text: "CodePush Migration", href: "/codepush-migration-checklist" },
+        { text: "Expo Updates vs Cresc", href: "/expo-updates-vs-cresc" },
         {
           text: "GitHub Issues",
           href: "https://github.com/reactnativecn/react-native-update/issues",
@@ -32,6 +35,10 @@ function Footer() {
     {
       title: "Links",
       links: [
+        { text: "React Native OTA Guide", href: "/react-native-ota-updates" },
+        { text: "Expo Pricing vs Cresc", href: "/expo-pricing-vs-cresc" },
+        { text: "llms.txt", href: "/llms.txt" },
+        { text: "llms-full.txt", href: "/llms-full.txt" },
         {
           text: "React Native",
           href: "https://reactnative.dev/",

@@ -7,8 +7,8 @@ export default defineConfig({
   llms: true,
   outDir: 'out',
   root: path.join(__dirname, 'pages'),
-  title: 'Cresc Over-the-Air Updates',
-  description: 'Cresc Over-the-Air Updates',
+  title: 'Cresc',
+  description: 'React Native OTA updates with delta patches, rollback safety, CI/CD publishing, and migration paths for CodePush or App Center teams.',
   icon: '/images/logo.svg',
   logo: {
     light: '/images/logo.svg',
@@ -20,8 +20,13 @@ export default defineConfig({
       { icon: 'github', mode: 'link', content: 'https://github.com/reactnativecn/react-native-update' },
     ],
     darkMode: false,
+    llmsUI: {
+      viewOptions: ['markdownLink', 'chatgpt', 'claude'],
+      placement: 'outline',
+    },
     nav: [
       { text: 'Home', link: '/' },
+      { text: 'CodePush Alternative', link: '/codepush-alternative' },
       { text: 'Documentation', link: '/docs/intro', activeMatch: '^/docs/' },
       { text: 'Pricing', link: '/pricing' },
       { text: 'FAQ', link: '/docs/faq' },
@@ -68,6 +73,34 @@ export default defineConfig({
           attrs: {
             property: 'og:keywords',
             content: 'OTA,hotupdate,no-review,fast-publish',
+          },
+        },
+        {
+          tag: 'meta',
+          attrs: {
+            name: 'keywords',
+            content: 'react native ota update,codepush alternative,app center alternative,expo updates alternative,react native hot update,harmony ota',
+          },
+        },
+        {
+          tag: 'meta',
+          attrs: {
+            name: 'robots',
+            content: 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1',
+          },
+        },
+        {
+          tag: 'meta',
+          attrs: {
+            property: 'og:site_name',
+            content: 'Cresc',
+          },
+        },
+        {
+          tag: 'meta',
+          attrs: {
+            name: 'twitter:card',
+            content: 'summary_large_image',
           },
         },
       ],
