@@ -1,28 +1,27 @@
 ---
-order: 9
+order: 1
 title: Install & Use Skills
-type: Advanced Guide
+type: Quick Start
 ---
 
-This document explains how to install and use the `react-native-update` Skills to help you efficiently complete integration, configuration, and troubleshooting tasks inside AI programming tools.
+For first-time Cresc integration, the recommended path is to install the `react-native-update` Skill and let your AI coding tool adapt the integration to your existing project. Fall back to the manual docs only when your app has unusual native structure, strict review requirements, or edge cases the generated changes do not cover well.
 
 ## Skill Information
 
 - Skill Name: `react-native-update`
 - Source Repo: `reactnativecn/react-native-update-skill`
 
-## Installation (Recommended)
+## Recommended workflow
 
-Install across all supported Agents in your current layout:
+1. Install the `react-native-update` Skill.
+2. Open your React Native or Expo app root directory inside the AI tool.
+3. Ask AI to integrate Cresc into the current project structure.
+4. Use [Installation & Config](/docs/getting-started) and [Code Integration](/docs/integration) as your review checklist.
+
+## Installation
 
 ```bash
 npx skills add reactnativecn/react-native-update-skill --skill react-native-update -a '*'
-```
-
-Install exclusively for Claude Code:
-
-```bash
-npx skills add reactnativecn/react-native-update-skill --skill react-native-update -a claude-code
 ```
 
 ## Update Skill
@@ -32,16 +31,17 @@ npx skills check
 npx skills update
 ```
 
-## Usage Guidelines
+## Prompts you can give to AI
 
 Following installation, you can assign requests directly to AI assistants, generating outcomes like:
 
 - "Integrate `react-native-update` inside my Expo project."
 - "Execute integration remodeling over the class component root node."
+- "Keep my current navigation structure and wrap the app with `UpdateProvider`."
 - "Configure a controlled whitelist staged rollout mechanism."
 - "Diagnose why 'OTA updates aren't deploying correctly' issues."
 
-## Topics Covered by the Skill
+## What the Skill can help automate
 
 - RN CLI / Expo Integration flows
 - Checking `update.json` and `appKey` configuration parameters
@@ -49,6 +49,12 @@ Following installation, you can assign requests directly to AI assistants, gener
 - Polling update strategy recommendations (`checkStrategy` / `updateStrategy`)
 - Diagnostics tackling familiar conflicts (like `expo-updates`)
 - Examples combining class instances manipulating user whitelists
+
+## When to switch back to the manual docs
+
+- Your app is brownfield, monorepo-based, or heavily customized at the native layer.
+- Auto-linking or native compilation is already failing and needs isolated debugging.
+- Your team wants to compare generated edits against the manual baseline step by step.
 
 ## Relevant Links
 

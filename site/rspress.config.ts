@@ -39,6 +39,7 @@ export default defineConfig({
           text: 'Getting Started',
           items: [
             { text: 'Introduction', link: '/docs/intro' },
+            { text: 'AI Skills', link: '/docs/skills' },
             { text: 'Installation', link: '/docs/getting-started' },
             { text: 'Integration', link: '/docs/integration' },
             { text: 'Publishing', link: '/docs/publish' },
@@ -52,7 +53,6 @@ export default defineConfig({
             { text: 'CLI Tools (Built-in)', link: '/docs/cli' },
             { text: 'CLI Tools (Custom)', link: '/docs/cli_module' },
             { text: 'Best Practices', link: '/docs/bestpractice' },
-            { text: 'Skills Installation', link: '/docs/skills' },
           ],
         },
         {

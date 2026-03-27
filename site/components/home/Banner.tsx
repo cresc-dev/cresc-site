@@ -17,24 +17,23 @@ function Banner() {
           </h1>
           <p className="mt-7 max-w-2xl text-xl leading-9 text-[#5f483c]">
             Cresc is a CodePush and App Center alternative for teams that need
-            delta patches, rollback protection, CI-friendly publishing, and a
-            clear path across React Native, Expo, Hermes, and Harmony builds.
+            delta patches, rollback protection, CI-friendly publishing, and an
+            AI-first integration path through the official Skill across React
+            Native, Expo, Hermes, and Harmony builds.
           </p>
 
           <div className="mt-10 flex flex-col gap-4 sm:flex-row">
             <a
-              href="https://admin.cresc.dev/#/register"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/docs/skills"
               className="inline-flex items-center justify-center rounded-full border border-[#7a3b2e] bg-[#7a3b2e] px-8 py-4 text-base font-semibold text-[#fffaf4] transition duration-300 hover:-translate-y-1 hover:bg-[#6a3025]"
             >
-              Start Free
+              Install AI Skill
             </a>
             <a
-              href="/codepush-alternative"
+              href="/docs/getting-started"
               className="inline-flex items-center justify-center rounded-full border border-[#c8b28f] bg-[#fffaf2] px-8 py-4 text-base font-semibold text-[#3f2b21] transition duration-300 hover:-translate-y-1 hover:border-[#7a3b2e] hover:text-[#7a3b2e]"
             >
-              Migrate From CodePush
+              View Manual Setup
             </a>
           </div>
 
