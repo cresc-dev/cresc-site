@@ -115,6 +115,10 @@ url: /docs/intro.md
 Cresc (npm package: [`react-native-update`](https://www.npmjs.com/package/react-native-update)
  [![npm version](https://badge.fury.io/js/react-native-update.svg)](https://www.npmjs.com/package/react-native-update)) is a **professional Over-the-Air (OTA) update service**
  for React Native teams shipping globally. It is designed to keep release workflows lean, stable, and cost-efficient from small apps to large production fleets.
+:::tip Recommended integration path
+If you use an AI coding tool that supports Skills, start with [Install & Use Skills](/docs/skills.md). Install the `react-native-update` Skill first, then let AI adapt the integration to your existing React Native or Expo project. The manual docs remain the fallback for brownfield apps, monorepos, and projects that need line-by-line review.
+:::
+
 ## 🚀 Why Choose Cresc?
 
 ### Ultimate Update Experience
@@ -175,17 +179,89 @@ Built-in policies available out of the box:
 
 ## 🚦 Get Started
 
-Only 3 steps to unlock instant OTA capabilities for your React Native app:
+Recommended onboarding flow:
 
-1. **[Installation & Config](/docs/getting-started.md)** - Basic setup takes only 5 mins
-2. **[Code Integration](/docs/integration.md)** - A few lines of wrapper code
-3. **[Publish Updates](/docs/publish.md)** - One CLI command to push new versions
+1. **[Install & Use Skills](/docs/skills.md)** - Recommended AI-first integration path
+2. **[Installation & Config](/docs/getting-started.md)** - Prepare dependencies and native config
+3. **[Code Integration](/docs/integration.md)** - Review or fine-tune the generated wrapper code
+4. **[Publish Updates](/docs/publish.md)** - Ship new OTA versions from your CLI
 
 :::info
 Not sure if this fits your project? Check our [FAQ](/docs/faq.md), start a thread in [GitHub Discussions](https://github.com/reactnativecn/react-native-update/discussions), or email us at [hi@cresc.dev](mailto:hi@cresc.dev).
 :::
 
 Start using Cresc today, and bring a professional OTA update workflow to your React Native app!
+
+
+
+---
+url: /docs/skills.md
+---
+
+# Install & Use Skills
+
+For first-time Cresc integration, the recommended path is to install the `react-native-update` Skill and let your AI coding tool adapt the integration to your existing project. Fall back to the manual docs only when your app has unusual native structure, strict review requirements, or edge cases the generated changes do not cover well.
+
+## Skill Information
+
+- Skill Name: `react-native-update`
+- Source Repo: `reactnativecn/react-native-update-skill`
+
+## Recommended workflow
+
+1. Install the `react-native-update` Skill.
+2. Open your React Native or Expo app root directory inside the AI tool.
+3. Ask AI to integrate Cresc into the current project structure.
+4. Use [Installation & Config](/docs/getting-started.md) and [Code Integration](/docs/integration.md) as your review checklist.
+
+## Installation
+
+```bash
+npx skills add reactnativecn/react-native-update-skill --skill react-native-update -a '*'
+```
+
+## Update Skill
+
+```bash
+npx skills check
+npx skills update
+```
+
+## Prompts you can give to AI
+
+Following installation, you can assign requests directly to AI assistants, generating outcomes like:
+
+- "Integrate `react-native-update` inside my Expo project."
+- "Execute integration remodeling over the class component root node."
+- "Keep my current navigation structure and wrap the app with `UpdateProvider`."
+- "Configure a controlled whitelist staged rollout mechanism."
+- "Diagnose why 'OTA updates aren't deploying correctly' issues."
+
+## What the Skill can help automate
+
+- RN CLI / Expo Integration flows
+- Checking `update.json` and `appKey` configuration parameters
+- Essential iOS / Android native intervention warnings
+- Polling update strategy recommendations (`checkStrategy` / `updateStrategy`)
+- Diagnostics tackling familiar conflicts (like `expo-updates`)
+- Examples combining class instances manipulating user whitelists
+
+## When to switch back to the manual docs
+
+- Your app is brownfield, monorepo-based, or heavily customized at the native layer.
+- Auto-linking or native compilation is already failing and needs isolated debugging.
+- Your team wants to compare generated edits against the manual baseline step by step.
+
+## Relevant Links
+
+- Open-Source Repo:
+  <a href="https://github.com/reactnativecn/react-native-update-skill" target="_blank">
+    [https://github.com/reactnativecn/react-native-update-skill](https://github.com/reactnativecn/react-native-update-skill)
+  </a>
+- ClawHub Page (Optional):
+  <a href="https://clawhub.ai/skills/react-native-update" target="_blank">
+    [https://clawhub.ai/skills/react-native-update](https://clawhub.ai/skills/react-native-update)
+  </a>
 
 
 
@@ -199,6 +275,10 @@ First, you should have an application developed based on React Native. We refer 
 If you haven't initialized an application yet, please see [Getting Started with React Native](https://reactnative.dev/docs/getting-started).
 
 We assume you already have everything set up for React Native development, including `Node.js`, `Xcode`, `Android SDK`, etc.
+
+:::tip Recommended: use the Skill before manual setup
+If your AI coding tool supports Skills, start with [Install & Use Skills](/docs/skills.md) and let AI handle most of the installation, native checks, and wrapper changes for your current project. This page stays as the manual fallback for brownfield apps, custom workspaces, or teams reviewing every generated change.
+:::
 
 ### Installation
 Run the following commands in your project's root directory (if you use other package managers like yarn, substitute accordingly):
@@ -623,6 +703,10 @@ url: /docs/integration.md
 # Code Integration
 
 Once installation and native configuration are complete, the next step is wiring Cresc into your app code.
+
+:::tip Recommended approach
+Prefer [Install & Use Skills](/docs/skills.md) first so AI can wire `UpdateProvider`, initialize the client, and apply the common OTA strategies for your project automatically. Keep this page as the manual reference and as a review checklist for generated changes.
+:::
 
 ### Retrieve your `appKey`
 Each platform uses its own `appKey`. The value is stored in `update.json`, which is created by `cresc createApp` or `cresc selectApp`.
@@ -2095,71 +2179,6 @@ As another example, a specific version might include major announcements, so you
 
 
 ---
-url: /docs/skills.md
----
-
-# Install & Use Skills
-
-This document explains how to install and use the `react-native-update` Skills to help you efficiently complete integration, configuration, and troubleshooting tasks inside AI programming tools.
-
-## Skill Information
-
-- Skill Name: `react-native-update`
-- Source Repo: `reactnativecn/react-native-update-skill`
-
-## Installation (Recommended)
-
-Install across all supported Agents in your current layout:
-
-```bash
-npx skills add reactnativecn/react-native-update-skill --skill react-native-update -a '*'
-```
-
-Install exclusively for Claude Code:
-
-```bash
-npx skills add reactnativecn/react-native-update-skill --skill react-native-update -a claude-code
-```
-
-## Update Skill
-
-```bash
-npx skills check
-npx skills update
-```
-
-## Usage Guidelines
-
-Following installation, you can assign requests directly to AI assistants, generating outcomes like:
-
-- "Integrate `react-native-update` inside my Expo project."
-- "Execute integration remodeling over the class component root node."
-- "Configure a controlled whitelist staged rollout mechanism."
-- "Diagnose why 'OTA updates aren't deploying correctly' issues."
-
-## Topics Covered by the Skill
-
-- RN CLI / Expo Integration flows
-- Checking `update.json` and `appKey` configuration parameters
-- Essential iOS / Android native intervention warnings
-- Polling update strategy recommendations (`checkStrategy` / `updateStrategy`)
-- Diagnostics tackling familiar conflicts (like `expo-updates`)
-- Examples combining class instances manipulating user whitelists
-
-## Relevant Links
-
-- Open-Source Repo:
-  <a href="https://github.com/reactnativecn/react-native-update-skill" target="_blank">
-    [https://github.com/reactnativecn/react-native-update-skill](https://github.com/reactnativecn/react-native-update-skill)
-  </a>
-- ClawHub Page (Optional):
-  <a href="https://clawhub.ai/skills/react-native-update" target="_blank">
-    [https://clawhub.ai/skills/react-native-update](https://clawhub.ai/skills/react-native-update)
-  </a>
-
-
-
----
 url: /docs/faq.md
 ---
 
@@ -2741,9 +2760,9 @@ React Native OTA Updates
 
 # React Native OTA updates with smaller patches and safer rollouts.
 
-Cresc is a CodePush and App Center alternative for teams that need delta patches, rollback protection, CI-friendly publishing, and a clear path across React Native, Expo, Hermes, and Harmony builds.
+Cresc is a CodePush and App Center alternative for teams that need delta patches, rollback protection, CI-friendly publishing, and an AI-first integration path through the official Skill across React Native, Expo, Hermes, and Harmony builds.
 
-[Start Free](https://admin.cresc.dev/#/register)[Migrate From CodePush](/codepush-alternative)[Open-source on GitHub](https://github.com/reactnativecn/react-native-update)Delta patchesSelf-host friendlyApp Center migrationNamed for crescendo
+[Install AI Skill](/docs/skills)[View Manual Setup](/docs/getting-started)[Open-source on GitHub](https://github.com/reactnativecn/react-native-update)Delta patchesSelf-host friendlyApp Center migrationNamed for crescendo
 
 ![Cresc Logo](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTA4IiBoZWlnaHQ9IjEwOCIgdmlld0JveD0iMCAwIDEwOCAxMDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImNyZXNjX3N0cm9rZSIgeDE9IjE2IiB5MT0iMTgiIHgyPSI5MCIgeTI9IjkwIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNEN0I1N0MiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIwLjU1IiBzdG9wLWNvbG9yPSIjQTg2QTQyIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzZFMzQyOCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxyYWRpYWxHcmFkaWVudCBpZD0iY3Jlc2NfcGVhcmwiIGN4PSIwIiBjeT0iMCIgcj0iMSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIGdyYWRpZW50VHJhbnNmb3JtPSJ0cmFuc2xhdGUoODQgNTApIHJvdGF0ZSg1Ni4zMSkgc2NhbGUoMTguNjAxMSkiPgogICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRkZGREY5Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMC41NiIgc3RvcC1jb2xvcj0iI0YwRTFDQSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNDN0EwNzIiLz4KICAgIDwvcmFkaWFsR3JhZGllbnQ+CiAgPC9kZWZzPgogIDxwYXRoCiAgICBkPSJNIDg4IDI1IEEgNDAgNDAgMCAxIDAgODggODMiCiAgICBzdHJva2U9InVybCgjY3Jlc2Nfc3Ryb2tlKSIKICAgIHN0cm9rZS13aWR0aD0iMTgiCiAgICBzdHJva2UtbGluZWNhcD0icm91bmQiCiAgLz4KICA8cGF0aAogICAgZD0iTSA4NiAzMSBBIDMyIDMyIDAgMSAwIDg2IDc3IgogICAgc3Ryb2tlPSIjRjRFNkNEIgogICAgc3Ryb2tlLW9wYWNpdHk9IjAuMjgiCiAgICBzdHJva2Utd2lkdGg9IjQiCiAgICBzdHJva2UtbGluZWNhcD0icm91bmQiCiAgLz4KICA8Y2lyY2xlIGN4PSI4OCIgY3k9IjU0IiByPSIxMCIgZmlsbD0idXJsKCNjcmVzY19wZWFybCkiIHN0cm9rZT0iI0I2ODY1NyIgc3Ryb2tlLXdpZHRoPSIxLjYiIC8+CiAgPGNpcmNsZSBjeD0iODQuMiIgY3k9IjQ5LjMiIHI9IjIuOCIgZmlsbD0iI0ZGRkZGRiIgZmlsbC1vcGFjaXR5PSIwLjg4IiAvPgo8L3N2Zz4K)## Built for release teams that need OTA updates to stay boring.
 

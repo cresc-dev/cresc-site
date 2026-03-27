@@ -3,6 +3,10 @@
 Cresc (npm package: [`react-native-update`](https://www.npmjs.com/package/react-native-update)
  [![npm version](https://badge.fury.io/js/react-native-update.svg)](https://www.npmjs.com/package/react-native-update)) is a **professional Over-the-Air (OTA) update service**
  for React Native teams shipping globally. It is designed to keep release workflows lean, stable, and cost-efficient from small apps to large production fleets.
+:::tip Recommended integration path
+If you use an AI coding tool that supports Skills, start with [Install & Use Skills](/docs/skills.md). Install the `react-native-update` Skill first, then let AI adapt the integration to your existing React Native or Expo project. The manual docs remain the fallback for brownfield apps, monorepos, and projects that need line-by-line review.
+:::
+
 ## 🚀 Why Choose Cresc?
 
 ### Ultimate Update Experience
@@ -63,11 +67,12 @@ Built-in policies available out of the box:
 
 ## 🚦 Get Started
 
-Only 3 steps to unlock instant OTA capabilities for your React Native app:
+Recommended onboarding flow:
 
-1. **[Installation & Config](/docs/getting-started.md)** - Basic setup takes only 5 mins
-2. **[Code Integration](/docs/integration.md)** - A few lines of wrapper code
-3. **[Publish Updates](/docs/publish.md)** - One CLI command to push new versions
+1. **[Install & Use Skills](/docs/skills.md)** - Recommended AI-first integration path
+2. **[Installation & Config](/docs/getting-started.md)** - Prepare dependencies and native config
+3. **[Code Integration](/docs/integration.md)** - Review or fine-tune the generated wrapper code
+4. **[Publish Updates](/docs/publish.md)** - Ship new OTA versions from your CLI
 
 :::info
 Not sure if this fits your project? Check our [FAQ](/docs/faq.md), start a thread in [GitHub Discussions](https://github.com/reactnativecn/react-native-update/discussions), or email us at [hi@cresc.dev](mailto:hi@cresc.dev).

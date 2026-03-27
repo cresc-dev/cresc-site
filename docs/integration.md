@@ -2,6 +2,10 @@
 
 Once installation and native configuration are complete, the next step is wiring Cresc into your app code.
 
+:::tip Recommended approach
+Prefer [Install & Use Skills](/docs/skills.md) first so AI can wire `UpdateProvider`, initialize the client, and apply the common OTA strategies for your project automatically. Keep this page as the manual reference and as a review checklist for generated changes.
+:::
+
 ### Retrieve your `appKey`
 Each platform uses its own `appKey`. The value is stored in `update.json`, which is created by `cresc createApp` or `cresc selectApp`.
 ```javascript
