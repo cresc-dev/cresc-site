@@ -48,21 +48,19 @@ If you are absolutely sure both steps were executed perfectly, please leave us f
 
 ---
 
-#### Error: "Hot update paused, reason: Build timestamp mismatch."
+#### Why do mismatched build timestamps affect update performance?
 
 Every time you compile a native package, a timestamp (`buildTime`) is injected into it (viewable using `cresc parseIpa` or `cresc parseApk`). If you distribute this package to users and want them to receive OTA updates, you must first upload the native package to the Cresc server. The server records this version number and build time for subsequent comparisons.
 
-For example, suppose I compile and upload `v1.0` (`Package 1A`). Later, for some reason, I rebuild without changing the version string (`Package 1B`), but I don't upload it. These two packages have the same version string but different build timestamps. Three scenarios might follow:
+For example, suppose I compile and upload `v1.0` (`Package 1A`). Later, for some reason, I rebuild without changing the version string (`Package 1B`), but I don't upload it. These two packages have the same version string but different build timestamps, so clients may start from different embedded bundles. Updates can still be delivered, but Cresc cannot reliably reuse the same diff baseline for every client. That can force larger full-bundle downloads or extra diff generation, increasing latency and bandwidth.
+
+Three scenarios might follow:
 
 1. I forgot I uploaded `1A`, `1B` has no actual changes, and no users have installed it yet. Throw away `1B` and let users install `1A`.
-2. I distributed `1B` to some users without uploading it. Users on `1A` get updates, while `1B` users get paused updates due to a mismatch. To fix this, you either force `1B` users to reinstall `1A`, or publish a strictly higher version string (e.g. `1.1`), upload it to Cresc, and delete `v1.0` records. This causes both groups to receive a mandatory native upgrade prompt.
+2. I distributed `1B` to some users without uploading it. Users on `1A` and `1B` may both receive updates, but `1B` users are less likely to benefit from a small diff built against the uploaded `1A` baseline. To fix this cleanly, either force `1B` users to reinstall `1A`, or publish a strictly higher version string (e.g. `1.1`), upload it to Cresc, and delete `v1.0` records. This causes both groups to receive a mandatory native upgrade prompt.
 3. I know I uploaded `1A`, but I made native changes and built `1B`. Uploading `1B` now triggers a version conflict because `1.0` already exists. Therefore, you must **increment the native version**, **upload** it to the server first, and **then** distribute it to users.
 
-Remember: Whenever compiling native releases: 1) increment the version string, 2) upload to Cresc servers. Only then can OTA updates function normally.
-
-:::info
-If you use the `Premium` tier or above, you can enable `"Ignore Build Timestamp"` in the dashboard's App Settings. This ignores timestamp comparisons entirely, checking only the version string. It opens more tolerant update flows for teams managing many distribution channels, though it may consume extra traffic bandwidth.
-:::
+Remember: Whenever compiling native releases: 1) increment the version string, 2) upload to Cresc servers. This keeps each native baseline explicit, improves diff reuse, and avoids unnecessary full-bundle traffic.
 
 ---
 
@@ -71,10 +69,6 @@ If you use the `Premium` tier or above, you can enable `"Ignore Build Timestamp"
 #### Which plan should I choose?
 
 Start with `Free` if you want to verify the workflow end to end. Choose `Standard` or `Premium` for smaller production apps, and move to `Pro`, `Max`, or `Ultra` as your daily checks, package counts, and app count grow.
-
-`Ignore Build Timestamp` is currently available on `Premium` and higher tiers.
-
----
 
 #### Can I trial a paid version first to evaluate its effectiveness?
 

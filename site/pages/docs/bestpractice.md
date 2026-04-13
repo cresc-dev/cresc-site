@@ -46,7 +46,7 @@ The primary content of a hot update package is the JS bundle and its referenced 
 
 1. If the channel APKs have differences in their `JS code or initial assets` (no matter how slight, which results in different jsbundles), you must build separate APKs, upload, and bind them individually. You can write scripts to automate bulk operations using the CLI.
 2. If the `JS code and initial assets` across channel APKs are perfectly identical, consider using [Flavor builds](https://developer.android.com/studio/build/build-variants), or other dynamic channel generation tools (like [Tencent's VasDolly](https://github.com/Tencent/VasDolly) or [Meituan's walle](https://github.com/Meituan-Dianping/walle)). In this approach, all channel APKs are generated from a single base APK (thus sharing the same build timestamp and jsbundle). This means you only need to upload one base APK, and hot updates applied to it will take effect across all channel APKs.
-3. If you are on the `Premium` tier or above, you can enable `Ignore Build Timestamp` in your app settings in the admin dashboard. This option only checks the version number and ignores the timestamp, providing a wider tolerance for updates, but it may consume more CDN traffic.
+3. Avoid distributing multiple native builds with the same version string but different build timestamps. Cresc can still deliver updates in that situation, but clients may start from different embedded bundles, which reduces diff reuse and can force larger full-bundle downloads or extra diff generation. Prefer one shared base APK for each version string, or publish a higher native version and upload that baseline before distribution.
 
 #### Supporting the AAB Format
 
