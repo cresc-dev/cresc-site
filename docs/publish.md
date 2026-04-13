@@ -53,7 +53,7 @@ The `CFBundleShortVersionString` in `ios/[project]/Info.plist` will be recorded 
 
 You can now upload this version to the App Store, or test it on devices via TestFlight. Note: Testing hot updates directly via Xcode is not supported yet.
 
-If you re-archive later (e.g., modifying native code/configs), you must **change the version number**, and `uploadIpa` again. Otherwise, identically versioned native packages will [fail to receive hot updates due to mismatched build timestamps](/docs/faq.md#error-hot-update-paused-reason-build-timestamp-mismatch).
+If you re-archive later (e.g., modifying native code/configs), you must **change the version number**, and `uploadIpa` again. Otherwise, identically versioned native packages can produce [mismatched build timestamps](/docs/faq.md#why-do-mismatched-build-timestamps-affect-update-performance), which do not block updates but can reduce diff reuse and increase download size.
 
 ### Android
 
@@ -71,7 +71,7 @@ The `versionName` in `android/app/build.gradle` is recorded as the `packageVersi
 
 You can now publish this version to app markets or install it directly for testing.
 
-If you rebuild native code later, you must **change the version number**, and `uploadApk` again. Otherwise, [hot updates will fail due to build timestamp mismatches](/docs/faq.md#error-hot-update-paused-reason-build-timestamp-mismatch).
+If you rebuild native code later, you must **change the version number**, and `uploadApk` again. Otherwise, [build timestamp mismatches](/docs/faq.md#why-do-mismatched-build-timestamps-affect-update-performance) do not block updates but can reduce diff reuse and increase download size.
 
 ## Publishing Hot Update Version
 
