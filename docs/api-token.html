@@ -8,7 +8,7 @@
 <script defer src="/static/js/lib-react.b4277833b9.js"></script>
 <script defer src="/static/js/lib-router.d32d13438e.js"></script>
 <script defer src="/static/js/3178.5ff2d1c8e8.js"></script>
-<script defer src="/static/js/index.0f9726befc.js"></script>
+<script defer src="/static/js/index.aacf5be8d3.js"></script>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="generator" content="Rspress v2.0.9">
 <meta property="og:keywords" content="OTA,hotupdate,no-review,fast-publish">
@@ -68,12 +68,10 @@ You must select at least one permission when creating a Token. Applying the prin
 <span class="line"><span style="color:var(--shiki-token-keyword)">  publish</span><span style="color:var(--shiki-token-keyword)">:</span></span>
 <span class="line"><span style="color:var(--shiki-token-keyword)">    runs-on</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> ubuntu-latest</span></span>
 <span class="line"><span style="color:var(--shiki-token-keyword)">    steps</span><span style="color:var(--shiki-token-keyword)">:</span></span>
-<span class="line"><span style="color:var(--shiki-foreground)">      - </span><span style="color:var(--shiki-token-keyword)">uses</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> actions/checkout@v4</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      - </span><span style="color:var(--shiki-token-keyword)">uses</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> actions/checkout@v6</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">      </span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">      - </span><span style="color:var(--shiki-token-keyword)">name</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> Setup Node.js</span></span>
-<span class="line"><span style="color:var(--shiki-token-keyword)">        uses</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> actions/setup-node@v4</span></span>
-<span class="line"><span style="color:var(--shiki-token-keyword)">        with</span><span style="color:var(--shiki-token-keyword)">:</span></span>
-<span class="line"><span style="color:var(--shiki-token-keyword)">          node-version</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &#x27;18&#x27;</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">        uses</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> actions/setup-node@v6</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">          </span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">      - </span><span style="color:var(--shiki-token-keyword)">name</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> Install dependencies</span></span>
 <span class="line"><span style="color:var(--shiki-token-keyword)">        run</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> npm install &amp;&amp; npm i -g react-native-update-cli</span></span>
