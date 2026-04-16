@@ -297,6 +297,30 @@ Note that some app stores might reject your app due to these permissions. Removi
 
 ---
 
+#### currentVersionInfo
+
+Information about the currently active hot update (empty object if no update was applied). Requires v10.31.2+.
+
+`currentVersionInfo` is synchronous, and is recommended instead of `getCurrentVersionInfo()`:
+
+```js
+const { currentVersionInfo } = useUpdate();
+
+console.log(currentVersionInfo.name);
+```
+
+Example value:
+
+```js
+{
+    name: '1.0.3-rc',
+    description: 'Added Chat feature\nFixed store bugs',
+    metaInfo: '{"silent":true}',
+}
+```
+
+---
+
 #### async function getCurrentVersionInfo()
 
 Gets information about the currently active hot update (returns an empty object if no update was applied). Use `currentVersionInfo` instead after v10.31.2.
