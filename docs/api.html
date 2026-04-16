@@ -8,7 +8,7 @@
 <script defer src="/static/js/lib-react.b4277833b9.js"></script>
 <script defer src="/static/js/lib-router.03c1a0bf7c.js"></script>
 <script defer src="/static/js/3178.e2e2428d14.js"></script>
-<script defer src="/static/js/index.f7a38dc8b2.js"></script>
+<script defer src="/static/js/index.96dc3fc7cc.js"></script>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="generator" content="Rspress v2.0.9">
 <meta property="og:keywords" content="OTA,hotupdate,no-review,fast-publish">
@@ -74,6 +74,10 @@
 <span class="line"><span style="color:var(--shiki-token-comment)">  // Requires v10.12.0+</span></span>
 <span class="line"><span style="color:var(--shiki-token-function)">  beforeCheckUpdate</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-foreground)"> () </span><span style="color:var(--shiki-token-keyword)">=&gt;</span><span style="color:var(--shiki-token-function)"> Promise</span><span style="color:var(--shiki-foreground)">&lt;</span><span style="color:var(--shiki-token-constant)">boolean</span><span style="color:var(--shiki-foreground)">&gt;;</span></span>
 <span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-comment)">  // Executed after each update check finishes, useful for reporting check results; does not affect the original check flow</span></span>
+<span class="line"><span style="color:var(--shiki-token-comment)">  // Requires v10.38.3+</span></span>
+<span class="line"><span style="color:var(--shiki-token-function)">  afterCheckUpdate</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-foreground)"> (state</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> UpdateCheckState</span><span style="color:var(--shiki-foreground)">) </span><span style="color:var(--shiki-token-keyword)">=&gt;</span><span style="color:var(--shiki-token-function)"> Promise</span><span style="color:var(--shiki-foreground)">&lt;</span><span style="color:var(--shiki-token-constant)">void</span><span style="color:var(--shiki-foreground)">&gt; </span><span style="color:var(--shiki-token-keyword)">|</span><span style="color:var(--shiki-token-constant)"> void</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"></span>
 <span class="line"><span style="color:var(--shiki-token-comment)">  // Executed before downloading updates, returning false cancels the download. Can be used with custom metaInfo for flow control.</span></span>
 <span class="line"><span style="color:var(--shiki-token-comment)">  // Requires v10.12.0+</span></span>
 <span class="line"><span style="color:var(--shiki-token-function)">  beforeDownloadUpdate</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-foreground)"> (info</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> UpdateInfo</span><span style="color:var(--shiki-foreground)">) </span><span style="color:var(--shiki-token-keyword)">=&gt;</span><span style="color:var(--shiki-token-function)"> Promise</span><span style="color:var(--shiki-foreground)">&lt;</span><span style="color:var(--shiki-token-constant)">boolean</span><span style="color:var(--shiki-foreground)">&gt;;</span></span>
@@ -86,6 +90,16 @@
 <span class="line"><span style="color:var(--shiki-token-comment)">  // Requires v10.28.2+</span></span>
 <span class="line"><span style="color:var(--shiki-token-function)">  onPackageExpired</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-foreground)"> (info</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> UpdateInfo</span><span style="color:var(--shiki-foreground)">) </span><span style="color:var(--shiki-token-keyword)">=&gt;</span><span style="color:var(--shiki-token-function)"> Promise</span><span style="color:var(--shiki-foreground)">&lt;</span><span style="color:var(--shiki-token-constant)">boolean</span><span style="color:var(--shiki-foreground)">&gt;;</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-comment)">// State reported after an update check finishes</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> UpdateCheckState</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-token-comment)">  // completed: check finished; skipped: skipped due to debug/web environment, beforeCheckUpdate returning false, etc.; error: check failed</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  status</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;completed&quot;</span><span style="color:var(--shiki-token-keyword)"> |</span><span style="color:var(--shiki-token-string-expression)"> &quot;skipped&quot;</span><span style="color:var(--shiki-token-keyword)"> |</span><span style="color:var(--shiki-token-string-expression)"> &quot;error&quot;</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-token-comment)">  // Check result when status is completed</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  result</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-function)"> UpdateInfo</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-token-comment)">  // Error object when status is error</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  error</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-function)"> Error</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">};</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:var(--shiki-token-comment)">// Log event types</span></span>
 <span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> EventType</span><span style="color:var(--shiki-token-keyword)"> =</span></span>

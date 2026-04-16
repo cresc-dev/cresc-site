@@ -55,6 +55,10 @@ interface CrescOptions {
   // Requires v10.12.0+
   beforeCheckUpdate?: () => Promise<boolean>;
 
+  // Executed after each update check finishes, useful for reporting check results; does not affect the original check flow
+  // Requires v10.38.3+
+  afterCheckUpdate?: (state: UpdateCheckState) => Promise<void> | void;
+
   // Executed before downloading updates, returning false cancels the download. Can be used with custom metaInfo for flow control.
   // Requires v10.12.0+
   beforeDownloadUpdate?: (info: UpdateInfo) => Promise<boolean>;
@@ -67,6 +71,16 @@ interface CrescOptions {
   // Requires v10.28.2+
   onPackageExpired?: (info: UpdateInfo) => Promise<boolean>;
 }
+
+// State reported after an update check finishes
+type UpdateCheckState = {
+  // completed: check finished; skipped: skipped due to debug/web environment, beforeCheckUpdate returning false, etc.; error: check failed
+  status: "completed" | "skipped" | "error";
+  // Check result when status is completed
+  result?: UpdateInfo;
+  // Error object when status is error
+  error?: Error;
+};
 
 // Log event types
 type EventType =
