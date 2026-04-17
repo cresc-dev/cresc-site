@@ -15,61 +15,89 @@ PopularThe main tier for production apps with regular release traffic.
 
 USD$39/ monthDaily queries100K / dayAppsUp to 10Native Packages60 / app · 500 MB eaHot Update Packages60 / app · 50 MB ea[Subscribe+](https://admin.cresc.dev)CDN delivery included
 
-Cost Shape
+Pricing Comparison
 
-## Same easy entry, cheaper much earlier at scale.
+## Fixed tiers, no runaway bill.
 
-Expo and Cresc do not meter the exact same thing. Expo EAS Update combines plan pricing with updated-user and bandwidth overages, while Cresc uses fixed monthly tiers with CDN delivery included. The sales point is predictability: Cresc is easier to budget as release traffic grows.
+Expo EAS Update and Cresc use different meters. Expo counts unique users who download an update in a monthly billing period, plus edge bandwidth. Cresc uses fixed monthly tiers based on daily update checks, with CDN delivery included. There is no hidden usage meter that turns a traffic spike into a surprise invoice. Pick the tier that fits real traffic, then upgrade only when the app needs more headroom.
 
-### Expo public pricing
+### Expo EAS Update
 
-Checked 2026-03-23Starter
+Checked 2026-04-17Free
 
-3K MAUs + 500 GiB
+1K update MAUs
+
+$0/mo
+
+Starter
+
+3K update MAUs + 100 GiB
 
 $19/mo + usage
 
 Production
 
-50K MAUs + 1 TiB
+50K update MAUs + 1 TiB
 
 $199/mo + usage
 
-Enterprise
+Expo counts update MAUs only when a device downloads at least one update during the billing period. Users who only check for updates are not counted as update MAUs.
 
-1M MAUs + 40 TiB
+### Same monthly scenarios
 
-Starts $1,999/mo + usage
+Same basisFirst paid tier
 
-Expo officially bills EAS Update overages by updated user and by GiB of edge bandwidth.
+Expo: Starter is $19/mo, then usage-based billing after 3K update MAUs and 100 GiB.
 
-### Cresc unit economics
+Cresc: Standard is $19/mo with 10K update checks per day, CDN delivery included, and no automatic overage bill.
 
-CDN includedPremium
+Production traffic
+
+Expo: Production is $199/mo, then usage-based billing after 50K update MAUs and 1 TiB.
+
+Cresc: Pro is $99/mo with 1M update checks per day. Upgrade when real traffic needs more headroom.
+
+High volume
+
+Expo: Enterprise pricing is custom, so there is no public monthly number to compare.
+
+Cresc: Max and Ultra are fixed public tiers at $399/mo and $1,699/mo, so capacity planning stays explicit.
+
+The direct difference is not that one "daily query" equals one Expo MAU. The difference is billing behavior: Cresc stops at the tier you choose, while Expo can add usage charges for update MAUs and bandwidth after the plan allowance.
+
+### Cresc upgrade path
+
+Fixed tiersStart with the tier that covers current release traffic. Upgrading changes the allowance, not the app integration or release flow, so teams can add capacity when real usage requires it instead of buying too much headroom early.
+
+Standard
+
+10K / day included
+
+$19/mo
+
+Premium
 
 100K / day included
 
-$390 / 1M daily queries
+$39/mo
 
 Pro
 
 1M / day included
 
-$99 / 1M daily queries
+$99/mo
 
 Max
 
 10M / day included
 
-$39.90 / 1M daily queries
+$399/mo
 
 Ultra
 
 100M / day included
 
-$16.99 / 1M daily queries
-
-Cresc keeps the same $19 entry price as Expo Starter, then gets materially cheaper from production scale upward.
+$1699/mo
 
 Want the detailed breakdown, including Expo's own overage example?
 
