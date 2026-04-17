@@ -70,6 +70,26 @@ Remember: Whenever compiling native releases: 1) increment the version string, 2
 
 Start with `Free` if you want to verify the workflow end to end. Choose `Standard` or `Premium` for smaller production apps, and move to `Pro`, `Max`, or `Ultra` as your daily checks, package counts, and app count grow.
 
+---
+
+#### How does upgrading a subscription work?
+
+Upgrades take effect immediately after payment succeeds. You pay the new plan's monthly price, and the unused value from your current plan is converted into extra days on the new plan.
+
+The conversion is value-based:
+
+```text
+remainingValue = remainingDays / 30 * currentPlanMonthlyPrice
+extraDays = floor(remainingValue / (newPlanMonthlyPrice / 30))
+newExpiry = now + 30 days + extraDays
+```
+
+For example, if `Standard` has 20 days left and you upgrade to `Pro`, the remaining `Standard` value is converted into extra `Pro` days. The new `Pro` quota is available after payment, and the old subscription is cancelled so you are not billed twice.
+
+No unused value is lost. Upgrading changes the quota allowance, not your app integration or release flow, so teams can add capacity when real usage requires it instead of buying too much headroom early.
+
+---
+
 #### Can I trial a paid version first to evaluate its effectiveness?
 
 If you need evaluation capacity beyond the published quotas, email [hi@cresc.dev](mailto:hi@cresc.dev) with your expected app count, daily checks, and rollout timeline.

@@ -173,14 +173,6 @@ function formatQueries(value: number) {
   return `${compactFormatter.format(value)} / day`;
 }
 
-function formatUnitRate(value: number) {
-  if (value >= 100) {
-    return `$${Math.round(value)}`;
-  }
-
-  return `$${value.toFixed(2).replace(/\.00$/, "")}`;
-}
-
 function formatQuota(count: number, size: string) {
   return `${count} / app · ${formatSize(size)} ea`;
 }
@@ -197,11 +189,6 @@ function QueryValue({
       </span>
     </div>
   );
-}
-
-function pricePerMillionDailyQueries(quota: TierQuota) {
-  const rate = quota.monthlyPrice / (quota.pv / 1_000_000);
-  return `${formatUnitRate(rate)} / 1M daily queries`;
 }
 
 function formatMetricValue(
@@ -277,8 +264,9 @@ const advancedTiers = tiers.filter(
   (tier) =>
     tier.key === "pro" || tier.key === "max" || tier.key === "ultra",
 );
-const scaleEconomicsTiers = tiers.filter(
+const upgradePathTiers = tiers.filter(
   (tier) =>
+    tier.key === "standard" ||
     tier.key === "premium" ||
     tier.key === "pro" ||
     tier.key === "max" ||
@@ -287,19 +275,37 @@ const scaleEconomicsTiers = tiers.filter(
 
 const expoPricingRows = [
   {
+    title: "Free",
+    price: "$0/mo",
+    included: "1K update MAUs",
+  },
+  {
     title: "Starter",
     price: "$19/mo + usage",
-    included: "3K MAUs + 500 GiB",
+    included: "3K update MAUs + 100 GiB",
   },
   {
     title: "Production",
     price: "$199/mo + usage",
-    included: "50K MAUs + 1 TiB",
+    included: "50K update MAUs + 1 TiB",
+  },
+];
+
+const comparisonRows = [
+  {
+    scenario: "First paid tier",
+    expo: "Starter is $19/mo, then usage-based billing after 3K update MAUs and 100 GiB.",
+    cresc: "Standard is $19/mo with 10K update checks per day, CDN delivery included, and no automatic overage bill.",
   },
   {
-    title: "Enterprise",
-    price: "Starts $1,999/mo + usage",
-    included: "1M MAUs + 40 TiB",
+    scenario: "Production traffic",
+    expo: "Production is $199/mo, then usage-based billing after 50K update MAUs and 1 TiB.",
+    cresc: "Pro is $99/mo with 1M update checks per day. Upgrade when real traffic needs more headroom.",
+  },
+  {
+    scenario: "High volume",
+    expo: "Enterprise pricing is custom, so there is no public monthly number to compare.",
+    cresc: "Max and Ultra are fixed public tiers at $399/mo and $1,699/mo, so capacity planning stays explicit.",
   },
 ];
 
@@ -522,28 +528,30 @@ function Pricing() {
         <section className="mx-auto mt-10 max-w-5xl rounded-[34px] border border-[#dcc9ae] bg-[#f8efe2]/80 px-5 py-6 shadow-[0_16px_36px_rgba(113,88,67,0.06)] sm:px-7 sm:py-8">
           <div className="max-w-3xl">
             <p className="text-xs uppercase tracking-[0.34em] text-[#8b5a3c]">
-              Cost Shape
+              Pricing Comparison
             </p>
             <h2 className="cresc-display mt-4 text-3xl text-[#2d1d15] sm:text-[2.4rem]">
-              Same easy entry, cheaper much earlier at scale.
+              Fixed tiers, no runaway bill.
             </h2>
             <p className="mt-4 text-base leading-8 text-[#5f483c]">
-              Expo and Cresc do not meter the exact same thing. Expo EAS Update
-              combines plan pricing with updated-user and bandwidth overages,
-              while Cresc uses fixed monthly tiers with CDN delivery included.
-              The sales point is predictability: Cresc is easier to budget as
-              release traffic grows.
+              Expo EAS Update and Cresc use different meters. Expo counts
+              unique users who download an update in a monthly billing period,
+              plus edge bandwidth. Cresc uses fixed monthly tiers based on
+              daily update checks, with CDN delivery included. There is no
+              hidden usage meter that turns a traffic spike into a surprise
+              invoice. Pick the tier that fits real traffic, then upgrade only
+              when the app needs more headroom.
             </p>
           </div>
 
-          <div className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+          <div className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
             <div className="rounded-[28px] border border-[#e4d3bd] bg-[#fffaf4] p-5">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="cresc-display text-[2rem] text-[#2d1d15]">
-                  Expo public pricing
+                  Expo EAS Update
                 </h3>
                 <span className="text-xs uppercase tracking-[0.2em] text-[#8b5a3c]">
-                  Checked 2026-03-23
+                  Checked 2026-04-17
                 </span>
               </div>
 
@@ -567,46 +575,86 @@ function Pricing() {
               </div>
 
               <p className="mt-4 text-sm leading-7 text-[#6a5245]">
-                Expo officially bills EAS Update overages by updated user and
-                by GiB of edge bandwidth.
+                Expo counts update MAUs only when a device downloads at least
+                one update during the billing period. Users who only check for
+                updates are not counted as update MAUs.
               </p>
             </div>
 
             <div className="rounded-[28px] border border-[#e4d3bd] bg-[#fffaf4] p-5">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="cresc-display text-[2rem] text-[#2d1d15]">
-                  Cresc unit economics
+                  Same monthly scenarios
                 </h3>
                 <span className="text-xs uppercase tracking-[0.2em] text-[#8b5a3c]">
-                  CDN included
+                  Same basis
                 </span>
               </div>
 
               <div className="mt-5 grid gap-3">
-                {scaleEconomicsTiers.map((tier) => (
+                {comparisonRows.map((row) => (
                   <div
-                    key={tier.key}
-                    className="grid grid-cols-[minmax(0,1fr)_auto] gap-4 rounded-[20px] border border-[#eadbc7] bg-[#fffdf9] px-4 py-3"
+                    key={row.scenario}
+                    className="rounded-[20px] border border-[#eadbc7] bg-[#fffdf9] px-4 py-3"
                   >
-                    <div>
-                      <p className="font-semibold text-[#2d1d15]">
-                        {tier.quota.title}
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-[#6a5245]">
-                        {formatQueries(tier.quota.pv)} included
-                      </p>
-                    </div>
-                    <p className="text-right text-sm font-semibold leading-6 text-[#7a3b2e]">
-                      {pricePerMillionDailyQueries(tier.quota)}
+                    <p className="font-semibold text-[#2d1d15]">
+                      {row.scenario}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-[#6a5245]">
+                      <span className="font-semibold text-[#7a3b2e]">Expo:</span>{" "}
+                      {row.expo}
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-[#6a5245]">
+                      <span className="font-semibold text-[#7a3b2e]">Cresc:</span>{" "}
+                      {row.cresc}
                     </p>
                   </div>
                 ))}
               </div>
 
               <p className="mt-4 text-sm leading-7 text-[#6a5245]">
-                Cresc keeps the same $19 entry price as Expo Starter, then gets
-                materially cheaper from production scale upward.
+                The direct difference is not that one "daily query" equals one
+                Expo MAU. The difference is billing behavior: Cresc stops at
+                the tier you choose, while Expo can add usage charges for
+                update MAUs and bandwidth after the plan allowance.
               </p>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-[24px] border border-[#e4d3bd] bg-[#fffaf4] p-5">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="cresc-display text-[2rem] text-[#2d1d15]">
+                Cresc upgrade path
+              </h3>
+              <span className="text-xs uppercase tracking-[0.2em] text-[#8b5a3c]">
+                Fixed tiers
+              </span>
+            </div>
+
+            <p className="mt-3 text-sm leading-7 text-[#6a5245]">
+              Start with the tier that covers current release traffic. Upgrading
+              changes the allowance, not the app integration or release flow, so
+              teams can add capacity when real usage requires it instead of
+              buying too much headroom early.
+            </p>
+
+            <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+              {upgradePathTiers.map((tier) => (
+                <div
+                  key={tier.key}
+                  className="rounded-[20px] border border-[#eadbc7] bg-[#fffdf9] px-4 py-3"
+                >
+                  <p className="font-semibold text-[#2d1d15]">
+                    {tier.quota.title}
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-[#6a5245]">
+                    {formatQueries(tier.quota.pv)} included
+                  </p>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-[#7a3b2e]">
+                    ${tier.quota.monthlyPrice}/mo
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
 
