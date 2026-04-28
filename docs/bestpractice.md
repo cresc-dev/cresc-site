@@ -47,6 +47,22 @@ The primary content of a hot update package is the JS bundle and its referenced 
 
 Update the `react-native-update-cli` to v2.6.0 or higher. You can then use the `cresc parseAab` and `cresc uploadAab` commands for `.aab` format support.
 
+If the same Android version needs an AAB for Google Play and an APK for other channels, do not build them in separate Gradle invocations. Add an npm script to the root `package.json` so CI and local releases use the same entry point, running both `assembleRelease` and `bundleRelease` in the same Gradle invocation. If your project already has a `scripts` field, add only this script:
+
+```json
+{
+  "scripts": {
+    "package:android:release": "cd android && ./gradlew clean assembleRelease bundleRelease"
+  }
+}
+```
+
+```bash
+$ npm run package:android:release
+```
+
+This produces `android/app/build/outputs/apk/release/app-release.apk` and `android/app/build/outputs/bundle/release/app-release.aab` from the same release build, keeping their build timestamps aligned. Distribute the format required by each channel: AAB for Google Play, APK for direct installs or third-party markets. If your project uses flavors, switch the npm script task names to the actual variant tasks, such as `assembleProdRelease` and `bundleProdRelease`.
+
 #### Testing and Rollbacks
 
 Starting from version v10.11.2, you can use two quick QR code scanning methods to test hot updates without needing to bind them beforehand:

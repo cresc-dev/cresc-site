@@ -9,10 +9,10 @@ flowchart TD
 
     subgraph nativeRelease["Publishing Native Baseline Version"]
     tagNativeVersion["Tag Native Version in git"]
-    nativePackage["Native Full Package (apk or ipa)"]
+    nativePackage["Native Full Package (apk, aab, or ipa)"]
     newNativeVersion["New Native Baseline Version"]
     tagNativeVersion -->|"Compile"| nativePackage
-    nativePackage -->|"Upload with cresc uploadApk/uploadIpa"| newNativeVersion
+    nativePackage -->|"Upload with cresc uploadApk/uploadAab/uploadIpa"| newNativeVersion
     end
 
     subgraph hotUpdateRelease["Publishing Hot Update Version"]
@@ -28,7 +28,7 @@ flowchart TD
     hotUpdateRelease -->|"Push incremental hot update (.diff file)"| user
 ```
 
-1. We first need to build a native release version. Before building, ensure `react-native-update` is integrated, tested, and works correctly. For Android, [disable `crunchPngs`](/docs/getting-started.md#disabling-android-image-crunch-operations). See documentation for [iOS Build](https://reactnative.dev/docs/publishing-to-app-store) and [Android Build](https://reactnative.dev/docs/signed-apk-android). After building, run `cresc uploadIpa` or `cresc uploadApk` to upload the package to Cresc servers to serve as the baseline for delta comparisons. Keep a copy of this installation package; the package distributed to users `must be strictly identical` to the uploaded one. We recommend using git tags for native versioning (e.g., `v1.0.0`).
+1. We first need to build a native release version. Before building, ensure `react-native-update` is integrated, tested, and works correctly. For Android, [disable `crunchPngs`](/docs/getting-started.md#disabling-android-image-crunch-operations). See documentation for [iOS Build](https://reactnative.dev/docs/publishing-to-app-store) and [Android Build](https://reactnative.dev/docs/signed-apk-android). After building, run `cresc uploadIpa`, `cresc uploadApk`, or `cresc uploadAab` to upload the package to Cresc servers to serve as the baseline for delta comparisons. Keep a copy of this installation package; the package distributed to users `must be strictly identical` to the uploaded one. We recommend using git tags for native versioning (e.g., `v1.0.0`).
 2. Iterate on your business logic over the baseline (add/remove JS code, static assets). Run `cresc bundle` to generate and publish a hot update without recompiling the native app. We recommend using git tags for hot update versioning (e.g., `v1.0.1`).
 3. If there are native changes during iteration, you must publish and upload a new native baseline version (repeat step 1, but set a different native version number). You can maintain just one native baseline or multiple versions concurrently.
 
@@ -59,19 +59,42 @@ If you re-archive later (e.g., modifying native code/configs), you must **change
 
 Set up signing per [Android Signed APK](https://reactnative.dev/docs/signed-apk-android). Run `./gradlew assembleRelease` or `./gradlew aR` in the `android` folder. The APK will be under `android/app/build/outputs/apk/release/app-release.apk`.
 
-Upload it via:
+If you need to distribute `.aab` to Google Play and `.apk` to other channels, add an npm script to the root `package.json` that runs `assembleRelease` and `bundleRelease` in the same Gradle invocation. This lets the APK and AAB reuse the same release build outputs, keeping the embedded bundle and build timestamp aligned. You can then distribute the format required by each channel. If your project already has a `scripts` field, add only this script:
+
+```json
+{
+  "scripts": {
+    "package:android:release": "cd android && ./gradlew clean assembleRelease bundleRelease"
+  }
+}
+```
+
+```bash
+$ npm run package:android:release
+```
+
+The outputs are:
+
+```text
+android/app/build/outputs/apk/release/app-release.apk
+android/app/build/outputs/bundle/release/app-release.aab
+```
+
+If your project uses flavors, adjust the task names in the npm script for the actual variant, for example `assembleProdRelease` and `bundleProdRelease`. Avoid running `assembleRelease` in one Gradle command and `bundleRelease` in another, because the two packages may end up with different build timestamps.
+
+Upload the format you actually distribute:
 
 ```bash
 $ cresc uploadApk android/app/build/outputs/apk/release/app-release.apk
-# If you build an .aab package, use:
-# cresc uploadAab android/app/build/outputs/bundle/release/app-release.aab
+# If you actually distribute an .aab package, use:
+$ cresc uploadAab android/app/build/outputs/bundle/release/app-release.aab
 ```
 
 The `versionName` in `android/app/build.gradle` is recorded as the `packageVersion`.
 
-You can now publish this version to app markets or install it directly for testing.
+You can now publish this version to app markets or install the APK directly for testing. If the same version produced both APK and AAB, distribute the format required by each channel: Google Play usually uses AAB, while direct install and third-party markets commonly use APK.
 
-If you rebuild native code later, you must **change the version number**, and `uploadApk` again. Otherwise, [build timestamp mismatches](/docs/faq.md#why-do-mismatched-build-timestamps-affect-update-performance) do not block updates but can reduce diff reuse and increase download size.
+If you rebuild native code later, you must **change the version number**, and upload the corresponding native package again. Otherwise, [build timestamp mismatches](/docs/faq.md#why-do-mismatched-build-timestamps-affect-update-performance) do not block updates but can reduce diff reuse and increase download size.
 
 ## Publishing Hot Update Version
 
