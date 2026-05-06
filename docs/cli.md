@@ -1,4 +1,4 @@
-# CLI Tools (Built-in)
+# CLI Tools
 
 ### Installation
 

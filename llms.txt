@@ -15,8 +15,7 @@
 - [Publishing Hot Updates](/docs/publish.md)
 - [API Reference](/docs/api.md)
 - [API Token](/docs/api-token.md): An API Token is an authentication method used to invoke the Cresc API within CI/CD pipelines or automated scripts. Compared to standard username/password logins, API Tokens are much more secure and easier to manage.
-- [CLI Tools (Built-in)](/docs/cli.md)
-- [CLI Tools (Custom Modules)](/docs/cli_module.md)
+- [CLI Tools](/docs/cli.md)
 - [Best Practices](/docs/bestpractice.md)
 - [FAQ](/docs/faq.md)
 
