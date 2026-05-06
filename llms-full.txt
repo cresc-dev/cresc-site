@@ -2219,13 +2219,13 @@ CDN delivery included on every plan.Unused resources can be removed to reclaim q
 
 For growing apps shipping on a steady monthly rhythm.
 
-USD$19/ monthDaily queries10K / dayAppsUp to 5Native Packages50 / app · 150 MB eaHot Update Packages50 / app · 15 MB ea[Subscribe+](https://admin.cresc.dev)CDN delivery included
+USD$19/ monthDaily queries10K / dayApps5 appsNative Packages50 base pkgs · 150 MB eaHot Update Packages50 updates · 15 MB ea[Subscribe+](https://admin.cresc.dev)CDN delivery included
 
 ## Premium
 
 PopularThe main tier for production apps with regular release traffic.
 
-USD$39/ monthDaily queries100K / dayAppsUp to 10Native Packages60 / app · 500 MB eaHot Update Packages60 / app · 50 MB ea[Subscribe+](https://admin.cresc.dev)CDN delivery included
+USD$39/ monthDaily queries100K / dayApps10 appsNative Packages60 base pkgs · 500 MB eaHot Update Packages60 updates · 50 MB ea[Subscribe+](https://admin.cresc.dev)CDN delivery included
 
 Pricing Comparison
 
@@ -2321,7 +2321,7 @@ Want the detailed breakdown, including Expo's own overage example?
 
 For larger teams that need room for heavier binaries and scale.
 
-USD$99/ monthDaily queries1M / dayAppsUp to 50Native Packages100 / app · 2 GB eaHot Update Packages100 / app · 200 MB ea[Subscribe+](https://admin.cresc.dev)CDN delivery included
+USD$99/ monthDaily queries1M / dayApps50 appsNative Packages100 base pkgs · 2 GB eaHot Update Packages100 updates · 200 MB ea[Subscribe+](https://admin.cresc.dev)CDN delivery included
 
 ## Max
 
