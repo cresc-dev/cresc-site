@@ -1,6 +1,6 @@
 ---
 order: 12
-title: CLI Tools (Built-in)
+title: CLI Tools
 type: Guide
 ---
 

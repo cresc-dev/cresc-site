@@ -50,8 +50,7 @@ export default defineConfig({
           items: [
             { text: 'API Reference', link: '/docs/api' },
             { text: 'API Token', link: '/docs/api-token' },
-            { text: 'CLI Tools (Built-in)', link: '/docs/cli' },
-            { text: 'CLI Tools (Custom)', link: '/docs/cli_module' },
+            { text: 'CLI Tools', link: '/docs/cli' },
             { text: 'Best Practices', link: '/docs/bestpractice' },
           ],
         },
@@ -68,6 +67,41 @@ export default defineConfig({
     plugins: [pluginSass()],
     html: {
       tags: [
+        {
+          tag: 'link',
+          attrs: {
+            rel: 'manifest',
+            href: '/manifest.webmanifest',
+          },
+        },
+        {
+          tag: 'meta',
+          attrs: {
+            name: 'theme-color',
+            content: '#D7B57C',
+          },
+        },
+        {
+          tag: 'meta',
+          attrs: {
+            name: 'apple-mobile-web-app-capable',
+            content: 'yes',
+          },
+        },
+        {
+          tag: 'meta',
+          attrs: {
+            name: 'apple-mobile-web-app-title',
+            content: 'Cresc',
+          },
+        },
+        {
+          tag: 'script',
+          attrs: {
+            src: '/register-pwa.js',
+            defer: true,
+          },
+        },
         {
           tag: 'meta',
           attrs: {
