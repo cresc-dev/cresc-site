@@ -173,8 +173,8 @@ function formatQueries(value: number) {
   return `${compactFormatter.format(value)} / day`;
 }
 
-function formatQuota(count: number, size: string) {
-  return `${count} / app · ${formatSize(size)} ea`;
+function formatQuota(count: number, noun: string, size: string) {
+  return `${count} ${noun} · ${formatSize(size)} ea`;
 }
 
 function QueryValue({
@@ -205,14 +205,14 @@ function formatMetricValue(
   }
 
   if (kind === "app") {
-    return `Up to ${quota.app}`;
+    return `${quota.app} apps`;
   }
 
   if (kind === "package") {
-    return formatQuota(quota.package, quota.packageSize);
+    return formatQuota(quota.package, "base pkgs", quota.packageSize);
   }
 
-  return formatQuota(quota.bundle, quota.bundleSize);
+  return formatQuota(quota.bundle, "updates", quota.bundleSize);
 }
 
 function cardStyle(tone: Tone): CSSProperties {
