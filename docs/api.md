@@ -70,6 +70,13 @@ interface CrescOptions {
   // Executed when the native package is expired, returning false stops the built-in strategy.
   // Requires v10.28.2+
   onPackageExpired?: (info: UpdateInfo) => Promise<boolean>;
+
+  // Executed before switchVersion or restartApp performs an immediate reload; returning false cancels this reload.
+  // Use it to wait for native SDKs such as Sentry to stop profiling and flush pending reports before the RN instance is destroyed.
+  // Requires v10.42.2+
+  beforeReload?: (
+    context: BeforeReloadContext,
+  ) => Promise<boolean | void> | boolean | void;
 }
 
 // State reported after an update check finishes
@@ -80,6 +87,14 @@ type UpdateCheckState = {
   result?: UpdateInfo;
   // Error object when status is error
   error?: Error;
+};
+
+// Reload context passed to beforeReload
+type BeforeReloadContext = {
+  // switchVersion: immediately apply a downloaded OTA update; restartApp: restart the current app
+  type: "switchVersion" | "restartApp";
+  // Present for switchVersion and contains the OTA hash about to be applied
+  hash?: string;
 };
 
 // Log event types
@@ -133,6 +148,35 @@ interface EventData {
 }
 ```
 
+#### beforeReload Example: Clean Up Native SDKs Before Reload
+
+`beforeReload` runs before `switchVersion()` and `restartApp()` actually reload the app. Returning `false` cancels the reload; thrown errors or rejected promises also stop the reload. `switchVersionLater()` does not destroy the current RN instance immediately, so it does not trigger this hook.
+
+If your app uses native SDKs that may keep profiling, sampling, logging, or upload work on background threads, clean them up here before Cresc reloads the RN instance:
+
+```ts
+import { NativeModules } from "react-native";
+import * as Sentry from "@sentry/react-native";
+import { Cresc } from "react-native-update";
+
+const crescClient = new Cresc({
+  appKey,
+  beforeReload: async (_context) => {
+    try {
+      NativeModules.RNSentry?.stopProfiling?.();
+    } catch {}
+
+    const flushed = await Promise.race([
+      Sentry.flush(),
+      new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 1500)),
+    ]);
+
+    // Returning false cancels this immediate reload until the next check or manual trigger.
+    return flushed;
+  },
+});
+```
+
 #### useUpdate()
 
 Utility functions for OTA updates. This method can also be imported using the alias `useCresc`.
@@ -171,9 +215,9 @@ interface UpdateContext {
   // We still recommend getting `updateInfo` via `useUpdate()` primarily
   checkUpdate: () => Promise<void | UpdateInfo>;
   // Called after download completes to immediately restart and switch to the new version
-  switchVersion: () => void;
+  switchVersion: () => Promise<void>;
   // Called after download completes to switch to the new version on the next user-initiated restart (silent update)
-  switchVersionLater: () => void;
+  switchVersionLater: () => Promise<void>;
   // Manually mark update as successful after a restart
   markSuccess: () => void;
   // Clear the last error state
@@ -202,6 +246,8 @@ interface UpdateContext {
   packageVersion: string;
   // Current Cresc service instance
   client?: Cresc;
+  // Immediately restart the app. Requires v10.28.2+.
+  restartApp: () => Promise<void>;
   // Progress data after download starts
   progress?: {
     hash: string;
@@ -349,6 +395,8 @@ Example return:
 
 Immediately restarts the application. Available in v10.28.2+.
 
+If `beforeReload` is configured, Cresc waits for it before restarting. Returning `false`, throwing an error, or rejecting the promise cancels this restart.
+
 ***
 
 #### function switchVersion()
@@ -357,6 +405,8 @@ Immediately restarts the app and loads the newly downloaded version.
 
 > Warning! Do not rely solely on `progress` to determine download completion! Call this strictly after `await downloadUpdate()` finishes.
 
+If `beforeReload` is configured, Cresc passes `{ type: "switchVersion", hash }` and waits for it before restarting. Returning `false`, throwing an error, or rejecting the promise cancels this restart.
+
 ***
 
 #### function switchVersionLater()
@@ -364,6 +414,8 @@ Immediately restarts the app and loads the newly downloaded version.
 Loads the newly downloaded version on the next natural app restart.
 
 > Warning! Call this strictly after `await downloadUpdate()` finishes.
+
+This method does not destroy the current RN instance immediately, so it does not trigger `beforeReload`.
 
 ***
 

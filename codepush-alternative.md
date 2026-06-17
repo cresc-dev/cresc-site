@@ -70,6 +70,7 @@ Usually yes. The migration work is mostly SDK integration, baseline upload, and 
 
 If you want the fastest route, go to [Getting Started](/docs/getting-started.md) and [register a Cresc account](https://admin.cresc.dev/#/register).
 
+
 ### Contact Us
 
 - [Email hi@cresc.dev](mailto:hi@cresc.dev)

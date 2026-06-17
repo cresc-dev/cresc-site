@@ -6,6 +6,7 @@ Once installation and native configuration are complete, the next step is wiring
 Prefer [Install & Use Skills](/docs/skills.md) first so AI can wire `UpdateProvider`, initialize the client, and apply the common OTA strategies for your project automatically. Keep this page as the manual reference and as a review checklist for generated changes.
 :::
 
+
 ### Retrieve your `appKey`
 Each platform uses its own `appKey`. The value is stored in `update.json`, which is created by `cresc createApp` or `cresc selectApp`.
 ```javascript
@@ -62,6 +63,9 @@ const crescClient = new Cresc({
   updateStrategy: "silentAndLater",
 });
 ```
+:::tip
+If your app uses Sentry profiling, performance sampling, or another native SDK that keeps work alive on background threads, and you use `"silentAndNow"`, `switchVersion()`, or `restartApp()`, upgrade `react-native-update` to v10.42.2+ and configure [`beforeReload`](/docs/api.md) to stop sampling and flush pending work before the immediate reload.
+:::
 ### Build a custom update UI
 If you want full control over the UI, disable the built-in update strategy and use `useUpdate()`:
 ```js

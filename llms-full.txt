@@ -74,6 +74,7 @@ Usually yes. The migration work is mostly SDK integration, baseline upload, and 
 
 If you want the fastest route, go to [Getting Started](/docs/getting-started.md) and [register a Cresc account](https://admin.cresc.dev/#/register).
 
+
 ### Contact Us
 
 - [Email hi@cresc.dev](mailto:hi@cresc.dev)
@@ -280,6 +281,7 @@ We assume you already have everything set up for React Native development, inclu
 If your AI coding tool supports Skills, start with [Install & Use Skills](/docs/skills.md) and let AI handle most of the installation, native checks, and wrapper changes for your current project. This page stays as the manual fallback for brownfield apps, custom workspaces, or teams reviewing every generated change.
 :::
 
+
 ### Installation
 Run the following commands in your project's root directory (if you use other package managers like yarn, substitute accordingly):
 
@@ -330,14 +332,18 @@ If RN version >= 0.60, you don't need this manual linking step.
 Note: If you have a brownfield native-RN project, or monorepo, or any custom scenario, the auto-linking function might fail because custom configurations might be incomplete or not fit the standard RN directory structure. Even if RN version >= 0.60, you might still need manual link operation.
 :::
 #### iOS
+
 RN < 0.60 and using CocoaPods (Recommended)
+
 1. Add to `ios/Podfile`:
 ```ruby
 pod 'react-native-update', path: '../node_modules/react-native-update'
 ```
 2. Run `pod install` in the `ios` directory.
 3. Recompile.
+
 RN < 0.60 without CocoaPods
+
 1. In Xcode's Project Navigator, right click `Libraries` ➜ `Add Files to [Your Project Name]`
 2. Go to `node_modules` ➜ `react-native-update` ➜ `ios` and select `RCTPushy.xcodeproj`
 3. In Xcode's Project Navigator, select your project. Under `Build Phases` ➜ `Link Binary With Libraries`, add `libRCTPushy.a`, `libz.tbd`, `libbz2.1.0.tbd`.
@@ -350,8 +356,11 @@ DEST="../node_modules/react-native-update/ios/"
 date +%s > "$DEST/pushy_build_time.txt"
 ```
 7. Attempt compilation. If successful, a `pushy_build_time.txt` file is generated inside `../node_modules/react-native-update/ios/`. Then, add the resulting `pushy_build_time.txt` into `Copy Bundle Resources`.
+
 #### Android
+
 RN < 0.60 or other scenarios preventing auto-link
+
 1. Add the following to `android/settings.gradle`:
 
    ```groovy
@@ -368,6 +377,7 @@ RN < 0.60 or other scenarios preventing auto-link
 3. Open `android/app/src/main/java/[...]/MainApplication.java`:
 - Add `import cn.reactnative.modules.update.UpdatePackage;` at the top of the file
 - Add `new UpdatePackage()` inside the `getPackages()` method (watch out for commas)
+
 ### Configuring the Bundle URL
 If you use `expo` 48+ and `react-native-update` >= 10.28.2, the bundle URL configures automatically. Skip straight to the [next step](#adding-a-deep-link-for-testing).
 If you don't use `expo`, or use an expo version under 48, manually follow the steps down below.
@@ -708,6 +718,7 @@ Once installation and native configuration are complete, the next step is wiring
 Prefer [Install & Use Skills](/docs/skills.md) first so AI can wire `UpdateProvider`, initialize the client, and apply the common OTA strategies for your project automatically. Keep this page as the manual reference and as a review checklist for generated changes.
 :::
 
+
 ### Retrieve your `appKey`
 Each platform uses its own `appKey`. The value is stored in `update.json`, which is created by `cresc createApp` or `cresc selectApp`.
 ```javascript
@@ -764,6 +775,9 @@ const crescClient = new Cresc({
   updateStrategy: "silentAndLater",
 });
 ```
+:::tip
+If your app uses Sentry profiling, performance sampling, or another native SDK that keeps work alive on background threads, and you use `"silentAndNow"`, `switchVersion()`, or `restartApp()`, upgrade `react-native-update` to v10.42.2+ and configure [`beforeReload`](/docs/api.md) to stop sampling and flush pending work before the immediate reload.
+:::
 ### Build a custom update UI
 If you want full control over the UI, disable the built-in update strategy and use `useUpdate()`:
 ```js
@@ -1160,6 +1174,13 @@ interface CrescOptions {
   // Executed when the native package is expired, returning false stops the built-in strategy.
   // Requires v10.28.2+
   onPackageExpired?: (info: UpdateInfo) => Promise<boolean>;
+
+  // Executed before switchVersion or restartApp performs an immediate reload; returning false cancels this reload.
+  // Use it to wait for native SDKs such as Sentry to stop profiling and flush pending reports before the RN instance is destroyed.
+  // Requires v10.42.2+
+  beforeReload?: (
+    context: BeforeReloadContext,
+  ) => Promise<boolean | void> | boolean | void;
 }
 
 // State reported after an update check finishes
@@ -1170,6 +1191,14 @@ type UpdateCheckState = {
   result?: UpdateInfo;
   // Error object when status is error
   error?: Error;
+};
+
+// Reload context passed to beforeReload
+type BeforeReloadContext = {
+  // switchVersion: immediately apply a downloaded OTA update; restartApp: restart the current app
+  type: "switchVersion" | "restartApp";
+  // Present for switchVersion and contains the OTA hash about to be applied
+  hash?: string;
 };
 
 // Log event types
@@ -1223,6 +1252,35 @@ interface EventData {
 }
 ```
 
+#### beforeReload Example: Clean Up Native SDKs Before Reload
+
+`beforeReload` runs before `switchVersion()` and `restartApp()` actually reload the app. Returning `false` cancels the reload; thrown errors or rejected promises also stop the reload. `switchVersionLater()` does not destroy the current RN instance immediately, so it does not trigger this hook.
+
+If your app uses native SDKs that may keep profiling, sampling, logging, or upload work on background threads, clean them up here before Cresc reloads the RN instance:
+
+```ts
+import { NativeModules } from "react-native";
+import * as Sentry from "@sentry/react-native";
+import { Cresc } from "react-native-update";
+
+const crescClient = new Cresc({
+  appKey,
+  beforeReload: async (_context) => {
+    try {
+      NativeModules.RNSentry?.stopProfiling?.();
+    } catch {}
+
+    const flushed = await Promise.race([
+      Sentry.flush(),
+      new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 1500)),
+    ]);
+
+    // Returning false cancels this immediate reload until the next check or manual trigger.
+    return flushed;
+  },
+});
+```
+
 #### useUpdate()
 
 Utility functions for OTA updates. This method can also be imported using the alias `useCresc`.
@@ -1261,9 +1319,9 @@ interface UpdateContext {
   // We still recommend getting `updateInfo` via `useUpdate()` primarily
   checkUpdate: () => Promise<void | UpdateInfo>;
   // Called after download completes to immediately restart and switch to the new version
-  switchVersion: () => void;
+  switchVersion: () => Promise<void>;
   // Called after download completes to switch to the new version on the next user-initiated restart (silent update)
-  switchVersionLater: () => void;
+  switchVersionLater: () => Promise<void>;
   // Manually mark update as successful after a restart
   markSuccess: () => void;
   // Clear the last error state
@@ -1292,6 +1350,8 @@ interface UpdateContext {
   packageVersion: string;
   // Current Cresc service instance
   client?: Cresc;
+  // Immediately restart the app. Requires v10.28.2+.
+  restartApp: () => Promise<void>;
   // Progress data after download starts
   progress?: {
     hash: string;
@@ -1439,6 +1499,8 @@ Example return:
 
 Immediately restarts the application. Available in v10.28.2+.
 
+If `beforeReload` is configured, Cresc waits for it before restarting. Returning `false`, throwing an error, or rejecting the promise cancels this restart.
+
 ***
 
 #### function switchVersion()
@@ -1447,6 +1509,8 @@ Immediately restarts the app and loads the newly downloaded version.
 
 > Warning! Do not rely solely on `progress` to determine download completion! Call this strictly after `await downloadUpdate()` finishes.
 
+If `beforeReload` is configured, Cresc passes `{ type: "switchVersion", hash }` and waits for it before restarting. Returning `false`, throwing an error, or rejecting the promise cancels this restart.
+
 ***
 
 #### function switchVersionLater()
@@ -1454,6 +1518,8 @@ Immediately restarts the app and loads the newly downloaded version.
 Loads the newly downloaded version on the next natural app restart.
 
 > Warning! Call this strictly after `await downloadUpdate()` finishes.
+
+This method does not destroy the current RN instance immediately, so it does not trigger `beforeReload`.
 
 ***
 
@@ -2211,21 +2277,70 @@ url: /pricing.md
 ---
 
 
+
 # Simple monthly tiers, arranged by release volume.
 
 Choose a plan based on your release traffic and the amount of app history you need to keep available.
 
-CDN delivery included on every plan.Unused resources can be removed to reclaim quota.FreeUSD $0/mo1K/day3 apps30 base pkgs · 30 MB30 updates · 3 MBCDN delivery included[Start free](/docs/getting-started)## Standard
+CDN delivery included on every plan.Unused resources can be removed to reclaim quota.
+
+FreeUSD $0/mo1K/day3 apps30 base pkgs · 30 MB30 updates · 3 MBCDN delivery included
+
+[Start free](/docs/getting-started)
+
+## Standard
 
 For growing apps shipping on a steady monthly rhythm.
 
-USD$19/ monthDaily queries10K / dayApps5 appsNative Packages50 base pkgs · 150 MB eaHot Update Packages50 updates · 15 MB ea[Subscribe+](https://admin.cresc.dev)CDN delivery included
+USD$19/ month
+
+Daily queries
+
+10K / day
+
+Apps
+
+5 apps
+
+Native Packages
+
+50 base pkgs · 150 MB ea
+
+Hot Update Packages
+
+50 updates · 15 MB ea
+
+[Subscribe+](https://admin.cresc.dev)
+
+CDN delivery included
 
 ## Premium
 
-PopularThe main tier for production apps with regular release traffic.
+Popular
 
-USD$39/ monthDaily queries100K / dayApps10 appsNative Packages60 base pkgs · 500 MB eaHot Update Packages60 updates · 50 MB ea[Subscribe+](https://admin.cresc.dev)CDN delivery included
+The main tier for production apps with regular release traffic.
+
+USD$39/ month
+
+Daily queries
+
+100K / day
+
+Apps
+
+10 apps
+
+Native Packages
+
+60 base pkgs · 500 MB ea
+
+Hot Update Packages
+
+60 updates · 50 MB ea
+
+[Subscribe+](https://admin.cresc.dev)
+
+CDN delivery included
 
 Pricing Comparison
 
@@ -2235,7 +2350,9 @@ Expo EAS Update and Cresc use different meters. Expo counts unique users who dow
 
 ### Expo EAS Update
 
-Checked 2026-04-17Free
+Checked 2026-04-17
+
+Free
 
 1K update MAUs
 
@@ -2257,7 +2374,9 @@ Expo counts update MAUs only when a device downloads at least one update during 
 
 ### Same monthly scenarios
 
-Same basisFirst paid tier
+Same basis
+
+First paid tier
 
 Expo: Starter is $19/mo, then usage-based billing after 3K update MAUs and 100 GiB.
 
@@ -2279,7 +2398,9 @@ The direct difference is not that one "daily query" equals one Expo MAU. The dif
 
 ### Cresc upgrade path
 
-Fixed tiersStart with the tier that covers current release traffic. Upgrading changes the allowance, not the app integration or release flow, so teams can add capacity when real usage requires it instead of buying too much headroom early.
+Fixed tiers
+
+Start with the tier that covers current release traffic. Upgrading changes the allowance, not the app integration or release flow, so teams can add capacity when real usage requires it instead of buying too much headroom early.
 
 Standard
 
@@ -2313,7 +2434,9 @@ $1699/mo
 
 Want the detailed breakdown, including Expo's own overage example?
 
-[Read pricing comparison](/expo-pricing-vs-cresc)Higher Volume
+[Read pricing comparison](/expo-pricing-vs-cresc)
+
+Higher Volume
 
 ## Pro and above.
 
@@ -2321,19 +2444,80 @@ Want the detailed breakdown, including Expo's own overage example?
 
 For larger teams that need room for heavier binaries and scale.
 
-USD$99/ monthDaily queries1M / dayApps50 appsNative Packages100 base pkgs · 2 GB eaHot Update Packages100 updates · 200 MB ea[Subscribe+](https://admin.cresc.dev)CDN delivery included
+USD$99/ month
+
+Daily queries
+
+1M / day
+
+Apps
+
+50 apps
+
+Native Packages
+
+100 base pkgs · 2 GB ea
+
+Hot Update Packages
+
+100 updates · 200 MB ea
+
+[Subscribe+](https://admin.cresc.dev)
+
+CDN delivery included
 
 ## Max
 
 For high-volume apps that query often and carry wider fleets.
 
-USD$399/ monthDaily queries10M / dayAppsSame limits as ProNative PackagesSame limits as ProHot Update PackagesSame limits as Pro[Subscribe+](https://admin.cresc.dev)CDN delivery included
+USD$399/ month
+
+Daily queries
+
+10M / day
+
+Apps
+
+Same limits as Pro
+
+Native Packages
+
+Same limits as Pro
+
+Hot Update Packages
+
+Same limits as Pro
+
+[Subscribe+](https://admin.cresc.dev)
+
+CDN delivery included
 
 ## Ultra
 
 For very large distribution footprints and sustained daily traffic.
 
-USD$1699/ monthDaily queries100M / dayAppsSame limits as ProNative PackagesSame limits as ProHot Update PackagesSame limits as Pro[Subscribe+](https://admin.cresc.dev)CDN delivery included
+USD$1699/ month
+
+Daily queries
+
+100M / day
+
+Apps
+
+Same limits as Pro
+
+Native Packages
+
+Same limits as Pro
+
+Hot Update Packages
+
+Same limits as Pro
+
+[Subscribe+](https://admin.cresc.dev)
+
+CDN delivery included
+
 
 
 ### Contact Us
@@ -2438,6 +2622,7 @@ Once Cresc is working in production:
 - [CodePush alternative](/codepush-alternative.md)
 - [React Native OTA updates](/react-native-ota-updates.md)
 - [Expo pricing vs Cresc](/expo-pricing-vs-cresc.md)
+
 
 ### Contact Us
 
@@ -2569,6 +2754,7 @@ That is the economic story worth emphasizing: **fixed public ceilings, intention
 - [Pricing](/pricing.md)
 - [CodePush alternative](/codepush-alternative.md)
 
+
 ### Contact Us
 
 - [Email hi@cresc.dev](mailto:hi@cresc.dev)
@@ -2668,6 +2854,7 @@ Smaller patches reduce bandwidth usage and make emergency fixes cheaper and fast
 
 Cresc is the more direct migration target because that replacement story is already part of its positioning and documentation.
 
+
 ### Contact Us
 
 - [Email hi@cresc.dev](mailto:hi@cresc.dev)
@@ -2705,15 +2892,22 @@ url: /index.md
 ---
 
 
+
 React Native OTA Updates
 
 # React Native OTA updates with smaller patches and safer rollouts.
 
 Cresc is a CodePush and App Center alternative for teams that need delta patches, rollback protection, CI-friendly publishing, and an AI-first integration path through the official Skill across React Native, Expo, Hermes, and Harmony builds.
 
-[Install AI Skill](/docs/skills)[View Manual Setup](/docs/getting-started)[Open-source on GitHub](https://github.com/reactnativecn/react-native-update)Delta patchesSelf-host friendlyApp Center migrationNamed for crescendo
+[Install AI Skill](/docs/skills)[View Manual Setup](/docs/getting-started)
 
-![Cresc Logo](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTA4IiBoZWlnaHQ9IjEwOCIgdmlld0JveD0iMCAwIDEwOCAxMDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImNyZXNjX3N0cm9rZSIgeDE9IjE2IiB5MT0iMTgiIHgyPSI5MCIgeTI9IjkwIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNEN0I1N0MiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIwLjU1IiBzdG9wLWNvbG9yPSIjQTg2QTQyIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzZFMzQyOCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxyYWRpYWxHcmFkaWVudCBpZD0iY3Jlc2NfcGVhcmwiIGN4PSIwIiBjeT0iMCIgcj0iMSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIGdyYWRpZW50VHJhbnNmb3JtPSJ0cmFuc2xhdGUoODQgNTApIHJvdGF0ZSg1Ni4zMSkgc2NhbGUoMTguNjAxMSkiPgogICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRkZGREY5Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMC41NiIgc3RvcC1jb2xvcj0iI0YwRTFDQSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNDN0EwNzIiLz4KICAgIDwvcmFkaWFsR3JhZGllbnQ+CiAgPC9kZWZzPgogIDxwYXRoCiAgICBkPSJNIDg4IDI1IEEgNDAgNDAgMCAxIDAgODggODMiCiAgICBzdHJva2U9InVybCgjY3Jlc2Nfc3Ryb2tlKSIKICAgIHN0cm9rZS13aWR0aD0iMTgiCiAgICBzdHJva2UtbGluZWNhcD0icm91bmQiCiAgLz4KICA8cGF0aAogICAgZD0iTSA4NiAzMSBBIDMyIDMyIDAgMSAwIDg2IDc3IgogICAgc3Ryb2tlPSIjRjRFNkNEIgogICAgc3Ryb2tlLW9wYWNpdHk9IjAuMjgiCiAgICBzdHJva2Utd2lkdGg9IjQiCiAgICBzdHJva2UtbGluZWNhcD0icm91bmQiCiAgLz4KICA8Y2lyY2xlIGN4PSI4OCIgY3k9IjU0IiByPSIxMCIgZmlsbD0idXJsKCNjcmVzY19wZWFybCkiIHN0cm9rZT0iI0I2ODY1NyIgc3Ryb2tlLXdpZHRoPSIxLjYiIC8+CiAgPGNpcmNsZSBjeD0iODQuMiIgY3k9IjQ5LjMiIHI9IjIuOCIgZmlsbD0iI0ZGRkZGRiIgZmlsbC1vcGFjaXR5PSIwLjg4IiAvPgo8L3N2Zz4K)## Built for release teams that need OTA updates to stay boring.
+[Open-source on GitHub](https://github.com/reactnativecn/react-native-update)Delta patchesSelf-host friendlyApp Center migration
+
+Named for crescendo
+
+![Cresc Logo](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTA4IiBoZWlnaHQ9IjEwOCIgdmlld0JveD0iMCAwIDEwOCAxMDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImNyZXNjX3N0cm9rZSIgeDE9IjE2IiB5MT0iMTgiIHgyPSI5MCIgeTI9IjkwIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNEN0I1N0MiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIwLjU1IiBzdG9wLWNvbG9yPSIjQTg2QTQyIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzZFMzQyOCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxyYWRpYWxHcmFkaWVudCBpZD0iY3Jlc2NfcGVhcmwiIGN4PSIwIiBjeT0iMCIgcj0iMSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIGdyYWRpZW50VHJhbnNmb3JtPSJ0cmFuc2xhdGUoODQgNTApIHJvdGF0ZSg1Ni4zMSkgc2NhbGUoMTguNjAxMSkiPgogICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRkZGREY5Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMC41NiIgc3RvcC1jb2xvcj0iI0YwRTFDQSIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNDN0EwNzIiLz4KICAgIDwvcmFkaWFsR3JhZGllbnQ+CiAgPC9kZWZzPgogIDxwYXRoCiAgICBkPSJNIDg4IDI1IEEgNDAgNDAgMCAxIDAgODggODMiCiAgICBzdHJva2U9InVybCgjY3Jlc2Nfc3Ryb2tlKSIKICAgIHN0cm9rZS13aWR0aD0iMTgiCiAgICBzdHJva2UtbGluZWNhcD0icm91bmQiCiAgLz4KICA8cGF0aAogICAgZD0iTSA4NiAzMSBBIDMyIDMyIDAgMSAwIDg2IDc3IgogICAgc3Ryb2tlPSIjRjRFNkNEIgogICAgc3Ryb2tlLW9wYWNpdHk9IjAuMjgiCiAgICBzdHJva2Utd2lkdGg9IjQiCiAgICBzdHJva2UtbGluZWNhcD0icm91bmQiCiAgLz4KICA8Y2lyY2xlIGN4PSI4OCIgY3k9IjU0IiByPSIxMCIgZmlsbD0idXJsKCNjcmVzY19wZWFybCkiIHN0cm9rZT0iI0I2ODY1NyIgc3Ryb2tlLXdpZHRoPSIxLjYiIC8+CiAgPGNpcmNsZSBjeD0iODQuMiIgY3k9IjQ5LjMiIHI9IjIuOCIgZmlsbD0iI0ZGRkZGRiIgZmlsbC1vcGFjaXR5PSIwLjg4IiAvPgo8L3N2Zz4K)
+
+## Built for release teams that need OTA updates to stay boring.
 
 The native build becomes the baseline. Every later React Native update ships only the changed business logic, keeping downloads smaller and emergency fixes much faster.
 
@@ -2727,7 +2921,11 @@ Incremental Delivery
 
 Cresc keeps the installed build as the base, then carries only the missing JavaScript and asset changes into place locally.
 
-![](/images/girl-with-pearl-earring.webp)App Updated!Movement I
+![](/images/girl-with-pearl-earring.webp)
+
+App Updated!
+
+Movement I
 
 ### Hold the full base
 
@@ -2751,21 +2949,33 @@ In Practice
 
 Install the CLI, upload the baseline build, and publish the next delta update through the dashboard or CI whenever the app changes.
 
-I### Install the CLI
+I
+
+### Install the CLI
 
 Connect your project to the publishing workflow with the Cresc command-line tool.
 
-II### Upload the baseline package
+II
+
+### Upload the baseline package
 
 Give Cresc the native build it compares against before later updates are published.
 
-III### Publish the update
+III
+
+### Publish the update
 
 Bundle JavaScript and assets, then release the update through the dashboard or your CI flow.
 
-first releaseproduction lanerelease@studio~/crescendo-app$Once the baseline is uploaded, the dashboard and CLI can handle the rest of the OTA release cycle with much less effort.
+first releaseproduction lane
 
-[Open Dashboard](https://admin.cresc.dev)[View Docs](/docs/getting-started)Search Paths
+release@studio~/crescendo-app$
+
+Once the baseline is uploaded, the dashboard and CLI can handle the rest of the OTA release cycle with much less effort.
+
+[Open Dashboard](https://admin.cresc.dev)[View Docs](/docs/getting-started)
+
+Search Paths
 
 ## Start from the question your team already has.
 
@@ -2777,19 +2987,25 @@ Migration
 
 See the migration path, rollout model, and why Cresc fits React Native teams that still need OTA updates after App Center's retirement.
 
-[Open Migration Guide](/codepush-alternative)Comparison
+[Open Migration Guide](/codepush-alternative)
+
+Comparison
 
 ### Expo Updates vs Cresc
 
 Compare bundle size, delta delivery, self-hosting flexibility, and when each workflow makes sense.
 
-[Compare Options](/expo-updates-vs-cresc)Overview
+[Compare Options](/expo-updates-vs-cresc)
+
+Overview
 
 ### React Native OTA updates
 
 Get the practical overview: what OTA updates can change, what still needs a native release, and how Cresc fits the release pipeline.
 
-[Read The Guide](/react-native-ota-updates)### Contact Us
+[Read The Guide](/react-native-ota-updates)
+
+### Contact Us
 
 - [Email hi@cresc.dev](mailto:hi@cresc.dev)
 - [GitHub Discussions](https://github.com/reactnativecn/react-native-update/discussions)
@@ -2884,6 +3100,7 @@ No. Native code and native dependency changes still require a normal build and d
 ### Why use Cresc instead of rolling my own?
 
 Cresc gives you the release workflow around OTA updates: baseline upload, delta patch generation, rollout control, rollback behavior, and CI-friendly tooling.
+
 
 ### Contact Us
 

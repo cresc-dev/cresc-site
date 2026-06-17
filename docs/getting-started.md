@@ -9,6 +9,7 @@ We assume you already have everything set up for React Native development, inclu
 If your AI coding tool supports Skills, start with [Install & Use Skills](/docs/skills.md) and let AI handle most of the installation, native checks, and wrapper changes for your current project. This page stays as the manual fallback for brownfield apps, custom workspaces, or teams reviewing every generated change.
 :::
 
+
 ### Installation
 Run the following commands in your project's root directory (if you use other package managers like yarn, substitute accordingly):
 
@@ -59,14 +60,18 @@ If RN version >= 0.60, you don't need this manual linking step.
 Note: If you have a brownfield native-RN project, or monorepo, or any custom scenario, the auto-linking function might fail because custom configurations might be incomplete or not fit the standard RN directory structure. Even if RN version >= 0.60, you might still need manual link operation.
 :::
 #### iOS
+
 RN < 0.60 and using CocoaPods (Recommended)
+
 1. Add to `ios/Podfile`:
 ```ruby
 pod 'react-native-update', path: '../node_modules/react-native-update'
 ```
 2. Run `pod install` in the `ios` directory.
 3. Recompile.
+
 RN < 0.60 without CocoaPods
+
 1. In Xcode's Project Navigator, right click `Libraries` ➜ `Add Files to [Your Project Name]`
 2. Go to `node_modules` ➜ `react-native-update` ➜ `ios` and select `RCTPushy.xcodeproj`
 3. In Xcode's Project Navigator, select your project. Under `Build Phases` ➜ `Link Binary With Libraries`, add `libRCTPushy.a`, `libz.tbd`, `libbz2.1.0.tbd`.
@@ -79,8 +84,11 @@ DEST="../node_modules/react-native-update/ios/"
 date +%s > "$DEST/pushy_build_time.txt"
 ```
 7. Attempt compilation. If successful, a `pushy_build_time.txt` file is generated inside `../node_modules/react-native-update/ios/`. Then, add the resulting `pushy_build_time.txt` into `Copy Bundle Resources`.
+
 #### Android
+
 RN < 0.60 or other scenarios preventing auto-link
+
 1. Add the following to `android/settings.gradle`:
 
    ```groovy
@@ -97,6 +105,7 @@ RN < 0.60 or other scenarios preventing auto-link
 3. Open `android/app/src/main/java/[...]/MainApplication.java`:
 - Add `import cn.reactnative.modules.update.UpdatePackage;` at the top of the file
 - Add `new UpdatePackage()` inside the `getPackages()` method (watch out for commas)
+
 ### Configuring the Bundle URL
 If you use `expo` 48+ and `react-native-update` >= 10.28.2, the bundle URL configures automatically. Skip straight to the [next step](#adding-a-deep-link-for-testing).
 If you don't use `expo`, or use an expo version under 48, manually follow the steps down below.
