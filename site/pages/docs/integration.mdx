@@ -85,6 +85,10 @@ const crescClient = new Cresc({
 });
 ```
 
+:::tip
+If your app uses Sentry profiling, performance sampling, or another native SDK that keeps work alive on background threads, and you use `"silentAndNow"`, `switchVersion()`, or `restartApp()`, upgrade `react-native-update` to v10.42.2+ and configure [`beforeReload`](/docs/api) to stop sampling and flush pending work before the immediate reload.
+:::
+
 ### Build a custom update UI
 
 If you want full control over the UI, disable the built-in update strategy and use `useUpdate()`:
