@@ -224,7 +224,7 @@ class AppDelegate: RCTAppDelegate {
 
 #### Android
 
-Add the following piece of code inside `MainApplication` (if integrating with a native project not utilizing `ReactApplication`, use [this API integration instead](api#updatecontextsetcustominstancemanagerreactinstancemanager-instancemanager)):
+Add the following piece of code inside `MainApplication` (if you package React Native as an AAR with `@callstack/react-native-brownfield`, or the host app does not use `ReactApplication` / `ReactActivity`, see [Brownfield Integration](/docs/brownfield)):
 
 <Tabs>
 <Tab label="Kotlin (RN 0.82 or up)">

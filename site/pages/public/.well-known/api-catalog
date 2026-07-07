@@ -1,0 +1,25 @@
+{
+  "linkset": [
+    {
+      "anchor": "https://api.cresc.dev/",
+      "service-desc": [
+        {
+          "href": "https://api.cresc.dev/openapi",
+          "type": "application/json"
+        }
+      ],
+      "service-doc": [
+        {
+          "href": "https://cresc.dev/docs/api",
+          "type": "text/html"
+        }
+      ],
+      "status": [
+        {
+          "href": "https://api.cresc.dev/status",
+          "type": "application/json"
+        }
+      ]
+    }
+  ]
+}

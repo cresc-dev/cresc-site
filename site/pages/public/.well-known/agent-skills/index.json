@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
+  "skills": [
+    {
+      "name": "react-native-update",
+      "type": "skill-md",
+      "description": "Integrate and troubleshoot React Native Update OTA for Pushy and Cresc.",
+      "url": "https://cresc.dev/.well-known/agent-skills/react-native-update/SKILL.md",
+      "digest": "sha256:95fb81305c3fded6d6b7e165c8d06c69a6cee8538501a87842e1799951ddc442"
+    }
+  ]
+}

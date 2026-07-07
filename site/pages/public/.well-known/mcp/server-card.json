@@ -1,0 +1,12 @@
+{
+  "serverInfo": {
+    "name": "Cresc API Server",
+    "version": "1.0.0"
+  },
+  "endpoint": "https://api.cresc.dev/mcp",
+  "capabilities": {
+    "tools": {},
+    "resources": {},
+    "prompts": {}
+  }
+}
