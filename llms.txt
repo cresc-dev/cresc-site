@@ -18,6 +18,7 @@
 - [CLI Tools](/docs/cli.md)
 - [Best Practices](/docs/bestpractice.md)
 - [FAQ](/docs/faq.md)
+- [Brownfield Integration](/docs/brownfield.md): Integrate Cresc into Android apps that consume React Native through @callstack/react-native-brownfield AARs.
 
 ## Pricing
 

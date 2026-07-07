@@ -450,7 +450,11 @@ Example:
 
 #### UpdateContext.setCustomInstanceManager(ReactInstanceManager instanceManager)
 
-If integrating into an existing Android host app, pass your custom ReactInstanceManager here. Available since `v5.5.8`.
+If you are integrating into an existing Android host app and still create `ReactInstanceManager` manually, pass that instance here. Available since `v5.5.8`.
+
+:::info
+For New Architecture or `@callstack/react-native-brownfield` AAR integrations, prefer `ReactHost` with `jsBundleFilePath`, and expose `getReactHost()` from the host `Application`. See [Brownfield Integration](/docs/brownfield.md) for the full setup.
+:::
 
 Example:
 

@@ -147,17 +147,29 @@ Locally binds an existing app configuration to the current project folder.
 
 Uploads an `.ipa` to the managed platform. (Requires CLI 1.24.0+)
 
+- `config`: Specify the path to the configuration file (default is `update.json`, requires CLI v2.16.1+).
+- `appId`: Specify the target App ID (overrides config file settings, requires CLI v2.16.1+).
+- `appKey`: Specify the target App Key (overrides config file settings, requires CLI v2.16.1+).
+
 ***
 
 #### cresc uploadApk \[apkFile]
 
 Uploads an `.apk` to the managed platform. (Requires CLI 1.24.0+)
 
+- `config`: Specify the path to the configuration file (default is `update.json`, requires CLI v2.16.1+).
+- `appId`: Specify the target App ID (overrides config file settings, requires CLI v2.16.1+).
+- `appKey`: Specify the target App Key (overrides config file settings, requires CLI v2.16.1+).
+
 ***
 
 #### cresc uploadAab \[aabFile]
 
 Uploads an `.aab` to the managed platform. (Requires CLI 2.6.0+)
+
+- `config`: Specify the path to the configuration file (default is `update.json`, requires CLI v2.16.1+).
+- `appId`: Specify the target App ID (overrides config file settings, requires CLI v2.16.1+).
+- `appKey`: Specify the target App Key (overrides config file settings, requires CLI v2.16.1+).
 
 ***
 
