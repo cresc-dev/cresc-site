@@ -1181,6 +1181,11 @@ interface CrescOptions {
   beforeReload?: (
     context: BeforeReloadContext,
   ) => Promise<boolean | void> | boolean | void;
+
+  // Whether to disable reporting update lifecycle events (version health stats), default: false (enabled)
+  // See the "Version health telemetry" section below
+  // Requires v10.47.0+
+  disableTelemetry?: boolean;
 }
 
 // State reported after an update check finishes
@@ -1251,6 +1256,28 @@ interface EventData {
   [key: string]: any;
 }
 ```
+
+#### Version health telemetry
+
+Starting from v10.47.0, the SDK automatically reports a small set of lifecycle events to the update server at key points of the update flow. They power the per-version health view in the admin panel (download failure rate, patch failure rate, rollback rate, etc.), so you can spot a bad release right after publishing:
+
+- `download_success` / `download_fail`: the update package downloaded successfully / all download strategies failed
+- `patch_fail`: applying an incremental patch failed (including cases recovered by falling back to the full package), or switching versions failed
+- `rollback`: the new version crashed on startup and was automatically rolled back
+- `mark_success`: the new version started up and was marked successful
+
+Each report only contains the update hash, the native package version, `cInfo` (SDK/RN/OS versions and the device identifier, same as in checkUpdate requests), and a truncated error summary on failures — never any business data. Reports are single fire-and-forget requests: no retries, failures are silently ignored, and they never affect the update flow or performance. Nothing is reported in development (`__DEV__`).
+
+To opt out, disable it at initialization:
+
+```js
+const crescClient = new Cresc({
+  appKey,
+  disableTelemetry: true,
+});
+```
+
+Note that with telemetry disabled, the admin panel cannot compute version health for these clients, nor warn you when a release is failing at scale.
 
 #### beforeReload Example: Clean Up Native SDKs Before Reload
 
