@@ -6,7 +6,7 @@ export const homeSchema = {
   operatingSystem: "iOS, Android, HarmonyOS",
   url: "https://cresc.dev/",
   description:
-    "React Native OTA updates with delta patches, rollback safety, CI/CD publishing, and migration support for CodePush or App Center.",
+    "React Native OTA updates with delta patches, release risk monitoring, automatic protection, CI/CD publishing, and migration support for CodePush or App Center.",
   offers: {
     "@type": "Offer",
     price: "0",
