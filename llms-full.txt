@@ -1222,6 +1222,10 @@ type EventType =
   | "errorUpdate"
   // Update success
   | "markSuccess"
+  // Reset to the packaged bundle succeeded (resetToPackagedBundle). Requires v10.48.0+
+  | "reset"
+  // Reset to the packaged bundle failed. Requires v10.48.0+
+  | "errorReset"
   // Downloading APK
   | "downloadingApk"
   // User rejected storage permission before downloading APK
@@ -1335,6 +1339,7 @@ const {
   updateInfo,
   lastError,
   restartApp,
+  resetToPackagedBundle,
 } = useUpdate();
 ```
 
@@ -1379,6 +1384,8 @@ interface UpdateContext {
   client?: Cresc;
   // Immediately restart the app. Requires v10.28.2+.
   restartApp: () => Promise<void>;
+  // Reset to the bundle packaged in the binary. Returns whether it succeeded. Requires v10.48.0+.
+  resetToPackagedBundle: (options?: { restart?: boolean }) => Promise<boolean>;
   // Progress data after download starts
   progress?: {
     hash: string;
@@ -1527,6 +1534,35 @@ Example return:
 Immediately restarts the application. Available in v10.28.2+.
 
 If `beforeReload` is configured, Cresc waits for it before restarting. Returning `false`, throwing an error, or rejecting the promise cancels this restart.
+
+***
+
+#### async function resetToPackagedBundle(options?)
+
+Resets the app to the bundle packaged in the binary. Returns a `boolean` indicating whether the reset succeeded. Available in v10.48.0+.
+
+It wipes the whole OTA update state and deletes every downloaded version, so the next launch loads the bundle shipped inside the native package. Pass `{ restart: true }` to restart immediately after a successful reset (the restart goes through `restartApp`, so `beforeReload` still applies). The device identifier (uuid) is preserved, so gray release bucketing is unaffected.
+
+Useful as a "factory reset" for support instructions, remote kill switches, or recovery flows:
+
+```js
+const { resetToPackagedBundle } = useUpdate();
+
+// Wipe all OTA updates and restart into the packaged bundle
+const ok = await resetToPackagedBundle({ restart: true });
+```
+
+It can also be called directly on the client instance:
+
+```js
+const ok = await crescClient.resetToPackagedBundle();
+```
+
+Like the other update-flow APIs, it never throws by default: failures resolve to `false`, and the error (code `RESET_FAILED`) is available via `lastError` / `onError`. With `throwError: true` configured, it throws instead.
+
+:::warning
+Always check the return value. This method requires native module support (v10.48.0+): if a newer JS bundle was delivered via OTA onto an older binary, the call resolves to `false` — the app is then still running the OTA bundle, not the packaged one.
+:::
 
 ***
 
@@ -3153,6 +3189,36 @@ Movement III
 ### Set it in place locally
 
 The client applies the patch against the installed baseline and confirms the update in place.
+
+Release protection
+
+## Catch risky updates early. Stop them before they spread.
+
+Cresc watches every rollout, surfaces risk quickly, and can pause an unhealthy release before more users are affected.
+
+I
+
+### See risk clearly
+
+Know at a glance whether a release is healthy.
+
+II
+
+### React sooner
+
+Catch warning signs before they become widespread.
+
+III
+
+### Limit the impact
+
+Pause risky updates automatically and protect more users.
+
+[Explore version health →](/docs/api)
+
+![Cresc version health dashboard grouped by OTA version and native package](/images/version-health-dashboard.png)
+
+Cresc Admin version health dashboard with local sample data
 
 In Practice
 

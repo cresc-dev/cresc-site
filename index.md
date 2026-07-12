@@ -50,6 +50,36 @@ Movement III
 
 The client applies the patch against the installed baseline and confirms the update in place.
 
+Release protection
+
+## Catch risky updates early. Stop them before they spread.
+
+Cresc watches every rollout, surfaces risk quickly, and can pause an unhealthy release before more users are affected.
+
+I
+
+### See risk clearly
+
+Know at a glance whether a release is healthy.
+
+II
+
+### React sooner
+
+Catch warning signs before they become widespread.
+
+III
+
+### Limit the impact
+
+Pause risky updates automatically and protect more users.
+
+[Explore version health →](/docs/api)
+
+![Cresc version health dashboard grouped by OTA version and native package](/images/version-health-dashboard.png)
+
+Cresc Admin version health dashboard with local sample data
+
 In Practice
 
 ## Ship React Native OTA updates in three steps.
