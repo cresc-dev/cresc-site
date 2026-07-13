@@ -1,0 +1,13 @@
+{
+  "resource": "https://api.cresc.dev/",
+  "authorization_servers": [
+    "https://api.cresc.dev/"
+  ],
+  "scopes_supported": [
+    "read",
+    "write"
+  ],
+  "bearer_methods_supported": [
+    "header"
+  ]
+}

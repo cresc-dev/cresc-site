@@ -1,19 +1,26 @@
 User-agent: *
 Allow: /
+Content-Signal: ai-train=no, search=yes, ai-input=no
 
 User-agent: OAI-SearchBot
 Allow: /
+Content-Signal: ai-train=no, search=yes, ai-input=no
 
 User-agent: GPTBot
 Allow: /
+Content-Signal: ai-train=no, search=yes, ai-input=no
 
 User-agent: Claude-SearchBot
 Allow: /
+Content-Signal: ai-train=no, search=yes, ai-input=no
 
 User-agent: ClaudeBot
 Allow: /
+Content-Signal: ai-train=no, search=yes, ai-input=no
 
 User-agent: PerplexityBot
 Allow: /
+Content-Signal: ai-train=no, search=yes, ai-input=no
 
 Sitemap: https://cresc.dev/sitemap.xml
+

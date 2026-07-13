@@ -1,7 +1,9 @@
 import * as path from 'path';
+import * as fs from 'fs';
 import { defineConfig } from '@rspress/core';
 import { pluginSass } from '@rsbuild/plugin-sass';
 import rspressPluginMermaid from 'rspress-plugin-mermaid';
+
 
 export default defineConfig({
   llms: true,
@@ -51,6 +53,7 @@ export default defineConfig({
             { text: 'API Reference', link: '/docs/api' },
             { text: 'API Token', link: '/docs/api-token' },
             { text: 'CLI Tools', link: '/docs/cli' },
+            { text: 'Brownfield Integration', link: '/docs/brownfield' },
             { text: 'Best Practices', link: '/docs/bestpractice' },
           ],
         },
@@ -103,6 +106,13 @@ export default defineConfig({
           },
         },
         {
+          tag: 'script',
+          attrs: {
+            src: '/webmcp-loader.js',
+            defer: true,
+          },
+        },
+        {
           tag: 'meta',
           attrs: {
             property: 'og:keywords',
@@ -139,6 +149,67 @@ export default defineConfig({
         },
       ],
     },
+    server: {
+      headers: {
+        'Link': '</.well-known/api-catalog>; rel="api-catalog", </docs/api>; rel="service-doc"'
+      },
+      setup: ({ server }) => {
+        server.middlewares.use((req, res, next) => {
+          const urlStr = req.url || '';
+          const urlPath = urlStr.split('?')[0];
+          
+          if (urlPath === '/.well-known/api-catalog') {
+            res.setHeader('Content-Type', 'application/linkset+json; charset=utf-8');
+          } else if (urlPath === '/.well-known/openid-configuration' ||
+                     urlPath === '/.well-known/oauth-authorization-server' ||
+                     urlPath === '/.well-known/oauth-protected-resource' ||
+                     urlPath === '/.well-known/mcp/server-card.json' ||
+                     urlPath === '/.well-known/agent-skills/index.json') {
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          } else if (urlPath === '/auth.md' || urlPath.endsWith('/SKILL.md')) {
+            res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+          }
+
+          if (req.headers.accept && req.headers.accept.includes('text/markdown')) {
+            // Find corresponding .md or .mdx file
+            let pathname = urlPath;
+            if (pathname !== '/' && pathname.endsWith('/')) {
+              pathname = pathname.slice(0, -1);
+            }
+            const candidates: string[] = [];
+            if (pathname === '/') {
+              candidates.push(path.join(__dirname, 'pages', 'index.mdx'));
+              candidates.push(path.join(__dirname, 'pages', 'index.md'));
+            } else {
+              if (pathname.endsWith('.html')) {
+                pathname = pathname.slice(0, -5);
+              }
+              candidates.push(path.join(__dirname, 'pages', `${pathname}.mdx`));
+              candidates.push(path.join(__dirname, 'pages', `${pathname}.md`));
+              candidates.push(path.join(__dirname, 'pages', pathname, 'index.mdx'));
+              candidates.push(path.join(__dirname, 'pages', pathname, 'index.md'));
+            }
+
+            for (const file of candidates) {
+              if (fs.existsSync(file)) {
+                try {
+                  const content = fs.readFileSync(file, 'utf-8');
+                  res.statusCode = 200;
+                  res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+                  const tokenCount = Math.ceil(content.length / 4);
+                  res.setHeader('x-markdown-tokens', String(tokenCount));
+                  res.end(content);
+                  return;
+                } catch (e) {
+                  // ignore and fallback
+                }
+              }
+            }
+          }
+          next();
+        });
+      }
+    }
   },
   plugins: [rspressPluginMermaid()],
 });
