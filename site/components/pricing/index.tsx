@@ -209,7 +209,7 @@ function formatMetricValue(
   }
 
   if (kind === "package") {
-    return formatQuota(quota.package, "base pkgs", quota.packageSize);
+    return `${quota.package} base pkgs`;
   }
 
   return formatQuota(quota.bundle, "updates", quota.bundleSize);
@@ -427,7 +427,7 @@ function CompactFreeRow({ quota }: { quota: TierQuota }) {
             {compactFormatter.format(quota.pv)}/day
           </span>
           <span>{quota.app} apps</span>
-          <span>{quota.package} base pkgs · {formatSize(quota.packageSize)}</span>
+          <span>{quota.package} base pkgs</span>
           <span>{quota.bundle} updates · {formatSize(quota.bundleSize)}</span>
           <span className="uppercase tracking-[0.18em] text-[#9c8a7d]">
             CDN delivery included
