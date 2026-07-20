@@ -6,7 +6,7 @@ Choose a plan based on your release traffic and the amount of app history you ne
 
 CDN delivery included on every plan.Unused resources can be removed to reclaim quota.
 
-FreeUSD $0/mo1K/day3 apps30 base pkgs · 30 MB30 updates · 3 MBCDN delivery included
+FreeUSD $0/mo1K/day3 apps30 base pkgs30 updates · 3 MBCDN delivery included
 
 [Start free](/docs/getting-started)
 
@@ -26,7 +26,7 @@ Apps
 
 Native Packages
 
-50 base pkgs · 150 MB ea
+50 base pkgs
 
 Hot Update Packages
 
@@ -54,7 +54,7 @@ Apps
 
 Native Packages
 
-60 base pkgs · 500 MB ea
+60 base pkgs
 
 Hot Update Packages
 
@@ -178,7 +178,7 @@ Apps
 
 Native Packages
 
-100 base pkgs · 2 GB ea
+100 base pkgs
 
 Hot Update Packages
 

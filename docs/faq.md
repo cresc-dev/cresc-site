@@ -95,7 +95,7 @@ If you need evaluation capacity beyond the published quotas, email [hi@cresc.dev
 Quotas measure four domains:
 
 1. Number of creatable Apps (iOS and Android count separately).
-2. Number and size of Native Packages (Calculated per app). Native packages refer to the baseline APK/IPA uploaded by `cresc uploadIpa/uploadApk`.
+2. Number of Native Packages (Calculated per app). Native packages refer to the baseline APK/IPA uploaded by `cresc uploadIpa/uploadApk`.
 3. Number and size of Update Packages (Calculated per app). Update packages refer to `.ppk` binaries generated via `cresc bundle`. _Note: this is not what users download. Users download incremental diffs, which are vastly smaller._
 4. Total Daily Update Check Quota (Aggregated across ALL apps under your account). The system increments this metric every time a user opens your app and polls checking for updates. If this limit is exceeded during the day, the API stops returning updates until resetting at midnight.
 
@@ -108,7 +108,7 @@ Limits #2 and #3 apply to individual applications independently, while #4 aggreg
 #### If I hit my quota, does the system break?
 
 If you hit application, Native Package, or Update Package caps, you will be blocked from new creating/uploading actions. However, existing end-users will still request and download existing patches normally without any interruption. You must either upgrade your tier, or prune old apps/packages to free up storage slots.
-If Native/Update sizes exceed MB limit metrics, the upload will fail. Upgrade your tier, or practice strict asset [Optimization](/docs/bestpractice.md#optimizing-native-and-hot-update-package-size).
+If Update sizes exceed MB limit metrics, the upload will fail. Upgrade your tier, or practice strict asset [Optimization](/docs/bestpractice.md#optimizing-native-and-hot-update-package-size).
 If Total Daily Checks hit their cap, the API refuses queries and returns an empty payload response, leaving apps stuck on previous states until midnight resets quotas. Either upgrade tiers or adjust built-in update schedules.
 
 ***
