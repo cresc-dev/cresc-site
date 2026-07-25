@@ -11,7 +11,7 @@ If you use an AI coding tool that supports Skills, start with [Install & Use Ski
 
 ### Ultimate Update Experience
 
-- **🎯 Ultra-small update packages**: Incremental updates based on bsdiff/hdiff limits size to **tens to hundreds of KB**, saving 99%+ bandwidth compared to full-size updates.
+- **🎯 Ultra-small update packages**: Incremental updates based on bsdiff/hdiff limits size to **tens to hundreds of KB**, saving 99%+ bandwidth compared to full-size updates — with an **exclusive Hermes-bytecode optimization** on top (see benchmark below).
 - **⚡️ Lightning Fast Distribution**: Global CDN delivery and incremental patch transport keep updates fast and reliable with a **99.9%+** success rate.
 - **🛡️ Secure and Reliable**: Built-in crash rollback mechanism automatically reverts failing patches, guaranteeing stability.
 - **🌐 Full Platform Support**: Flawless support for <span style={{whiteSpace: 'nowrap'}}><AppleOutlined style={{fontSize: '16px', color: '#555', marginRight: '6px'}} /> **iOS**</span> and <span style={{whiteSpace: 'nowrap'}}><AndroidOutlined style={{fontSize: '16px', color: '#3DDC84', marginRight: '6px'}} /> **Android**</span>.
@@ -20,9 +20,26 @@ If you use an AI coding tool that supports Skills, start with [Install & Use Ski
   - ✅ **New Architecture** - Immediate support
   - ✅ **Hermes** - Full bytecode translation
 - **📖 Open Source Ecosystem**: The client SDK, CLI tools, and admin UI are [fully open source on GitHub](https://github.com/reactnativecn/react-native-update). Transparent and auditable logic means you can host your own servers without vendor lock-in.
+- **📊 Full Release Visibility**: The dashboard ships with **built-in analytics, percentage-based staged rollouts, and release health monitoring** — see every release's adoption and stability at a glance, no extra data pipeline needed.
 - **🔒 Data Security**: Intercept and handle data analytics yourself. You retain full control.
 - **💬 Professional Support**: Dedicated technical support to troubleshoot issues and keep your app stable.
 - **🏆 Proven Track Record**: Running reliably since 2016, powering numerous well-known apps and enterprises.
+
+### 📊 Benchmarked: a diff algorithm purpose-built for Hermes
+
+Hermes bytecode is full of offset tables — a one-line JS change shifts every offset after it, which makes generic binary diffs blow up in size. Cresc applies an **exclusive HBC (Hermes bytecode) structure-aware reversible transform** that removes this amplification at the source.
+
+Measured on a real React Native 0.86 app (\~4.4 MB bytecode; the [benchmark code and data are fully open and reproducible](https://github.com/sunnylqm/hbc-diff-benchmark)):
+
+| Release scenario           | Full update | Classic incremental (bsdiff) | Cresc incremental (Hermes-optimized) |
+| -------------------------- | ----------- | ---------------------------- | ------------------------------------ |
+| One-line text change       | 1.9 MB      | 93.7 KB                      | **63.5 KB** (32% smaller)            |
+| Small feature (\~60 LOC)   | 1.9 MB      | 411.6 KB                     | **285.5 KB** (31% smaller)           |
+| Medium feature (\~300 LOC) | 1.9 MB      | 551.6 KB                     | **398.4 KB** (28% smaller)           |
+
+- **95%+ bandwidth saved** vs full updates, and another **\~30% saved** vs classic bsdiff incremental updates
+- **The smaller the change, the bigger the win** — exactly the high-frequency hotfix scenario OTA is for
+- Fail-safe by design: the bytecode structure is fully validated before transforming, with automatic fallback to the plain incremental path; new Hermes versions are supported with **zero client-side changes**
 
 ## 💰 Unbeatable Value
 
