@@ -2063,6 +2063,174 @@ Operation complete, 5 active native packages bound.
 
 
 ---
+url: /docs/brownfield.md
+---
+
+# Brownfield Integration
+
+This page is for Android native apps that consume a React Native AAR produced with [`@callstack/react-native-brownfield`](https://oss.callstack.com/react-native-brownfield/).
+
+These projects usually have this shape:
+
+- The host `Application` does not implement `ReactApplication`
+- The host `Activity` does not extend `ReactActivity`
+- The React Native runtime is initialized inside the AAR module, usually through `ReactNativeHostManager` or a similar class
+
+Do not change the host app inheritance just to integrate Cresc. Wire Cresc where the AAR module creates `ReactHost`, `ReactNativeHost`, or `ReactInstanceManager`.
+
+
+### Install the dependency
+Inside the React Native project root:
+```bash
+npm i react-native-update
+npm i -g react-native-update-cli
+```
+Make sure the AAR includes the `react-native-update` Android module. If autolinking does not include it in your library module, add it manually:
+```groovy
+dependencies {
+    api project(":react-native-update")
+}
+```
+:::warning
+If `PackageList(application).packages` already includes `UpdatePackage()`, do not add it a second time.
+:::
+### Register UpdatePackage in the AAR module
+The JavaScript API needs the Android native module. Confirm `UpdatePackage` is present where your AAR module creates the package list:
+```kotlin
+import cn.reactnative.modules.update.UpdatePackage
+import com.facebook.react.PackageList
+
+val packages = PackageList(application).packages.apply {
+  // Remove this line if autolinking already includes UpdatePackage
+  add(UpdatePackage())
+}
+```
+### Configure ReactHost for the New Architecture
+For RN 0.82+, or any brownfield module that initializes React Native with `ReactHost` / `getDefaultReactHost`, pass Cresc's bundle path into `jsBundleFilePath`:
+```kotlin
+package com.yourapp.reactnativeapp
+
+import android.app.Application
+import cn.reactnative.modules.update.UpdateContext
+import cn.reactnative.modules.update.UpdatePackage
+import com.callstack.reactnativebrownfield.OnJSBundleLoaded
+import com.callstack.reactnativebrownfield.ReactNativeBrownfield
+import com.facebook.react.PackageList
+import com.facebook.react.ReactHost
+import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
+import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
+
+object ReactNativeHostManager {
+  private var reactHost: ReactHost? = null
+
+  fun initialize(
+    application: Application,
+    onJSBundleLoaded: OnJSBundleLoaded? = null,
+  ) {
+    // Required by RN >= 0.80
+    loadReactNative(application)
+
+    val packages = PackageList(application).packages.apply {
+      // Remove this line if autolinking already includes UpdatePackage
+      add(UpdatePackage())
+    }
+
+    reactHost = getDefaultReactHost(
+      context = application.applicationContext,
+      packageList = packages,
+      jsBundleFilePath = UpdateContext.getBundleUrl(
+        application,
+        "assets://index.android.bundle",
+      ),
+    )
+
+    ReactNativeBrownfield.initialize(
+      application = application,
+      reactHost = reactHost,
+      onJSBundleLoaded = onJSBundleLoaded,
+    )
+  }
+
+  fun getReactHost(): ReactHost? = reactHost
+}
+```
+`assets://index.android.bundle` is the fallback embedded bundle used when no OTA update has been applied. Match it to the actual bundle name packaged into your AAR.
+### Expose ReactHost from the host Application
+In the New Architecture, Cresc needs to find the active `ReactHost` when `switchVersion()` or `restartApp()` reloads the RN runtime after an update.
+If the host `Activity` is not a `ReactActivity`, and the host `Application` is not a `ReactApplication`, expose a public `getReactHost()` method from the host `Application`:
+```kotlin
+import android.app.Application
+import com.facebook.react.ReactHost
+import com.yourapp.reactnativeapp.ReactNativeHostManager
+
+class MainApplication : Application() {
+  override fun onCreate() {
+    super.onCreate()
+    ReactNativeHostManager.initialize(this)
+  }
+
+  fun getReactHost(): ReactHost? {
+    return ReactNativeHostManager.getReactHost()
+  }
+}
+```
+Cresc finds this method reflectively. The host `Application` does not need to implement `ReactApplication`.
+:::warning
+Passing `jsBundleFilePath` is enough for cold starts. Exposing `getReactHost()` is what makes `switchVersion()` / `restartApp()` reliable for immediate runtime reloads in New Architecture brownfield apps.
+:::
+### Legacy architecture or custom ReactInstanceManager
+If your brownfield integration still creates `ReactInstanceManager` manually, wire the bundle path there:
+```kotlin
+import cn.reactnative.modules.update.UpdateContext
+
+val reactInstanceManager = ReactInstanceManager.builder()
+  // ...other setters
+  // Do not call setBundleAssetName("index.android.bundle")
+  .setJSBundleFile(
+    UpdateContext.getBundleUrl(
+      application,
+      "assets://index.android.bundle",
+    )
+  )
+  .build()
+
+UpdateContext.setCustomInstanceManager(reactInstanceManager)
+```
+For New Architecture apps, prefer the `ReactHost` setup above.
+### Wrap the JavaScript root
+The JavaScript side is the same as a regular React Native app:
+```tsx
+import { Platform } from "react-native";
+import { Cresc, UpdateProvider } from "react-native-update";
+import updateConfig from "./update.json";
+import App from "./App";
+
+const crescClient = new Cresc({
+  appKey: updateConfig[Platform.OS].appKey,
+  checkStrategy: "both",
+  updateStrategy: "silentAndLater",
+});
+
+export default function Root() {
+  return (
+    <UpdateProvider client={crescClient}>
+      <App />
+    </UpdateProvider>
+  );
+}
+```
+### Build and publish
+1. Rebuild the React Native AAR and make sure the host app consumes the new artifact.
+2. Build the final host APK / AAB.
+3. Upload the final host package with `cresc uploadApk` or `cresc uploadAab`.
+4. When publishing OTA updates, target the native version that matches the final host app's `versionName` and build timestamp.
+:::info
+Cresc updates JavaScript bundles and JavaScript assets. Native changes such as new native modules, Kotlin / Java changes, Manifest changes, or `.so` changes still require a new AAR and host app release.
+:::
+
+
+
+---
 url: /docs/bestpractice.md
 ---
 
@@ -2266,7 +2434,7 @@ _Note: Even though assets can be hot updated, downloaded update assets are serve
 
 If an update succeeds but rolls back on reboot, it usually means one of two things:
 
-- You didn't correctly [configure bundleUrl](/docs/getting-started.md#configuring-bundle-url) during setup.
+- You didn't correctly [configure bundleUrl](/docs/getting-started.md#configuring-the-bundle-url) during setup.
 - (Only on Cresc v9 or lower) You didn't correctly call `markSuccess()`. In v10+, the SDK handles this automatically.
 
 If you are absolutely sure both steps were executed perfectly, please leave us feedback in our [Issues section](https://github.com/reactnativecn/react-native-update/issues).
@@ -2369,174 +2537,6 @@ Yes. If your traffic profile goes beyond `Ultra`, or you need tailored limits, r
 
 
 ---
-url: /docs/brownfield.md
----
-
-# Brownfield Integration
-
-This page is for Android native apps that consume a React Native AAR produced with [`@callstack/react-native-brownfield`](https://oss.callstack.com/react-native-brownfield/).
-
-These projects usually have this shape:
-
-- The host `Application` does not implement `ReactApplication`
-- The host `Activity` does not extend `ReactActivity`
-- The React Native runtime is initialized inside the AAR module, usually through `ReactNativeHostManager` or a similar class
-
-Do not change the host app inheritance just to integrate Cresc. Wire Cresc where the AAR module creates `ReactHost`, `ReactNativeHost`, or `ReactInstanceManager`.
-
-
-### Install the dependency
-Inside the React Native project root:
-```bash
-npm i react-native-update
-npm i -g react-native-update-cli
-```
-Make sure the AAR includes the `react-native-update` Android module. If autolinking does not include it in your library module, add it manually:
-```groovy
-dependencies {
-    api project(":react-native-update")
-}
-```
-:::warning
-If `PackageList(application).packages` already includes `UpdatePackage()`, do not add it a second time.
-:::
-### Register UpdatePackage in the AAR module
-The JavaScript API needs the Android native module. Confirm `UpdatePackage` is present where your AAR module creates the package list:
-```kotlin
-import cn.reactnative.modules.update.UpdatePackage
-import com.facebook.react.PackageList
-
-val packages = PackageList(application).packages.apply {
-  // Remove this line if autolinking already includes UpdatePackage
-  add(UpdatePackage())
-}
-```
-### Configure ReactHost for the New Architecture
-For RN 0.82+, or any brownfield module that initializes React Native with `ReactHost` / `getDefaultReactHost`, pass Cresc's bundle path into `jsBundleFilePath`:
-```kotlin
-package com.yourapp.reactnativeapp
-
-import android.app.Application
-import cn.reactnative.modules.update.UpdateContext
-import cn.reactnative.modules.update.UpdatePackage
-import com.callstack.reactnativebrownfield.OnJSBundleLoaded
-import com.callstack.reactnativebrownfield.ReactNativeBrownfield
-import com.facebook.react.PackageList
-import com.facebook.react.ReactHost
-import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
-import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
-
-object ReactNativeHostManager {
-  private var reactHost: ReactHost? = null
-
-  fun initialize(
-    application: Application,
-    onJSBundleLoaded: OnJSBundleLoaded? = null,
-  ) {
-    // Required by RN >= 0.80
-    loadReactNative(application)
-
-    val packages = PackageList(application).packages.apply {
-      // Remove this line if autolinking already includes UpdatePackage
-      add(UpdatePackage())
-    }
-
-    reactHost = getDefaultReactHost(
-      context = application.applicationContext,
-      packageList = packages,
-      jsBundleFilePath = UpdateContext.getBundleUrl(
-        application,
-        "assets://index.android.bundle",
-      ),
-    )
-
-    ReactNativeBrownfield.initialize(
-      application = application,
-      reactHost = reactHost,
-      onJSBundleLoaded = onJSBundleLoaded,
-    )
-  }
-
-  fun getReactHost(): ReactHost? = reactHost
-}
-```
-`assets://index.android.bundle` is the fallback embedded bundle used when no OTA update has been applied. Match it to the actual bundle name packaged into your AAR.
-### Expose ReactHost from the host Application
-In the New Architecture, Cresc needs to find the active `ReactHost` when `switchVersion()` or `restartApp()` reloads the RN runtime after an update.
-If the host `Activity` is not a `ReactActivity`, and the host `Application` is not a `ReactApplication`, expose a public `getReactHost()` method from the host `Application`:
-```kotlin
-import android.app.Application
-import com.facebook.react.ReactHost
-import com.yourapp.reactnativeapp.ReactNativeHostManager
-
-class MainApplication : Application() {
-  override fun onCreate() {
-    super.onCreate()
-    ReactNativeHostManager.initialize(this)
-  }
-
-  fun getReactHost(): ReactHost? {
-    return ReactNativeHostManager.getReactHost()
-  }
-}
-```
-Cresc finds this method reflectively. The host `Application` does not need to implement `ReactApplication`.
-:::warning
-Passing `jsBundleFilePath` is enough for cold starts. Exposing `getReactHost()` is what makes `switchVersion()` / `restartApp()` reliable for immediate runtime reloads in New Architecture brownfield apps.
-:::
-### Legacy architecture or custom ReactInstanceManager
-If your brownfield integration still creates `ReactInstanceManager` manually, wire the bundle path there:
-```kotlin
-import cn.reactnative.modules.update.UpdateContext
-
-val reactInstanceManager = ReactInstanceManager.builder()
-  // ...other setters
-  // Do not call setBundleAssetName("index.android.bundle")
-  .setJSBundleFile(
-    UpdateContext.getBundleUrl(
-      application,
-      "assets://index.android.bundle",
-    )
-  )
-  .build()
-
-UpdateContext.setCustomInstanceManager(reactInstanceManager)
-```
-For New Architecture apps, prefer the `ReactHost` setup above.
-### Wrap the JavaScript root
-The JavaScript side is the same as a regular React Native app:
-```tsx
-import { Platform } from "react-native";
-import { Cresc, UpdateProvider } from "react-native-update";
-import updateConfig from "./update.json";
-import App from "./App";
-
-const crescClient = new Cresc({
-  appKey: updateConfig[Platform.OS].appKey,
-  checkStrategy: "both",
-  updateStrategy: "silentAndLater",
-});
-
-export default function Root() {
-  return (
-    <UpdateProvider client={crescClient}>
-      <App />
-    </UpdateProvider>
-  );
-}
-```
-### Build and publish
-1. Rebuild the React Native AAR and make sure the host app consumes the new artifact.
-2. Build the final host APK / AAB.
-3. Upload the final host package with `cresc uploadApk` or `cresc uploadAab`.
-4. When publishing OTA updates, target the native version that matches the final host app's `versionName` and build timestamp.
-:::info
-Cresc updates JavaScript bundles and JavaScript assets. Native changes such as new native modules, Kotlin / Java changes, Manifest changes, or `.so` changes still require a new AAR and host app release.
-:::
-
-
-
----
 url: /pricing.md
 ---
 
@@ -2556,7 +2556,7 @@ FreeUSD $0/mo1K/day3 apps30 base pkgs30 updates · 3 MBCDN delivery included
 
 For growing apps shipping on a steady monthly rhythm.
 
-USD$19/ month
+$19USD / month
 
 Daily queries
 
@@ -2574,7 +2574,7 @@ Hot Update Packages
 
 50 updates · 15 MB ea
 
-[Subscribe+](https://admin.cresc.dev)
+[Subscribe→](https://admin.cresc.dev)
 
 CDN delivery included
 
@@ -2584,7 +2584,7 @@ Popular
 
 The main tier for production apps with regular release traffic.
 
-USD$39/ month
+$39USD / month
 
 Daily queries
 
@@ -2602,7 +2602,7 @@ Hot Update Packages
 
 60 updates · 50 MB ea
 
-[Subscribe+](https://admin.cresc.dev)
+[Subscribe→](https://admin.cresc.dev)
 
 CDN delivery included
 
@@ -2708,7 +2708,7 @@ Higher Volume
 
 For larger teams that need room for heavier binaries and scale.
 
-USD$99/ month
+$99USD / month
 
 Daily queries
 
@@ -2726,7 +2726,7 @@ Hot Update Packages
 
 100 updates · 200 MB ea
 
-[Subscribe+](https://admin.cresc.dev)
+[Subscribe→](https://admin.cresc.dev)
 
 CDN delivery included
 
@@ -2734,7 +2734,7 @@ CDN delivery included
 
 For high-volume apps that query often and carry wider fleets.
 
-USD$399/ month
+$399USD / month
 
 Daily queries
 
@@ -2752,7 +2752,7 @@ Hot Update Packages
 
 Same limits as Pro
 
-[Subscribe+](https://admin.cresc.dev)
+[Subscribe→](https://admin.cresc.dev)
 
 CDN delivery included
 
@@ -2760,7 +2760,7 @@ CDN delivery included
 
 For very large distribution footprints and sustained daily traffic.
 
-USD$1699/ month
+$1699USD / month
 
 Daily queries
 
@@ -2778,7 +2778,7 @@ Hot Update Packages
 
 Same limits as Pro
 
-[Subscribe+](https://admin.cresc.dev)
+[Subscribe→](https://admin.cresc.dev)
 
 CDN delivery included
 
@@ -3159,7 +3159,7 @@ url: /index.md
 
 React Native OTA Updates
 
-# React Native OTA updates with smaller patches and safer rollouts.
+# OTA updates with smaller patches and safer rollouts.
 
 Cresc is a CodePush and App Center alternative for teams that need delta patches, rollback protection, CI-friendly publishing, and an AI-first integration path through the official Skill across React Native, Expo, Hermes, and Harmony builds.
 
@@ -3181,7 +3181,7 @@ Cresc keeps the original release as the base and turns later OTA releases into m
 
 Incremental Delivery
 
-## React Native OTA updates should ship the delta, not the whole bundle.
+## Ship the delta, not the whole bundle.
 
 Cresc keeps the installed build as the base, then carries only the missing JavaScript and asset changes into place locally.
 
@@ -3213,19 +3213,19 @@ Release protection
 
 Cresc watches every rollout, surfaces risk quickly, and can pause an unhealthy release before more users are affected.
 
-I
+01
 
 ### See risk clearly
 
 Know at a glance whether a release is healthy.
 
-II
+02
 
 ### React sooner
 
 Catch warning signs before they become widespread.
 
-III
+03
 
 ### Limit the impact
 
@@ -3239,27 +3239,29 @@ Cresc Admin version health dashboard with local sample data
 
 In Practice
 
-## Ship React Native OTA updates in three steps.
+## Ship OTA updates in three steps.
 
 Install the CLI, upload the baseline build, and publish the next delta update through the dashboard or CI whenever the app changes.
 
-I
+1
 
 ### Install the CLI
 
 Connect your project to the publishing workflow with the Cresc command-line tool.
 
-II
+2
 
 ### Upload the baseline package
 
 Give Cresc the native build it compares against before later updates are published.
 
-III
+3
 
 ### Publish the update
 
 Bundle JavaScript and assets, then release the update through the dashboard or your CI flow.
+
+cresc — release
 
 first releaseproduction lane
 
@@ -3281,7 +3283,7 @@ Migration
 
 See the migration path, rollout model, and why Cresc fits React Native teams that still need OTA updates after App Center's retirement.
 
-[Open Migration Guide](/codepush-alternative)
+[Open Migration Guide →](/codepush-alternative)
 
 Comparison
 
@@ -3289,7 +3291,7 @@ Comparison
 
 Compare bundle size, delta delivery, self-hosting flexibility, and when each workflow makes sense.
 
-[Compare Options](/expo-updates-vs-cresc)
+[Compare Options →](/expo-updates-vs-cresc)
 
 Overview
 
@@ -3297,7 +3299,7 @@ Overview
 
 Get the practical overview: what OTA updates can change, what still needs a native release, and how Cresc fits the release pipeline.
 
-[Read The Guide](/react-native-ota-updates)
+[Read The Guide →](/react-native-ota-updates)
 
 ### Contact Us
 

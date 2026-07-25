@@ -2,7 +2,7 @@
 
 React Native OTA Updates
 
-# React Native OTA updates with smaller patches and safer rollouts.
+# OTA updates with smaller patches and safer rollouts.
 
 Cresc is a CodePush and App Center alternative for teams that need delta patches, rollback protection, CI-friendly publishing, and an AI-first integration path through the official Skill across React Native, Expo, Hermes, and Harmony builds.
 
@@ -24,7 +24,7 @@ Cresc keeps the original release as the base and turns later OTA releases into m
 
 Incremental Delivery
 
-## React Native OTA updates should ship the delta, not the whole bundle.
+## Ship the delta, not the whole bundle.
 
 Cresc keeps the installed build as the base, then carries only the missing JavaScript and asset changes into place locally.
 
@@ -56,19 +56,19 @@ Release protection
 
 Cresc watches every rollout, surfaces risk quickly, and can pause an unhealthy release before more users are affected.
 
-I
+01
 
 ### See risk clearly
 
 Know at a glance whether a release is healthy.
 
-II
+02
 
 ### React sooner
 
 Catch warning signs before they become widespread.
 
-III
+03
 
 ### Limit the impact
 
@@ -82,27 +82,29 @@ Cresc Admin version health dashboard with local sample data
 
 In Practice
 
-## Ship React Native OTA updates in three steps.
+## Ship OTA updates in three steps.
 
 Install the CLI, upload the baseline build, and publish the next delta update through the dashboard or CI whenever the app changes.
 
-I
+1
 
 ### Install the CLI
 
 Connect your project to the publishing workflow with the Cresc command-line tool.
 
-II
+2
 
 ### Upload the baseline package
 
 Give Cresc the native build it compares against before later updates are published.
 
-III
+3
 
 ### Publish the update
 
 Bundle JavaScript and assets, then release the update through the dashboard or your CI flow.
+
+cresc — release
 
 first releaseproduction lane
 
@@ -124,7 +126,7 @@ Migration
 
 See the migration path, rollout model, and why Cresc fits React Native teams that still need OTA updates after App Center's retirement.
 
-[Open Migration Guide](/codepush-alternative)
+[Open Migration Guide →](/codepush-alternative)
 
 Comparison
 
@@ -132,7 +134,7 @@ Comparison
 
 Compare bundle size, delta delivery, self-hosting flexibility, and when each workflow makes sense.
 
-[Compare Options](/expo-updates-vs-cresc)
+[Compare Options →](/expo-updates-vs-cresc)
 
 Overview
 
@@ -140,7 +142,7 @@ Overview
 
 Get the practical overview: what OTA updates can change, what still needs a native release, and how Cresc fits the release pipeline.
 
-[Read The Guide](/react-native-ota-updates)
+[Read The Guide →](/react-native-ota-updates)
 
 ### Contact Us
 

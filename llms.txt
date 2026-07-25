@@ -16,9 +16,9 @@
 - [API Reference](/docs/api.md)
 - [API Token](/docs/api-token.md): An API Token is an authentication method used to invoke the Cresc API within CI/CD pipelines or automated scripts. Compared to standard username/password logins, API Tokens are much more secure and easier to manage.
 - [CLI Tools](/docs/cli.md)
+- [Brownfield Integration](/docs/brownfield.md): Integrate Cresc into Android apps that consume React Native through @callstack/react-native-brownfield AARs.
 - [Best Practices](/docs/bestpractice.md)
 - [FAQ](/docs/faq.md)
-- [Brownfield Integration](/docs/brownfield.md): Integrate Cresc into Android apps that consume React Native through @callstack/react-native-brownfield AARs.
 
 ## Pricing
 

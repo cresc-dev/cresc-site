@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cresc-site-v1';
+const CACHE_NAME = 'cresc-site-v2';
 const PRECACHE_URLS = ['/', '/manifest.webmanifest', '/images/logo.svg'];
 
 self.addEventListener('install', (event) => {

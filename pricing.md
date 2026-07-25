@@ -14,7 +14,7 @@ FreeUSD $0/mo1K/day3 apps30 base pkgs30 updates · 3 MBCDN delivery included
 
 For growing apps shipping on a steady monthly rhythm.
 
-USD$19/ month
+$19USD / month
 
 Daily queries
 
@@ -32,7 +32,7 @@ Hot Update Packages
 
 50 updates · 15 MB ea
 
-[Subscribe+](https://admin.cresc.dev)
+[Subscribe→](https://admin.cresc.dev)
 
 CDN delivery included
 
@@ -42,7 +42,7 @@ Popular
 
 The main tier for production apps with regular release traffic.
 
-USD$39/ month
+$39USD / month
 
 Daily queries
 
@@ -60,7 +60,7 @@ Hot Update Packages
 
 60 updates · 50 MB ea
 
-[Subscribe+](https://admin.cresc.dev)
+[Subscribe→](https://admin.cresc.dev)
 
 CDN delivery included
 
@@ -166,7 +166,7 @@ Higher Volume
 
 For larger teams that need room for heavier binaries and scale.
 
-USD$99/ month
+$99USD / month
 
 Daily queries
 
@@ -184,7 +184,7 @@ Hot Update Packages
 
 100 updates · 200 MB ea
 
-[Subscribe+](https://admin.cresc.dev)
+[Subscribe→](https://admin.cresc.dev)
 
 CDN delivery included
 
@@ -192,7 +192,7 @@ CDN delivery included
 
 For high-volume apps that query often and carry wider fleets.
 
-USD$399/ month
+$399USD / month
 
 Daily queries
 
@@ -210,7 +210,7 @@ Hot Update Packages
 
 Same limits as Pro
 
-[Subscribe+](https://admin.cresc.dev)
+[Subscribe→](https://admin.cresc.dev)
 
 CDN delivery included
 
@@ -218,7 +218,7 @@ CDN delivery included
 
 For very large distribution footprints and sustained daily traffic.
 
-USD$1699/ month
+$1699USD / month
 
 Daily queries
 
@@ -236,7 +236,7 @@ Hot Update Packages
 
 Same limits as Pro
 
-[Subscribe+](https://admin.cresc.dev)
+[Subscribe→](https://admin.cresc.dev)
 
 CDN delivery included
 

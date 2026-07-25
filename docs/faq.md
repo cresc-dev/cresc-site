@@ -35,7 +35,7 @@ _Note: Even though assets can be hot updated, downloaded update assets are serve
 
 If an update succeeds but rolls back on reboot, it usually means one of two things:
 
-- You didn't correctly [configure bundleUrl](/docs/getting-started.md#configuring-bundle-url) during setup.
+- You didn't correctly [configure bundleUrl](/docs/getting-started.md#configuring-the-bundle-url) during setup.
 - (Only on Cresc v9 or lower) You didn't correctly call `markSuccess()`. In v10+, the SDK handles this automatically.
 
 If you are absolutely sure both steps were executed perfectly, please leave us feedback in our [Issues section](https://github.com/reactnativecn/react-native-update/issues).
