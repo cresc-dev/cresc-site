@@ -7,6 +7,9 @@ export default defineConfig({
   llms: true,
   outDir: 'out',
   root: path.join(__dirname, 'pages'),
+  route: {
+    cleanUrls: true,
+  },
   title: 'Cresc',
   description: 'React Native OTA updates with delta patches, rollback safety, CI/CD publishing, and migration paths for CodePush or App Center teams.',
   icon: '/images/logo.svg',
@@ -51,6 +54,7 @@ export default defineConfig({
             { text: 'API Reference', link: '/docs/api' },
             { text: 'API Token', link: '/docs/api-token' },
             { text: 'CLI Tools', link: '/docs/cli' },
+            { text: 'Brownfield Integration', link: '/docs/brownfield' },
             { text: 'Best Practices', link: '/docs/bestpractice' },
           ],
         },
