@@ -1,34 +1,63 @@
+# Deploys the site to GitHub Pages using the official Pages actions
+# (configure-pages / upload-pages-artifact / deploy-pages).
+# Requires Pages "Source" to be set to "GitHub Actions" in repo settings.
 name: github pages
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, but don't cancel production runs
+# that are already in flight (per the official starter workflow).
 concurrency:
   group: "pages"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: 24
+          bun-version: latest
 
       - name: Build
+        working-directory: site
         run: |
-          cd site && npm i && npm run build && cd -
-          mv site/out ./
+          bun install --frozen-lockfile
+          bun run build
+
+      - name: Assemble site root
+        run: |
+          mv site/out ./out
           cp CNAME out/
           mv policy out/policy
           cp .nojekyll out/
 
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v4
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./out
+          path: ./out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
