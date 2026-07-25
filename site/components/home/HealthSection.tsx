@@ -8,43 +8,43 @@ interface HealthPointProps {
 
 function HealthPoint({ index, title, children }: HealthPointProps) {
   return (
-    <div className="border-t border-[#c9b28f]/70 pt-4">
+    <div className="border-t border-[#e7e5e1] pt-4">
       <div className="flex items-baseline gap-3">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#a07742]">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#b45309]">
           {index}
         </span>
-        <h3 className="text-lg font-semibold text-[#3f291f]">{title}</h3>
+        <h3 className="cresc-display text-lg text-[#1c1917]">{title}</h3>
       </div>
-      <p className="mt-2 text-[15px] leading-7 text-[#6c5142]">{children}</p>
+      <p className="mt-2 text-[15px] leading-7 text-[#57534e]">{children}</p>
     </div>
   );
 }
 
 function HealthSection() {
   return (
-    <section className="cresc-section-alt relative overflow-hidden py-24 sm:py-32">
+    <section className="cresc-section-alt relative overflow-hidden py-24 sm:py-28">
       <div className="relative mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
         <div className="grid items-center gap-14 lg:grid-cols-[0.84fr_1.16fr] lg:gap-16">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#8c6239]">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#b45309]">
               Release protection
             </p>
-            <h2 className="cresc-display mt-5 text-4xl leading-[1.05] text-[#2d1d15] sm:text-5xl">
+            <h2 className="cresc-display mt-4 text-3xl leading-tight text-[#1c1917] sm:text-[2.6rem]">
               Catch risky updates early. Stop them before they spread.
             </h2>
-            <p className="mt-6 text-lg leading-8 text-[#6c5142]">
+            <p className="mt-5 text-lg leading-8 text-[#57534e]">
               Cresc watches every rollout, surfaces risk quickly, and can pause
               an unhealthy release before more users are affected.
             </p>
 
             <div className="mt-9 space-y-6">
-              <HealthPoint index="I" title="See risk clearly">
+              <HealthPoint index="01" title="See risk clearly">
                 Know at a glance whether a release is healthy.
               </HealthPoint>
-              <HealthPoint index="II" title="React sooner">
+              <HealthPoint index="02" title="React sooner">
                 Catch warning signs before they become widespread.
               </HealthPoint>
-              <HealthPoint index="III" title="Limit the impact">
+              <HealthPoint index="03" title="Limit the impact">
                 Pause risky updates automatically and protect more users.
               </HealthPoint>
             </div>
@@ -52,18 +52,18 @@ function HealthSection() {
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <a
                 href="/docs/api"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-[#7a3b2e] transition-colors hover:text-[#52271f]"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-[#b45309] transition-colors hover:text-[#78350f]"
               >
                 Explore version health <span aria-hidden="true">→</span>
               </a>
             </div>
           </div>
 
-          <figure className="cresc-manuscript relative overflow-hidden rounded-[2rem] p-3 sm:p-4">
+          <figure className="cresc-frame relative overflow-hidden rounded-2xl p-2.5 sm:p-3">
             <img
               src="/images/version-health-dashboard.png"
               alt="Cresc version health dashboard grouped by OTA version and native package"
-              className="relative w-full rounded-[1.35rem] border border-[#8f735f]/35"
+              className="relative w-full rounded-xl border border-[#e7e5e1]"
               loading="lazy"
             />
             <figcaption className="sr-only">

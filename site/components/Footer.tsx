@@ -54,13 +54,13 @@ function Footer() {
   ];
 
   return (
-    <footer className="bg-[#f1e6d6] text-[#5f483c] mt-auto border-t border-[#ddcdb3]">
+    <footer className="bg-[#f6f5f2] text-[#57534e] mt-auto border-t border-[#e7e5e1]">
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-16">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-8">
           {columns.map((col) => (
             <div key={col.title}>
-              <h3 className="cresc-display text-[#2d1d15] font-semibold text-2xl mb-5 tracking-wide">
+              <h3 className="text-[#1c1917] font-semibold text-sm uppercase tracking-[0.12em] mb-5">
                 {col.title}
               </h3>
               <ul className="space-y-3">
@@ -72,12 +72,12 @@ function Footer() {
                         {...(link.external
                           ? { target: "_blank", rel: "noopener noreferrer" }
                           : {})}
-                        className="text-[#6a5245] hover:text-[#7a3b2e] transition-colors duration-200 text-sm leading-relaxed"
+                        className="text-[#57534e] hover:text-[#b45309] transition-colors duration-200 text-sm leading-relaxed"
                       >
                         {link.text}
                       </a>
                     ) : (
-                      <span className="text-[#6a5245] text-sm leading-relaxed">
+                      <span className="text-[#57534e] text-sm leading-relaxed">
                         {link.text}
                       </span>
                     )}
@@ -90,9 +90,9 @@ function Footer() {
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-[#ddcdb3]">
+      <div className="border-t border-[#e7e5e1]">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-6">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-sm text-[#7a6558]">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-sm text-[#78716c]">
             <p>© {new Date().getFullYear()} CHARMLOT PTE. LTD.</p>
           </div>
         </div>

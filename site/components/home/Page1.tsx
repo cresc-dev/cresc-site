@@ -632,7 +632,6 @@ function Page1() {
       ref={sectionRef}
       className="cresc-section relative py-24"
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(168,132,84,0.12),transparent_28%),repeating-linear-gradient(180deg,rgba(137,98,66,0.035)_0,rgba(137,98,66,0.035)_1px,transparent_1px,transparent_34px),radial-gradient(circle_at_bottom_right,rgba(122,59,46,0.08),transparent_30%)]" />
 
       {pearlPoint && pearlOpacity > 0.01 && (
         <div
@@ -645,7 +644,7 @@ function Page1() {
             willChange: "left, top, opacity, transform",
           }}
         >
-          <div className="cresc-pearl-shell relative h-9 w-9 rounded-full border border-[#c6a374] bg-[radial-gradient(circle_at_30%_30%,#fffefb_0,#f2e4cf_56%,#d0ae7a_100%)] shadow-[0_10px_28px_rgba(244,231,189,0.28),0_12px_24px_rgba(71,44,24,0.24)]">
+          <div className="cresc-pearl-shell relative h-9 w-9 rounded-full border border-[#d7b57c] bg-[radial-gradient(circle_at_30%_30%,#fffefb_0,#f2e4cf_56%,#d0ae7a_100%)] shadow-[0_10px_28px_rgba(244,231,189,0.28),0_12px_24px_rgba(28,25,23,0.24)]">
             <span className="absolute left-[0.4rem] top-[0.32rem] h-2.5 w-2.5 rounded-full bg-white/95" />
           </div>
         </div>
@@ -653,13 +652,13 @@ function Page1() {
 
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-sm uppercase tracking-[0.4em] text-[#8b5a3c]">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#b45309]">
             Incremental Delivery
           </p>
-          <h2 className="cresc-display mt-5 text-4xl text-[#2d1d15] sm:text-5xl">
-            React Native OTA updates should ship the delta, not the whole bundle.
+          <h2 className="cresc-display mt-4 text-3xl leading-tight text-[#1c1917] sm:text-[2.6rem]">
+            Ship the delta, not the whole bundle.
           </h2>
-          <p className="mt-6 text-lg leading-8 text-[#5f483c]">
+          <p className="mt-5 text-lg leading-8 text-[#57534e]">
             Cresc keeps the installed build as the base, then carries only the
             missing JavaScript and asset changes into place locally.
           </p>
@@ -678,11 +677,11 @@ function Page1() {
             style={isCompleted ? undefined : { top: `${sequenceTop}px` }}
           >
             <div className="self-start">
-              <div className="cresc-frame cresc-score-lines rounded-[38px] p-5 sm:p-6">
-                <div className="cresc-stage-panel relative overflow-hidden rounded-[30px] p-4 sm:p-6">
+              <div className="cresc-frame rounded-3xl p-5 sm:p-6">
+                <div className="cresc-stage-panel relative overflow-hidden rounded-2xl p-4 sm:p-6">
                   <div
                     ref={stageRef}
-                    className="relative aspect-[13/16] overflow-hidden rounded-[26px] bg-[#09070f]"
+                    className="relative aspect-[13/16] overflow-hidden rounded-xl bg-[#09070f]"
                   >
                     <img
                       src="/images/girl-with-pearl-earring.webp"
@@ -696,15 +695,15 @@ function Page1() {
                   </div>
 
                   <div
-                    className="pointer-events-none absolute bottom-14 left-1/2 flex items-center gap-2 rounded-full border border-[#d6c0a0] bg-[linear-gradient(180deg,rgba(255,249,239,0.96),rgba(244,234,220,0.92))] px-4 py-2 text-sm text-[#4d3528] shadow-[0_16px_30px_rgba(71,44,24,0.18)]"
+                    className="pointer-events-none absolute bottom-14 left-1/2 flex items-center gap-2 rounded-full border border-white/20 bg-white/95 px-4 py-2 text-sm text-[#1c1917] shadow-[0_16px_30px_rgba(16,17,20,0.3)] backdrop-blur"
                     style={{
                       opacity: toastReveal,
                       transform: `translate(-50%, ${(1 - toastReveal) * 34}px) scale(${0.96 + toastReveal * 0.04})`,
                       filter: `blur(${(1 - toastReveal) * 8}px)`,
                     }}
                   >
-                    <span className="h-2.5 w-2.5 rounded-full bg-[#7a3b2e]" />
-                    <span className="font-medium tracking-[0.06em]">
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#16a34a]" />
+                    <span className="font-semibold">
                       App Updated!
                     </span>
                   </div>
@@ -726,10 +725,10 @@ function Page1() {
                 return (
                   <article
                     key={movement.label}
-                    className={`cresc-score-card flex min-h-[9.75rem] flex-col justify-center rounded-[28px] border px-6 py-5 lg:min-h-0 lg:flex-1 lg:px-7 ${
+                    className={`cresc-score-card flex min-h-[9.75rem] flex-col justify-center rounded-2xl border px-6 py-5 lg:min-h-0 lg:flex-1 lg:px-7 ${
                       isActive
-                        ? "border-[#c89a6a] bg-[#fff9f1] shadow-[0_20px_44px_rgba(113,88,67,0.1)]"
-                        : "border-[#ddcdb3] bg-[#fffaf4]"
+                        ? "border-[#b45309]/45 shadow-[0_16px_40px_-12px_rgba(180,83,9,0.2)]"
+                        : "border-[#e7e5e1]"
                     } ${reveal > 0.02 ? "" : "pointer-events-none"}`}
                     style={{
                       opacity: reveal,
@@ -737,13 +736,13 @@ function Page1() {
                       filter: `blur(${(1 - reveal) * 12}px)`,
                     }}
                   >
-                    <p className="text-xs uppercase tracking-[0.36em] text-[#8b5a3c]">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#b45309]">
                       {movement.label}
                     </p>
-                    <h3 className="cresc-display mt-3 text-[2rem] leading-[1.02] text-[#2d1d15] lg:text-[2.15rem]">
+                    <h3 className="cresc-display mt-2.5 text-2xl leading-snug text-[#1c1917]">
                       {movement.title}
                     </h3>
-                    <p className="mt-3 text-[0.98rem] leading-6 text-[#5f483c]">
+                    <p className="mt-2.5 text-[0.95rem] leading-6 text-[#57534e]">
                       {movement.desc}
                     </p>
                   </article>
