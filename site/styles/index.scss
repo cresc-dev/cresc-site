@@ -123,6 +123,14 @@ html:not(.rp-dark) .rp-social-links__item {
     box-shadow 0.2s ease;
 }
 
+// The default theme re-declares font-size: 14px on hover/active with higher
+// specificity, which makes the item width jump; pin our size in those states.
+html:not(.rp-dark) .rp-nav-menu__item:hover .rp-nav-menu__item__container,
+html:not(.rp-dark) .rp-nav-menu__item--active .rp-nav-menu__item__container {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
 html:not(.rp-dark) .rp-nav__title__link:hover,
 html:not(.rp-dark) .rp-nav-menu__item__container:hover,
 html:not(.rp-dark) .rp-social-links__item:hover,
