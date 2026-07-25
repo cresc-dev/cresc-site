@@ -1,6 +1,3 @@
-# Deploys the site to GitHub Pages using the official Pages actions
-# (configure-pages / upload-pages-artifact / deploy-pages).
-# Requires Pages "Source" to be set to "GitHub Actions" in repo settings.
 name: github pages
 
 on:
@@ -14,11 +11,9 @@ permissions:
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment, but don't cancel production runs
-# that are already in flight (per the official starter workflow).
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
