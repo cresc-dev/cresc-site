@@ -1,0 +1,146 @@
+---
+order: 14
+title: MCP Server
+type: Guide
+---
+
+# MCP Server (Private Preview)
+
+Cresc publishes its release topology, update decisions and artifact states as a
+**remote, read-only MCP server**. Connect it from your own AI client (Claude
+Desktop, an IDE, your own agent) and the model reads deterministic diagnostic
+facts directly, which you can then combine with GitHub, Sentry, CI or anything
+else you already use.
+
+Cresc hosts no model, pays for no tokens, and never connects to your other MCP
+servers.
+
+:::info Preview
+This is an invite-only private preview authenticated with dedicated access
+tokens. Standard OAuth authorization arrives with the public beta.
+:::
+
+## What it can answer
+
+A typical investigation:
+
+```text
+pushy.apps.list                → which appKey are we talking about
+pushy.app.topology             → which version should this native package serve
+pushy.check_update.diagnose    → why did this device not receive the update
+pushy.diff.status              → was the patch never generated, or did it fail
+```
+
+| Tool | Purpose |
+|------|---------|
+| `pushy.apps.list` | Apps within the grant |
+| `pushy.app.topology` | Native package → bound version (main / gray-release candidate / rollout percentage) |
+| `pushy.check_update.diagnose` | Replay the update decision for a set of client parameters: classification, artifact states, confirmed findings and suggested actions |
+| `pushy.diff.status` | Patch artifacts and their generation tasks (error text redacted) |
+
+All read-only: they never enqueue generation, count quota, mint download URLs
+or modify any state.
+
+## Creating an access token
+
+1. Sign in to the [Cresc console](https://admin.cresc.dev)
+2. Open "External agents / MCP"
+3. Fill in a token name and a client name (e.g. `claude-desktop`)
+4. **Pick the apps it may read** — narrowing this to the apps you are actually
+   debugging is strongly recommended
+5. **Copy and store the token immediately** after creation
+
+:::warning
+The plaintext token is shown exactly once; the server only stores its hash and
+it can never be retrieved again.
+:::
+
+MCP tokens and API tokens are separate systems: an MCP token can only reach the
+four read-only tools above, and an API token cannot connect to `/mcp`. A token
+created by a team member never exceeds that member's role or app scope, and
+stops working as soon as their membership is removed or downgraded.
+
+## Connecting a client
+
+```
+Endpoint:  https://api.cresc.dev/mcp
+Transport: Streamable HTTP (stateless)
+Header:    Authorization: Bearer pushy_mcp_...
+```
+
+With Claude Desktop, add a remote MCP server:
+
+```json
+{
+  "mcpServers": {
+    "cresc": {
+      "type": "http",
+      "url": "https://api.cresc.dev/mcp",
+      "headers": {
+        "Authorization": "Bearer pushy_mcp_your_token"
+      }
+    }
+  }
+}
+```
+
+Smoke test:
+
+```bash
+curl -sS https://api.cresc.dev/mcp \
+  -H 'content-type: application/json' \
+  -H 'accept: application/json, text/event-stream' \
+  -H "authorization: Bearer $CRESC_MCP_TOKEN" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+The server speaks both `2026-07-28` (self-contained requests, no handshake) and
+the 2025-era protocol revisions; your client negotiates, and you normally do not
+need to care which leg it takes.
+
+## Reading the result
+
+Every call returns both a structured result (`structuredContent`, what the model
+consumes) and a one-line summary for humans. Three things in a diagnosis deserve
+attention:
+
+- **`meta.mode` is always `current_simulation`** — the verdict reflects the
+  **current** release and artifact state, not a replay of some past request.
+- **`meta.limitations`** — what this particular verdict cannot claim.
+- **`clientResolution`** — rollout membership is decided **client-side from the
+  device uuid**. SDK 10.50.0 fixed a defect in the bucketing implementation, so
+  every device's bucket was reshuffled once. If the client reported its SDK
+  version, only the matching algorithm is used; if it did not, both outcomes are
+  listed and flagged `ambiguous` rather than guessed.
+
+The uuid you pass in is used only for that bucket computation — it never appears
+in the result, the audit log or the database.
+
+## Security and privacy
+
+- There are no SQL, shell, arbitrary-URL or file-reading tools, and no write
+  tools of any kind;
+- email addresses, IPs, device identifiers, secrets, payment data, signed
+  download URLs and raw error details are never returned;
+- the AI client you authorize may forward the data to the model provider you
+  chose — Cresc controls neither that client nor its retention, training or
+  cross-border policy, so narrow the app scope to what you need;
+- tokens can be revoked from the console at any time, and revocation takes
+  effect immediately;
+- calls are rate limited (240/min per token) and each result has a size cap.
+
+## FAQ
+
+**Why does `tools/list` return fewer tools than documented?**
+The list is trimmed to the token's granted scopes; tools you have no permission
+for never appear.
+
+**The diagnosis says a new version exists, but the client reports up to date.**
+Usually the artifacts are not ready yet (the patch is missing and the whole
+package cannot be served). The diagnosis reports
+`UPDATE_DECIDED_BUT_NOTHING_SERVABLE`; follow up with `pushy.diff.status` to see
+whether the generation task is backed up or failing.
+
+**Can I use this on a self-hosted deployment?**
+Yes. Run `prisma/migrations/add_mcp_tokens.sql` and set `MCP_ENABLED=1` plus
+`MCP_ALLOWED_HOSTS`; without them the `/mcp` route returns 404.
