@@ -4,7 +4,7 @@ title: MCP Server
 type: Guide
 ---
 
-# MCP Server (Private Preview)
+# MCP Server
 
 Cresc publishes its release topology, update decisions and artifact states as a
 **remote, read-only MCP server**. Connect it from your own AI client (Claude
@@ -14,11 +14,6 @@ else you already use.
 
 Cresc hosts no model, pays for no tokens, and never connects to your other MCP
 servers.
-
-:::info Preview
-This is an invite-only private preview authenticated with dedicated access
-tokens. Standard OAuth authorization arrives with the public beta.
-:::
 
 ## What it can answer
 
@@ -95,9 +90,9 @@ curl -sS https://api.cresc.dev/mcp \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
-The server speaks both `2026-07-28` (self-contained requests, no handshake) and
-the 2025-era protocol revisions; your client negotiates, and you normally do not
-need to care which leg it takes.
+The server supports both the current MCP protocol revision (`2026-07-28`,
+self-contained requests with no handshake) and the 2025-era revisions, so any
+reasonably recent client works — the negotiation is transparent to you.
 
 ## Reading the result
 
@@ -130,18 +125,3 @@ in the result, the audit log or the database.
   effect immediately;
 - calls are rate limited (240/min per token) and each result has a size cap.
 
-## FAQ
-
-**Why does `tools/list` return fewer tools than documented?**
-The list is trimmed to the token's granted scopes; tools you have no permission
-for never appear.
-
-**The diagnosis says a new version exists, but the client reports up to date.**
-Usually the artifacts are not ready yet (the patch is missing and the whole
-package cannot be served). The diagnosis reports
-`UPDATE_DECIDED_BUT_NOTHING_SERVABLE`; follow up with `pushy.diff.status` to see
-whether the generation task is backed up or failing.
-
-**Can I use this on a self-hosted deployment?**
-Yes. Run `prisma/migrations/add_mcp_tokens.sql` and set `MCP_ENABLED=1` plus
-`MCP_ALLOWED_HOSTS`; without them the `/mcp` route returns 404.
