@@ -6,65 +6,42 @@ type: Guide
 
 # MCP Server
 
-Cresc publishes its release topology, update decisions and artifact states as a
-**remote, read-only MCP server**. Connect it from your own AI client (Claude
-Desktop, an IDE, your own agent) and the model reads deterministic diagnostic
-facts directly, which you can then combine with GitHub, Sentry, CI or anything
-else you already use.
+Connect Cresc to your AI client (Claude Desktop, an IDE, your own agent) so it
+can read your release state directly and investigate alongside GitHub, Sentry or
+CI. Everything is read-only — it never changes your releases.
 
-Cresc hosts no model, pays for no tokens, and never connects to your other MCP
-servers.
+## What you would use it for
 
-## What it can answer
+**Find out why a device did not get an update**
 
-A typical investigation:
+> A device on native package 1.2.0 of my app (appKey xxx) never received the
+> update — can you check?
 
-```text
-pushy.apps.list                → which appKey are we talking about
-pushy.app.topology             → which version should this native package serve
-pushy.check_update.diagnose    → why did this device not receive the update
-pushy.diff.status              → was the patch never generated, or did it fail
-```
+The agent looks up which version that package currently serves, replays the
+update decision, checks whether the patch artifacts are ready, and tells you
+where it stops — outside the rollout, package paused, or the patch still
+building.
 
-| Tool | Purpose |
-|------|---------|
-| `pushy.apps.list` | Apps within the grant |
-| `pushy.app.topology` | Native package → bound version (main / gray-release candidate / rollout percentage) |
-| `pushy.check_update.diagnose` | Replay the update decision for a set of client parameters: classification, artifact states, confirmed findings and suggested actions |
-| `pushy.diff.status` | Patch artifacts and their generation tasks (error text redacted) |
+**Confirm the state around a release**
 
-All read-only: they never enqueue generation, count quota, mint download URLs
-or modify any state.
+> Which version does 1.2.0 serve right now, and what is the rollout percentage?
 
-## Creating an access token
+**Correlate with your other tools**
 
-1. Sign in to the [Cresc console](https://admin.cresc.dev)
-2. Open "External agents / MCP"
-3. Fill in a token name and a client name (e.g. `claude-desktop`)
-4. **Pick the apps it may read** — narrowing this to the apps you are actually
-   debugging is strongly recommended
-5. Optionally set an expiry (defaults to 90 days, at most 365)
-6. **Copy and store the token immediately** after creation
+> Errors went up yesterday — compare the Sentry exceptions with the Cresc
+> release history
 
-:::warning
-The plaintext token is shown exactly once; the server only stores its hash and
-it can never be retrieved again.
-:::
+## Getting started
 
-MCP tokens and API tokens are separate systems: an MCP token can only reach the
-four read-only tools above, and an API token cannot connect to `/mcp`. A token
-created by a team member never exceeds that member's role or app scope, and
-stops working as soon as their membership is removed or downgraded.
+### 1. Create a token
 
-## Connecting a client
+In the [Cresc console](https://admin.cresc.dev) open "MCP Server",
+give it a name and a client label, **tick the apps it may read**, then copy the
+token right away — it is shown only once.
 
-```
-Endpoint:  https://api.cresc.dev/mcp
-Transport: Streamable HTTP (stateless)
-Header:    Authorization: Bearer pushy_mcp_...
-```
+### 2. Configure your client
 
-With Claude Desktop, add a remote MCP server:
+With Claude Desktop:
 
 ```json
 {
@@ -80,48 +57,34 @@ With Claude Desktop, add a remote MCP server:
 }
 ```
 
-Smoke test:
+### 3. Just ask
 
-```bash
-curl -sS https://api.cresc.dev/mcp \
-  -H 'content-type: application/json' \
-  -H 'accept: application/json, text/event-stream' \
-  -H "authorization: Bearer $CRESC_MCP_TOKEN" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
-```
+Once connected, ask in plain language as in the scenarios above — you never need
+to name a tool.
 
-The server supports both the current MCP protocol revision (`2026-07-28`,
-self-contained requests with no handshake) and the 2025-era revisions, so any
-reasonably recent client works — the negotiation is transparent to you.
+## What it can read
 
-## Reading the result
+| Capability | Description |
+|---|---|
+| App list | The apps the token is allowed to see |
+| Release topology | The version each native package serves, plus any gray release and its percentage |
+| Update decision | Replays the decision for a set of client parameters and explains the outcome |
+| Artifact status | Whether the patch was generated, and whether its task failed |
 
-Every call returns both a structured result (`structuredContent`, what the model
-consumes) and a one-line summary for humans. Three things in a diagnosis deserve
-attention:
+## Good to know
 
-- **`meta.mode` is always `current_simulation`** — the verdict reflects the
-  **current** release and artifact state, not a replay of some past request.
-- **`meta.limitations`** — what this particular verdict cannot claim.
-- **`clientResolution`** — rollout membership is decided **client-side from the
-  device uuid**. SDK 10.50.0 fixed a defect in the bucketing implementation, so
-  every device's bucket was reshuffled once. If the client reported its SDK
-  version, only the matching algorithm is used; if it did not, both outcomes are
-  listed and flagged `ambiguous` rather than guessed.
+- **Read-only**: it never publishes a version, pauses an app or changes any
+  setting;
+- **Scoped per app**: grant only the apps you are debugging; a token can be
+  revoked from the console at any time and stops working immediately;
+- **Where the data goes**: results go to the AI client you authorized, which may
+  forward them to the model provider you chose — Cresc controls neither;
+- Responses never contain email addresses, IPs, device identifiers, secrets or
+  payment data.
 
-The uuid you pass in is used only for that bucket computation — it never appears
-in the result, the audit log or the database.
+## About gray releases
 
-## Security and privacy
-
-- There are no SQL, shell, arbitrary-URL or file-reading tools, and no write
-  tools of any kind;
-- email addresses, IPs, device identifiers, secrets, payment data, signed
-  download URLs and raw error details are never returned;
-- the AI client you authorize may forward the data to the model provider you
-  chose — Cresc controls neither that client nor its retention, training or
-  cross-border policy, so narrow the app scope to what you need;
-- tokens can be revoked from the console at any time, and revocation takes
-  effect immediately;
-- calls are rate limited (240/min per token) and each result has a size cap.
-
+Whether a device is in a gray release is decided on the device, so the server
+can only name the candidate version. Supply a device uuid when investigating and
+the answer becomes specific to that device; the uuid is used for that one
+calculation and is never stored.
