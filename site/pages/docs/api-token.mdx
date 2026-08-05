@@ -1,14 +1,14 @@
 ---
 order: 12
-title: API Token
+title: API Key
 type: Guide
 ---
 
 
 
-# API Token
+# API Key
 
-An API Token is an authentication method used to invoke the [Cresc API](https://api.cresc.dev/openapi) within CI/CD pipelines or automated scripts. Compared to standard username/password logins, API Tokens are much more secure and easier to manage.
+An API Key is an authentication method used to invoke the [Cresc API](https://api.cresc.dev/openapi) within CI/CD pipelines or automated scripts. Compared to standard username/password logins, API Keys are much more secure and easier to manage.
 
 ## Use Cases
 
@@ -16,18 +16,18 @@ An API Token is an authentication method used to invoke the [Cresc API](https://
 - **Automation Scripts**: Write scripts to manage apps, versions, or native packages in bulk.
 - **Third-Party Integrations**: Wrap Cresc's workflows into external developer tools.
 
-## Creating an API Token
+## Creating an API Key
 
 1. Log into the [Cresc Dashboard](https://admin.cresc.dev)
-2. Click on "API Token" in the left sidebar menu.
-3. Click the "Create Token" button.
-4. Enter a name for the Token (e.g., CI/CD Pipeline).
+2. Click on "API Key" in the left sidebar menu.
+3. Click the "Create API Key" button.
+4. Enter a name for the API Key (e.g., CI/CD Pipeline).
 5. Select the required permissions.
 6. (Optional) Set an expiration date.
-7. Click Create, and **copy the secret Token immediately**.
+7. Click Create, and **copy the secret API Key immediately**.
 
 :::warning
-The token string is only displayed once upon creation. You will not be able to view it again. Be sure to save it safely immediately!
+The API Key string is only displayed once upon creation. You will not be able to view it again. Be sure to save it safely immediately!
 :::
 
 ## Permissions
@@ -39,21 +39,25 @@ The token string is only displayed once upon creation. You will not be able to v
 | **Delete** | Delete apps, versions, and packages |
 
 :::info
-You must select at least one permission when creating a Token. Applying the principle of least privilege is a best practice.
+You must select at least one permission when creating a API Key. Applying the principle of least privilege is a best practice.
 :::
 
-## Using Tokens with API
+## Using API Key with API
 
-When calling the Cresc API, supply the token via the `x-api-token` HTTP header:
+When calling the Cresc API, supply the API Key via the `x-api-token` HTTP header:
 
 ```bash
 curl -X GET "https://api.cresc.dev/app/list" \
   -H "x-api-token: YOUR_API_TOKEN"
 ```
 
+:::info
+The header `x-api-token` and the environment variable `CRESC_API_TOKEN` are wire-level names kept unchanged for compatibility with existing integrations. The console and the docs call it an API Key — they are the same thing.
+:::
+
 ### Using in the CLI
 
-If you're using the `react-native-update-cli` tool (v2.7.0+), you can pass the Token via environment variables:
+If you're using the `react-native-update-cli` tool (v2.7.0+), you can pass the API Key via environment variables:
 
 ```bash
 export CRESC_API_TOKEN=your_api_token_here
@@ -91,41 +95,41 @@ jobs:
 ```
 
 :::tip
-In CI/CD pipelines, always store your tokens securely using the platform's Secret Manager (e.g., GitHub Secrets) rather than hardcoding them in your configuration scripts.
+In CI/CD pipelines, always store your API Key securely using the platform's Secret Manager (e.g., GitHub Secrets) rather than hardcoding them in your configuration scripts.
 :::
 
-## Managing Tokens
+## Managing API Key
 
-### Viewing Token List
+### Viewing API Key List
 
-On the "API Token" page, you can view all created tokens, including:
-- Token Name
+On the "API Key" page, you can view all created API Key, including:
+- API Key Name
 - Permissions
 - Expiration Time
 - Last Used Time
 - Status (Active/Expired/Revoked)
 
-### Revoking a Token
+### Revoking a API Key
 
-If a token is leaked or no longer needed, you can revoke it at any time:
+If a API Key is leaked or no longer needed, you can revoke it at any time:
 
-1. Identify the token in the table list.
+1. Identify the API Key in the table list.
 2. Click the "Revoke" button.
 3. Confirm revocation.
 
 :::warning
-Revocations take effect immediately. Any API requests made using a revoked token will be instantly rejected. Ensure you update any dependent CI/CD setups before revoking.
+Revocations take effect immediately. Any API requests made using a revoked API Key will be instantly rejected. Ensure you update any dependent CI/CD setups before revoking.
 :::
 
 ## Security Practices
 
 1. **Principle of Least Privilege**: Only grant the exact permissions required.
-2. **Set Expirations**: Try to use short-lived tokens or configure expirations for temporary integration projects.
-3. **Periodic Rotation**: Routinely revoke old tokens and cycle in new tokens for long-running workflows.
-4. **Secure Storage**: Never commit tokens directly to your repository source code.
-5. **Monitor Usage**: Check the 'Last Used Time' and delete idle tokens routinely.
+2. **Set Expirations**: Try to use short-lived API Key or configure expirations for temporary integration projects.
+3. **Periodic Rotation**: Routinely revoke old API Key and cycle in new API Key for long-running workflows.
+4. **Secure Storage**: Never commit API Key directly to your repository source code.
+5. **Monitor Usage**: Check the 'Last Used Time' and delete idle API Key routinely.
 
 ## Limits
 
-- Each user can create a maximum of **10** API Tokens.
-- To create additional tokens, you must first revoke existing unused tokens.
+- Each user can create a maximum of **10** API Keys.
+- To create additional API Key, you must first revoke existing unused API Key.

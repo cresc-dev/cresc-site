@@ -52,7 +52,7 @@ export default defineConfig({
           text: 'Advanced Usage',
           items: [
             { text: 'API Reference', link: '/docs/api' },
-            { text: 'API Token', link: '/docs/api-token' },
+            { text: 'API Key', link: '/docs/api-token' },
             { text: 'MCP Server', link: '/docs/mcp' },
             { text: 'CLI Tools', link: '/docs/cli' },
             { text: 'Brownfield Integration', link: '/docs/brownfield' },

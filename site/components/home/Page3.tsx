@@ -20,6 +20,13 @@ const landingCards = [
     href: "/react-native-ota-updates",
     cta: "Read The Guide",
   },
+  {
+    eyebrow: "Automation",
+    title: "Debug releases from your AI client",
+    desc: "Connect Cresc to Claude Desktop, an IDE or your own agent over MCP and ask why a device never got the update — read-only, scoped per app.",
+    href: "/docs/mcp",
+    cta: "See MCP Server",
+  },
 ];
 
 function Page3() {
