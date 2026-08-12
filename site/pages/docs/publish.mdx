@@ -196,3 +196,30 @@ Review the [rollout parameter in the CLI docs](/docs/cli#cresc-update).
 - **Priority**: Users inside the canary bucket receive the canary update. Others receive the Full update.
 - **Promoting to Full**: Bumping the percentage to 100% promotes the canary to a full release automatically, replacing any older full releases.
 - **Client Requirements**: Features require `react-native-update` >= 10.32.0.
+
+## Force Boot (Brick Rescue)
+
+Force boot is a flag on the binding between a hot update version and a native package: the client's **native cold-start check** activates that version right after downloading it (effective on the next launch), overriding the in-app update strategy (`updateStrategy` / `checkStrategy`).
+
+### Why it exists
+
+If a hot update kills your app's JS (crash on launch, white screen), the JS code on that device never gets another chance to run the update check — the regular OTA channel is dead. That device is "bricked".
+
+Since `react-native-update` 10.51.0, the client runs an independent background check from **native code** a few seconds after every cold start, with no JS involved. Force boot is the directive for that channel: even with JS dead, the native check can still pull down the fix and activate it, so the device recovers on its next launch.
+
+### Usage
+
+1. Log in to the [Cresc console](https://cresc.dev)
+2. Find the fixed version and publish it with "Full + force boot (rescue)", or for an already-bound version, choose "Force boot (rescue)" from the package menu
+3. Review the semantics in the confirmation dialog and publish
+
+### Notes
+
+:::warning
+Force boot overrides the user-side update strategy. Reserve it for emergencies like brick rescue, and make sure the fix version is verified before publishing.
+:::
+
+- **Client requirement**: the native package must ship `react-native-update` >= 10.51.0 (older clients have no native cold-start check, and the console hides the option for them)
+- **Native check only**: the interactive JS update flow ignores this flag
+- **Safety guards still apply**: the device-local rollback guard takes precedence over force boot, and first-launch crash protection still rolls back automatically if the activated version crashes
+- **The flag lives on the binding**: republishing (rebinding) replaces the binding and clears the flag; you can also choose "Cancel force boot" from the package menu

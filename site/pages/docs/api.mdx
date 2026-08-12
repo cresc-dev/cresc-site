@@ -88,6 +88,13 @@ interface CrescOptions {
   // See the "Version health telemetry" section below
   // Requires v10.47.0+
   disableTelemetry?: boolean;
+
+  // Whether to disable the native cold-start check (the background check
+  // native code runs independently after every cold start), default: false
+  // (enabled). Disabling it gives up the force-boot brick-rescue channel.
+  // See the "Native cold-start check" section below
+  // Requires v10.51.0+
+  disableNativeCheck?: boolean;
 }
 
 // State reported after an update check finishes
@@ -184,6 +191,27 @@ const crescClient = new Cresc({
 ```
 
 Note that with telemetry disabled, the admin panel cannot compute version health for these clients, nor warn you when a release is failing at scale.
+
+#### Native cold-start check
+
+Since v10.51.0, the client runs an independent background update check from **native code** a few seconds after every cold start, with no JS involved. Its purpose is brick rescue: if a hot update kills your JS, the device can never run the JS-side check again — this native channel is the only one left that can pull the fix back down (activated via the console's [force boot](publish#force-boot-brick-rescue) flag).
+
+Key behaviors:
+
+- **Never disrupts the normal flow**: ordinarily it only downloads and caches; activation follows your configured strategy — with `checkStrategy: null` native downloads but never activates on its own; only a server-issued force-boot flag overrides the strategy
+- **JS reuses its result**: the JS-side check reuses the response the native check just fetched, saving one network round-trip on cold start
+- **Safety guards**: the device-local rollback guard has top priority, and first-launch crash protection still rolls back automatically if the activated version fails to start
+
+If you genuinely need to (traffic/battery budgets, consent-gated networking for compliance), disable it at init:
+
+```js
+const crescClient = new Cresc({
+  appKey,
+  disableNativeCheck: true,
+});
+```
+
+Note: a client with this disabled loses the force-boot rescue capability — once stuck on a broken update, reinstalling the app is the only way out.
 
 #### beforeReload Example: Clean Up Native SDKs Before Reload
 
