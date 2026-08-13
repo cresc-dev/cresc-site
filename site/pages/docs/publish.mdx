@@ -205,7 +205,7 @@ Force boot is a flag on the binding between a hot update version and a native pa
 
 If a hot update kills your app's JS (crash on launch, white screen), the JS code on that device never gets another chance to run the update check — the regular OTA channel is dead. That device is "bricked".
 
-Since `react-native-update` 10.51.0, the client runs an independent background check from **native code** a few seconds after every cold start, with no JS involved. Force boot is the directive for that channel: even with JS dead, the native check can still pull down the fix and activate it, so the device recovers on its next launch.
+Since `react-native-update` 10.52.1, the client runs an independent background check from **native code** a few seconds after every cold start, with no JS involved. Force boot is the directive for that channel: even with JS dead, the native check can still pull down the fix and activate it, so the device recovers on its next launch.
 
 ### Usage
 
@@ -219,7 +219,7 @@ Since `react-native-update` 10.51.0, the client runs an independent background c
 Force boot overrides the user-side update strategy. Reserve it for emergencies like brick rescue, and make sure the fix version is verified before publishing.
 :::
 
-- **Client requirement**: the native package must ship `react-native-update` >= 10.51.0 (older clients have no native cold-start check, and the console hides the option for them)
+- **Client requirement**: the native package must ship `react-native-update` >= 10.52.1 (older clients lack the full native cold-start check capability, and the console hides the option for them)
 - **Native check only**: the interactive JS update flow ignores this flag
 - **Safety guards still apply**: the device-local rollback guard takes precedence over force boot, and first-launch crash protection still rolls back automatically if the activated version crashes
 - **The flag lives on the binding**: republishing (rebinding) replaces the binding and clears the flag; you can also choose "Cancel force boot" from the package menu

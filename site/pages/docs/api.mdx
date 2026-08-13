@@ -93,7 +93,7 @@ interface CrescOptions {
   // native code runs independently after every cold start), default: false
   // (enabled). Disabling it gives up the force-boot brick-rescue channel.
   // See the "Native cold-start check" section below
-  // Requires v10.51.0+
+  // Requires v10.52.1+
   disableNativeCheck?: boolean;
 }
 
@@ -194,7 +194,7 @@ Note that with telemetry disabled, the admin panel cannot compute version health
 
 #### Native cold-start check
 
-Since v10.51.0, the client runs an independent background update check from **native code** a few seconds after every cold start, with no JS involved. Its purpose is brick rescue: if a hot update kills your JS, the device can never run the JS-side check again — this native channel is the only one left that can pull the fix back down (activated via the console's [force boot](publish#force-boot-brick-rescue) flag).
+Since v10.52.1, the client runs an independent background update check from **native code** a few seconds after every cold start, with no JS involved. Its purpose is brick rescue: if a hot update kills your JS, the device can never run the JS-side check again — this native channel is the only one left that can pull the fix back down (activated via the console's [force boot](publish#force-boot-brick-rescue) flag).
 
 Key behaviors:
 
