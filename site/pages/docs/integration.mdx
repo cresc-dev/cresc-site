@@ -189,7 +189,7 @@ function App() {
 
 After `checkUpdate()`, Cresc exposes state through `useUpdate()`:
 
-1. `{ expired: true }`: The installed native baseline is no longer valid. Prompt the user to install a newer native build if needed.
+1. `{ expired: true }`: The installed native baseline is no longer valid. Prompt the user to install a newer native build if needed. For in-app APK updates, configure the [install permission and system confirmation flow](/docs/api#async-function-downloadandinstallapkurl).
 2. `{ upToDate: true }`: No OTA update is currently available.
 3. `{ update: true }`: An OTA update is available. Use `name`, `description`, `metaInfo`, and the download flow to drive your UI.
 

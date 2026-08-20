@@ -361,7 +361,7 @@ interface UpdateContext {
 
 Triggers an update check, returns `updateInfo` (Note: Before v10.26.0, `checkUpdate` had no return value. We still recommend prioritizing `updateInfo` from `useUpdate()`). There are three return scenarios:
 
-1. `{expired: true}`: The native package has expired (3 cases: 1. Manually set as expired, 2. Manually deleted, 3. Never uploaded). You should prompt the user to download a new native build or redirect to the app store (requires setting `downloadUrl` in the web console). To update an APK inside the app, configure [install permissions](/docs/api#async-function-downloadandinstallapkurl).
+1. `{expired: true}`: The native package has expired (3 cases: 1. Manually set as expired, 2. Manually deleted, 3. Never uploaded). You should prompt the user to download a new native build or redirect to the app store (requires setting `downloadUrl` in the web console). To update an APK inside the app, configure the [install permission and system confirmation flow](/docs/api#async-function-downloadandinstallapkurl).
 
 ```js
 {
@@ -396,20 +396,23 @@ Downloads the hot update package. Only proceeds if `update:true`. Updates `progr
 
 #### async function downloadAndInstallApk(url)
 
-Downloads and directly installs an APK. `url` must point directly to the APK file.
+Downloads an APK and starts installation through Android's `PackageInstaller`. `url` must point directly to the APK file. This feature supports Android 5.0 (API 21) and later.
 
-Due to external factors like system security constraints, this is not guaranteed to succeed perfectly. If download/install fails during the app lifecycle, subsequent calls won't retry and fail silently.
+Installation must be initiated by the user and confirmed in Android's system installer. Regular apps cannot use this API for silent installation. The promise resolves after the system confirmation UI opens; it does not mean the user completed the installation.
 
-Note: Requires manual permissions added to `AndroidManifest.xml`. If supporting pre-Android 7.0 devices, you also need external storage permissions.
+Declare the install permission manually in the final app's `AndroidManifest.xml`:
 
 ```xml
 <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-
-<!-- For pre-Android 7.0 -->
-<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 ```
 
-Note that some app stores might reject your app due to these permissions. Removing them does not affect OTA update functionality.
+The APK is downloaded into app-private storage and written directly to a `PackageInstaller.Session`, so no external storage permission is required.
+
+On Android 8.0 (API 26) and later, the user must also allow the current app to install unknown apps. If this access has not been granted, the first call opens the app-specific system settings page and rejects with `APK_INSTALL_PERMISSION_REQUIRED`. Call the method again after the user grants access. Once the install session is submitted, the SDK handles `STATUS_PENDING_USER_ACTION` and opens Android's installation confirmation UI. The APK is not installed if the user declines.
+
+:::warning
+`REQUEST_INSTALL_PACKAGES` is a sensitive permission. Do not include it in channel builds that do not need in-app APK installation. Google Play does not allow this permission to be used for self-updates; remove it from Google Play builds and direct users to the store or use Google Play's in-app update mechanism instead. Removing this permission only disables full APK installation and does not affect Cresc OTA updates.
+:::
 
 ---
 
