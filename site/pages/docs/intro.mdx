@@ -19,7 +19,7 @@ If you use an AI coding tool that supports Skills, start with [Install & Use Ski
 
 ### Ultimate Update Experience
 
-- **🎯 Ultra-small update packages**: Incremental updates based on bsdiff/hdiff limits size to **tens to hundreds of KB**, saving 99%+ bandwidth compared to full-size updates — with an **exclusive Hermes-bytecode optimization** on top (see benchmark below).
+- **🎯 Ultra-small update packages**: Incremental updates based on bsdiff/hdiff keep a typical release to **tens to hundreds of KB**, and an **exclusive Hermes-bytecode optimization** takes a one-line hotfix all the way down to **3.4 KB** — 99.8% less bandwidth than a full update (see benchmark below).
 - **⚡️ Lightning Fast Distribution**: Global CDN delivery and incremental patch transport keep updates fast and reliable with a **99.9%+** success rate.
 - **🛡️ Secure and Reliable**: Built-in crash rollback mechanism automatically reverts failing patches, guaranteeing stability.
 - **🌐 Full Platform Support**: Flawless support for <span style={{whiteSpace: 'nowrap'}}><AppleOutlined style={{fontSize: '16px', color: '#555', marginRight: '6px'}} /> **iOS**</span> and <span style={{whiteSpace: 'nowrap'}}><AndroidOutlined style={{fontSize: '16px', color: '#3DDC84', marginRight: '6px'}} /> **Android**</span>.
@@ -36,19 +36,23 @@ If you use an AI coding tool that supports Skills, start with [Install & Use Ski
 
 ### 📊 Benchmarked: a diff algorithm purpose-built for Hermes
 
-Hermes bytecode is full of offset tables — a one-line JS change shifts every offset after it, which makes generic binary diffs blow up in size. Cresc applies an **exclusive HBC (Hermes bytecode) structure-aware reversible transform** that removes this amplification at the source.
+Hermes bytecode resists generic binary diffing in two independent ways. Cresc removes both, and the gains stack:
+
+- Hermes **re-sorts its string table on every compile**, so a one-line JS edit renumbers most string IDs and two nearly identical bytecode files end up differing almost everywhere. Cresc compiles each release against an earlier bytecode of the same app, pinning those IDs so that only real changes ever reach the diff.
+- Hermes bytecode is also full of **offset tables**, where inserting a few bytes shifts every offset after it. Cresc applies an **exclusive HBC (Hermes bytecode) structure-aware reversible transform** that removes this amplification at the source.
 
 Measured on a real React Native 0.86 app (~4.4 MB bytecode; the [benchmark code and data are fully open and reproducible](https://github.com/sunnylqm/hbc-diff-benchmark)):
 
 | Release scenario | Full update | Classic incremental (bsdiff) | Cresc incremental (Hermes-optimized) |
 |---|---|---|---|
-| One-line text change | 1.9 MB | 93.7 KB | **63.5 KB** (32% smaller) |
-| Small feature (~60 LOC) | 1.9 MB | 411.6 KB | **285.5 KB** (31% smaller) |
-| Medium feature (~300 LOC) | 1.9 MB | 551.6 KB | **398.4 KB** (28% smaller) |
+| One-line text change | 1.9 MB | 93.7 KB | **3.4 KB** (28× smaller) |
+| Small feature (~60 LOC) | 1.9 MB | 411.6 KB | **50.2 KB** (8.2× smaller) |
+| Medium feature (~300 LOC) | 1.9 MB | 551.6 KB | **97.8 KB** (5.6× smaller) |
 
-- **95%+ bandwidth saved** vs full updates, and another **~30% saved** vs classic bsdiff incremental updates
+- A one-line hotfix ships in **3.4 KB** — **99.8% less** than a full update, and **28× smaller** than a classic bsdiff incremental update
 - **The smaller the change, the bigger the win** — exactly the high-frequency hotfix scenario OTA is for
-- Fail-safe by design: the bytecode structure is fully validated before transforming, with automatic fallback to the plain incremental path; new Hermes versions are supported with **zero client-side changes**
+- **Nothing to change in your app**: both optimizations run at build time, so apps already in the store benefit from their next release onwards
+- Fail-safe by design: each build is verified against an unoptimized one and any mismatch falls back automatically; new Hermes versions are supported with **zero client-side changes**
 
 ## 💰 Unbeatable Value
 
