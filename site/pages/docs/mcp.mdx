@@ -39,7 +39,49 @@ In the [Cresc console](https://admin.cresc.dev) open "MCP Server",
 give it a name and a client label, **tick the apps it may read**, then copy the
 token right away — it is shown only once.
 
-### 2. Configure your client
+### 2. Let your agent install it (recommended)
+
+Copy the block below into your AI assistant (Claude Code, Cursor, Codex, Gemini
+CLI — any of them). **Replace the token with your own first**; the agent will
+find the right config location, install the server and verify it:
+
+```text
+Please install the Cresc hot-update MCP server in the client I am using.
+
+Server details (fixed — do not change them):
+- Name: cresc
+- Transport: HTTP (Streamable HTTP — not stdio, not SSE)
+- URL: https://api.cresc.dev/mcp
+- Auth: request header  Authorization: Bearer <token>
+- My token: pushy_mcp_xxxxxxxx   <- replace this with the token from the console
+
+Steps to follow:
+
+1. First work out which client I am in (Claude Code / Claude Desktop / Cursor /
+   VS Code / Codex / Cline / Gemini CLI ...) and find its MCP config file or
+   CLI. If you cannot tell, ask me — do not guess and write into a random one.
+2. Add it the official way for that client. Prefer the official CLI when there
+   is one (claude mcp add, codex mcp add, gemini mcp add); otherwise edit the
+   config file: back it up first, keep every MCP server already listed there,
+   and never overwrite the whole file.
+3. If the client only supports stdio and cannot talk to a remote HTTP server,
+   use the proxy instead:
+   npx -y mcp-remote https://api.cresc.dev/mcp --header "Authorization: Bearer <token>"
+4. The token is a secret: prefer user-level (global) config, and do not write it
+   into a project file that git would commit. If it has to live in the project,
+   confirm the file is in .gitignore and tell me.
+5. Verify after installing: list the tools the cresc server exposes, then run one
+   read-only query (for example, list the apps I have access to) and paste the
+   result. A 401/403 means the token is invalid or no apps were ticked — tell me
+   to create a new token in the console instead of retrying.
+6. Finish with one line: which file you changed or which command you ran, and
+   whether I need to restart the client.
+
+For context: this MCP server is read-only. It only reads release state — it
+never publishes a version and never changes any setting.
+```
+
+### 3. Or configure it by hand
 
 With Claude Desktop:
 
@@ -57,7 +99,7 @@ With Claude Desktop:
 }
 ```
 
-### 3. Just ask
+### 4. Just ask
 
 Once connected, ask in plain language as in the scenarios above — you never need
 to name a tool.
