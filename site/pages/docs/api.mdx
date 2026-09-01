@@ -89,6 +89,11 @@ interface CrescOptions {
   // Requires v10.47.0+
   disableTelemetry?: boolean;
 
+  // Whether to disable JS error reporting, default: false (enabled)
+  // See the "JS Error Monitoring" chapter: https://cresc.dev/docs/errors
+  // Requires v10.55.0+
+  disableErrorReporting?: boolean;
+
   // Whether to disable the native cold-start check (the background check
   // native code runs independently after every cold start), default: false
   // (enabled). Disabling it gives up the force-boot brick-rescue channel.
@@ -191,6 +196,18 @@ const crescClient = new Cresc({
 ```
 
 Note that with telemetry disabled, the admin panel cannot compute version health for these clients, nor warn you when a release is failing at scale.
+
+#### JS error reporting
+
+Since v10.55.0 the SDK reports JavaScript exceptions raised inside an OTA version to the update service, and the console restores the stack to your original source with the source map archived at publish time. Uncaught exceptions are reported automatically (the handler is appended on top of React Native's existing global `ErrorUtils` handler, so existing Sentry-style integrations are untouched), and you can report manually from a `catch`:
+
+```js
+crescClient.captureException(error, {
+  extra: { screen: "checkout" },
+});
+```
+
+It is part of every plan at no extra cost. To opt out, set `disableErrorReporting: true` at initialization. The full story — console UI, source map requirements and manual reporting — is in [JS Error Monitoring](errors).
 
 #### Native cold-start check
 
@@ -441,6 +458,22 @@ Example value:
     name: '1.0.3-rc',
     description: 'Added Chat feature\nFixed store bugs',
     metaInfo: '{"silent":true}',
+}
+```
+
+---
+
+#### function captureException(error, context?)
+
+Reports a JavaScript exception manually. Requires v10.55.0+. `context` accepts `fatal` (whether the error is fatal, default false), `componentStack` (a React component stack) and `extra` (custom context: strings, numbers, booleans and null only, up to 32 fields).
+
+The call returns synchronously and never throws: transport happens in the background, failures are silent, and the same error object is only reported once. Errors are only reported while running an OTA version, and never in development (`__DEV__`). See [JS Error Monitoring](errors).
+
+```js
+try {
+  await submitOrder(order);
+} catch (e) {
+  crescClient.captureException(e, { extra: { orderId: order.id } });
 }
 ```
 

@@ -12,15 +12,15 @@
   "dependencies": {
     "@ant-design/icons": "^6.3.2",
     "@rsbuild/plugin-sass": "^2.0.1",
-    "@rspress/core": "^2.0.18",
+    "@rspress/core": "^2.0.21",
     "@tailwindcss/postcss": "^4.3.3",
-    "@types/react-dom": "^19.2.3",
-    "antd": "^6.5.2",
-    "postcss": "^8.5.23",
+    "@types/react-dom": "^19.2.5",
+    "antd": "^6.6.2",
+    "postcss": "^8.5.26",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "rspress-plugin-mermaid": "^1.0.1",
-    "sass": "^1.102.0",
+    "sass": "^1.103.1",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2"
   }

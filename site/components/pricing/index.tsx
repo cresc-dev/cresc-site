@@ -464,6 +464,10 @@ function Pricing() {
             <span className="hidden h-1 w-1 rounded-full bg-[#d6d3cd] sm:block" />
             <span>CDN delivery included on every plan.</span>
             <span className="hidden h-1 w-1 rounded-full bg-[#d6d3cd] md:block" />
+            <span>
+              Source-mapped JS crash reporting included, free on every plan.
+            </span>
+            <span className="hidden h-1 w-1 rounded-full bg-[#d6d3cd] md:block" />
             <span>Unused resources can be removed to reclaim quota.</span>
           </div>
         </div>

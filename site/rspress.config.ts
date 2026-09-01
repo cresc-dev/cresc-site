@@ -55,6 +55,7 @@ export default defineConfig({
             { text: 'API Key', link: '/docs/api-token' },
             { text: 'MCP Server', link: '/docs/mcp' },
             { text: 'CLI Tools', link: '/docs/cli' },
+            { text: 'JS Error Monitoring', link: '/docs/errors' },
             { text: 'Brownfield Integration', link: '/docs/brownfield' },
             { text: 'Best Practices', link: '/docs/bestpractice' },
           ],
