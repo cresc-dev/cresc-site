@@ -232,3 +232,34 @@
     filter: blur(0);
   }
 }
+
+/* Force light headings on hero banner despite common.scss overrides */
+.cresc-home {
+  .cresc-hero-title {
+    color: #f8fafc !important;
+  }
+}
+
+/* ---------- GitHub Button Dark Styling ---------- */
+
+.cresc-gh-dark {
+  .gh-btn,
+  .gh-count {
+    background: rgba(10, 17, 32, 0.75) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    color: #f1f5f9 !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .gh-count:hover,
+  .gh-btn:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    color: #ffffff !important;
+  }
+
+  .gh-ico {
+    filter: invert(1) brightness(1.6);
+  }
+}

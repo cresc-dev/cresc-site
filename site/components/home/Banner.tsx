@@ -119,29 +119,29 @@ function Banner(_props: BannerProps) {
             <div className="flex flex-wrap items-center gap-3 mb-6 sm:mb-8">
               <a
                 href="/docs/skills"
-                className="group inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-black/45 backdrop-blur-md px-4 py-1.5 text-sm text-slate-100 hover:border-amber-400/60 hover:text-white transition-all duration-300 shadow-xl"
+                className="group inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-black/45 backdrop-blur-md px-4 py-1.5 text-sm text-slate-100 hover:border-blue-400/60 hover:text-white transition-all duration-300 shadow-xl"
               >
                 <span className="relative flex w-2 h-2">
                   <span className="cresc-live-dot absolute inline-flex h-full w-full rounded-full bg-emerald-400" />
                 </span>
                 <span>Official Skill Live · One-Prompt Setup with AI</span>
-                <span className="text-amber-400 group-hover:translate-x-0.5 transition-transform duration-300">
+                <span className="text-blue-400 group-hover:translate-x-0.5 transition-transform duration-300">
                   →
                 </span>
               </a>
               <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/40 backdrop-blur-md px-4 py-1.5 text-sm text-slate-200 shadow-lg">
-                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                <span className="w-2 h-2 rounded-full bg-violet-400" />
                 CodePush & App Center Alternative
               </span>
             </div>
 
             {/* Headline with dynamic highlight replacement */}
-            <h1 className="text-[2.75rem] leading-[1.12] sm:text-6xl lg:text-[4.25rem] font-extrabold tracking-tight text-white mb-6 drop-shadow-[0_4px_24px_rgba(0,0,0,0.85)]">
+            <h1 className="cresc-hero-title text-[2.75rem] leading-[1.12] sm:text-6xl lg:text-[4.25rem] font-extrabold tracking-tight text-white mb-6 drop-shadow-[0_4px_24px_rgba(0,0,0,0.85)]">
               Ship Every Release
               <br />
               <span
                 key={activeSlide}
-                className="cresc-slide-text bg-clip-text text-transparent bg-[linear-gradient(100deg,#f59e0b_0%,#fbbf24_45%,#fde68a_90%)]"
+                className="cresc-slide-text bg-clip-text text-transparent bg-[linear-gradient(100deg,#38bdf8_0%,#818cf8_50%,#c084fc_100%)]"
               >
                 {current.highlight}
               </span>
@@ -181,7 +181,7 @@ function Banner(_props: BannerProps) {
               <a href="/docs/skills" className="w-full sm:w-auto">
                 <button
                   type="button"
-                  className="w-full sm:w-auto px-8 py-[15px] rounded-full text-base font-bold text-[#1c1917] bg-[linear-gradient(100deg,#f59e0b,#fbbf24)] shadow-[0_8px_32px_rgba(245,158,11,0.4)] hover:shadow-[0_12px_44px_rgba(251,191,36,0.5)] hover:-translate-y-0.5 transition-all duration-300"
+                  className="pushy-btn-primary w-full sm:w-auto px-8 py-[15px] rounded-full text-base font-bold text-white bg-[linear-gradient(100deg,#2563eb,#4f46e5)] shadow-[0_8px_32px_rgba(37,99,235,0.45)] hover:shadow-[0_12px_44px_rgba(79,70,229,0.55)] hover:-translate-y-0.5 transition-all duration-300"
                 >
                   Install AI Skill
                 </button>
@@ -194,7 +194,7 @@ function Banner(_props: BannerProps) {
                   5-Min Quickstart
                 </button>
               </a>
-              <div className="scale-125 origin-left sm:ml-3 mt-2 sm:mt-0">
+              <div className="cresc-gh-dark scale-125 origin-left sm:ml-3 mt-2 sm:mt-0">
                 <GitHubButton
                   type="stargazers"
                   namespace="reactnativecn"
