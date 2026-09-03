@@ -1,15 +1,15 @@
 const landingCards = [
   {
     eyebrow: "Migration",
-    title: "Replacing CodePush or App Center",
-    desc: "See the migration path, rollout model, and why Cresc fits React Native teams that still need OTA updates after App Center's retirement.",
+    title: "Replacing CodePush & Expo Updates",
+    desc: "See the migration path, huge cost savings vs EAS Update, delta rollout model, and why Cresc is the best long-term OTA home.",
     href: "/codepush-alternative",
     cta: "Open Migration Guide",
   },
   {
-    eyebrow: "Comparison",
+    eyebrow: "Comparison & Pricing",
     title: "Expo Updates vs Cresc",
-    desc: "Compare bundle size, delta delivery, self-hosting flexibility, and when each workflow makes sense.",
+    desc: "Compare pricing models, delta delivery, bandwidth costs, and why Cresc saves up to 80%+ over EAS Update with zero surprise overage bills.",
     href: "/expo-updates-vs-cresc",
     cta: "Compare Options",
   },

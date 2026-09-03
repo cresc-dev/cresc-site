@@ -34,44 +34,59 @@ Expo Updates and Cresc both help React Native teams ship JavaScript changes outs
 
 ## Short answer
 
-- Choose **Expo Updates** if your team is heavily standardized on Expo services and prefers the default Expo release path.
-- Choose **Cresc** if your team wants smaller delta updates, a CodePush-style migration path, or more control over how OTA delivery fits your release system.
+- Choose **Expo Updates** if your team is heavily standardized on Expo services, has a small user base within free/starter limits, and prefers the default Expo release path.
+- Choose **Cresc** if your team wants massive price savings over EAS Update, smaller delta updates (~42 KB), a CodePush-style migration path, or more control over how OTA delivery fits your release system.
 
 ## Comparison table
 
 | Topic | Expo Updates | Cresc |
 | --- | --- | --- |
 | OTA updates for React Native | Yes | Yes |
-| Expo-oriented workflow | Strong default fit | Supported |
+| **Pricing & Cost Efficiency** | **Metered: $0.005/extra MAU + $0.10/GiB** | **Predictable flat tiers, zero overages (70–90% savings)** |
+| **Production Plan Pricing** | **$199/mo (capped at 50K MAUs)** | **$99/mo (covers 1,000,000 daily checks)** |
+| **Update payload size** | Full bundle (Megabytes) | **~42 KB (HDiff micro-patches)** |
+| **CDN Bandwidth** | Metered edge bandwidth ($$$) | **Included on every plan** |
+| Expo-oriented workflow | Strong default fit | Supported (CLI, bare, prebuild) |
 | Delta patch delivery | Not the main positioning | Core positioning |
 | Self-host friendliness | More service-oriented | Stronger |
-| CodePush/App Center migration story | Indirect | Direct |
+| CodePush migration story | Indirect | Direct |
 | CLI and CI publishing | Yes | Yes |
-| Rollback handling | Yes | Yes |
+| Rollback handling | Yes | Automatic crash detection & rollback |
+| JS Crash reporting | Separate service (Sentry) | Included free with source mapping |
 
 ## When Cresc is the better fit
 
-- You are moving off CodePush or App Center and want the workflow to feel familiar.
-- You care about shrinking update payloads with delta patches.
+- You want to eliminate expensive Expo EAS Update MAU and bandwidth invoices (saving up to 80%+).
+- You are moving off CodePush and want a familiar, drop-in replacement workflow.
+- You care about shrinking update payloads by 90%+ with delta patches.
 - You want to keep the option to self-host parts of the stack.
 - You want a release flow that is not tightly coupled to the rest of the Expo platform story.
 
 ## When Expo Updates is the better fit
 
-- Your team already uses Expo services end to end.
+- Your team already uses Expo services end to end and stays within low-traffic tiers.
 - You do not need a migration-focused replacement path.
 - Delta patch size is less important than keeping everything on the default Expo stack.
 
 ## What this means in practice
 
-Cresc is usually the better choice when release engineering, bandwidth efficiency, and migration risk are top concerns. Expo Updates is usually the better choice when operational simplicity inside Expo matters more than patch granularity or hosting flexibility.
+Cresc is usually the better choice when cost efficiency, bandwidth optimization, release engineering, and migration risk are top concerns. Expo Updates is usually the better choice when operational simplicity inside Expo matters more than patch granularity, cost predictability, or hosting flexibility.
 
 ## If pricing is the deciding factor
 
-See [Expo pricing vs Cresc](/expo-pricing-vs-cresc). As checked on April 17, 2026, Expo EAS Update and Cresc use different meters: Expo bills around update MAUs and bandwidth, while Cresc uses fixed monthly tiers based on daily update checks. Cresc keeps capacity planning explicit: pick the tier that fits real traffic, then upgrade when the app needs more headroom instead of absorbing automatic overage bills.
+**Cresc provides a decisive price and bandwidth advantage over Expo EAS Update.**
+
+See [Expo pricing vs Cresc](/expo-pricing-vs-cresc) for a comprehensive side-by-side cost model. Expo EAS Update bills across two separate consumption meters: update MAUs ($0.005 per extra updated user) and edge bandwidth ($0.10 per extra GiB). For active apps with frequent releases or traffic spikes, this metered billing quickly leads to unexpected hundreds or thousands of dollars in monthly overage fees.
+
+In contrast:
+- **Pro tier is $99/mo** for 1,000,000 daily queries—less than half the price of Expo Production ($199/mo for just 50,000 update MAUs).
+- **HDiff differential delivery** shrinks update payloads down to ~42 KB average, slashing bandwidth consumption by over 90%.
+- **Zero surprise invoices**: Cresc plans are fixed monthly tiers with CDN delivery included. You choose when to upgrade.
 
 ## Related documentation
 
+- [CodePush & Expo Updates alternative](/codepush-alternative)
+- [Expo pricing vs Cresc](/expo-pricing-vs-cresc)
 - [Installation and configuration](/docs/getting-started)
 - [Code integration](/docs/integration)
 - [Pricing](/pricing)
@@ -80,14 +95,14 @@ See [Expo pricing vs Cresc](/expo-pricing-vs-cresc). As checked on April 17, 202
 
 ### Can Cresc work in Expo projects?
 
-Yes. Cresc documents an Expo installation path and also explains where it conflicts with `expo-updates`.
+Yes. Cresc provides full support for Expo projects (via config plugins and prebuild) and documents how to use Cresc cleanly in Expo apps.
 
 ### Why does delta delivery matter?
 
-Smaller patches reduce bandwidth usage and make emergency fixes cheaper and faster to distribute, especially on large fleets or constrained networks.
+Smaller patches reduce bandwidth usage by 90%+ and make emergency fixes cheaper and faster to distribute, especially on large fleets or constrained mobile networks.
 
 ### Which option is easier to migrate to from CodePush?
 
-Cresc is the more direct migration target because that replacement story is already part of its positioning and documentation.
+Cresc is the direct, natural migration target for CodePush users because it preserves the baseline-and-patch mental model, CLI publishing experience, and transparent pricing without the expensive lock-in of Expo EAS.
 
 <Footer />

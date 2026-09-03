@@ -27,14 +27,6 @@ Generates a hot update resource package (ppk). Automatically detects if framewor
 - `expo`: Force use of Expo CLI for bundling (requires CLI v1.40.0+).
 - `taro`: Force use of Taro CLI for bundling (requires CLI v1.40.0+).
 
-Since v2.22.0, Hermes projects use **delta mode** (`hermesc -base-bytecode`) by default: the bundle is compiled against the HBC of the app's previous hot update, which keeps the Hermes string table stable across versions and typically shrinks hot-update patches 5–30×. The output is still a standard HBC and the client is unaffected; any failure along the way silently falls back to a plain compile, so a release is never blocked. Related options:
-
-- `hermesBase`: `auto` (default; asks the server for this app's base and verifies it by sha256) | `none` (disable) | a local file path (`.hbc` / `.ppk` / `.apk` / `.ipa`, e.g. the store build's bundle).
-- `verifyHermesBase`: default `true`; after the base compile the CLI also compiles without the base and compares both disassemblies, dropping the base on any mismatch. Pass `false` to trade safety for time on very large bundles.
-- `cacheMaxMb`: limit of the local bundle cache (default 500 MB / 20 files) kept at `.cresc.temp/cache/<sha256>`; `PUSHY_CACHE_DIR` / `PUSHY_CACHE_MAX_MB` also apply.
-
-Only hermesc builds that include the upstream delta-mode fix are used (the classic hermesc shipped with React Native, or `hermes-compiler` ≥ 250829098). Upgrading React Native changes the HBC version and starts a new chain automatically (the first version has no base). Also since v2.22.0 hermesc always runs with `-output-source-map`: the bytecode no longer embeds debug info (15–40% smaller, same as RN release builds) and the Hermes `.map` stays in `.cresc.temp/intermedia/<platform>/` for symbolicating crash stacks later.
-
 Since v1.44.2, direct publishing arguments have been added (equivalent to calling `cresc publish` right after bundling finishes):
 
 - `name`: Target name for the hot update version (its own version number).

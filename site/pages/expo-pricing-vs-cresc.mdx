@@ -72,12 +72,22 @@ Expo's official usage-based pricing for EAS Update adds:
 | Scenario | Expo | Cresc |
 | --- | --- | --- |
 | First paid tier | Starter is `$19/mo`, then usage-based billing after 3K update MAUs and 100 GiB. | Standard is `$19/mo` with 10K update checks per day, CDN delivery included, and no automatic overage bill. |
-| Production traffic | Production is `$199/mo`, then usage-based billing after 50K update MAUs and 1 TiB. | Pro is `$99/mo` with 1M update checks per day. Upgrade when real traffic needs more headroom. |
-| High volume | Enterprise pricing is custom, so there is no public monthly number to compare. | Max and Ultra are fixed public tiers at `$399/mo` and `$1,699/mo`, so capacity planning stays explicit. |
+| Production traffic | Production is `$199/mo`, then usage-based billing after 50K update MAUs and 1 TiB. | Pro is `$99/mo` (half the price!) with 1M update checks per day and included CDN bandwidth. |
+| Real-world 100K users | Expo Production ($199) + 50K overage MAUs ($250) + bandwidth overage (~$50+) = **~$500+/mo**. | Pro is **$99/mo flat** (or Premium at $39/mo), delivering **80%+ savings** with zero surprise bills. |
+| High volume | Enterprise pricing is custom with high sales minimums. | Max and Ultra are fixed public tiers at `$399/mo` and `$1,699/mo`, so capacity planning stays explicit. |
 
-The useful takeaway is predictability. Cresc gives fixed public tiers and does not turn a traffic spike into an automatic overage invoice. Expo can be economical when your update MAUs and bandwidth stay inside the plan allowance, but it can add usage charges when either meter crosses the included limit.
+The useful takeaway is predictability and massive savings. Cresc gives fixed public tiers and does not turn a traffic spike into an automatic overage invoice. Expo can add usage charges when either update MAUs ($0.005/user) or edge bandwidth ($0.10/GiB) cross the included limit.
 
 When a Cresc tier is no longer enough, upgrading does not make the buyer forfeit the unused portion of the current plan. The higher tier takes effect after payment, the old subscription is cancelled, and the current plan's remaining value is converted into extra days on the new tier.
+
+## Migrating from CodePush? Avoid the Expo pricing trap
+
+Teams moving off discontinued Microsoft CodePush often evaluate Expo EAS Update as the default successor. However, many engineering teams encounter severe bill shock: what used to be zero-cost on CodePush turns into recurring per-user monthly bills ($0.005/user) and edge bandwidth bills ($0.10/GiB) that compound as the app grows.
+
+Cresc provides the true spiritual and operational successor to CodePush:
+- **Transparent flat pricing**: starting at $19/mo (Standard) or $99/mo (Pro covering 1M checks/day), with zero per-user overage charges.
+- **Micro delta updates (~42 KB)**: HDiff differential patches cut data transfer by 90%+ compared to Expo's full multi-megabyte bundles.
+- **Global CDN included**: Worldwide edge delivery is included in the plan price.
 
 ## Expo's own usage example
 
@@ -87,7 +97,7 @@ Expo's official billing documentation gives this example for the Starter plan:
 - 5 MiB each
 - 10,000 updated users
 
-Their documented **extra usage** comes to **$95.31** for that month. Adding the Starter subscription itself means the all-in monthly cost would be **$114.31**. That total is an inference from the official example plus the public Starter plan fee.
+Their documented **extra usage** comes to **$95.31** for that month. Adding the Starter subscription itself means the all-in monthly cost would be **$114.31**. That total is an inference from the official example plus the public Starter plan fee. On Cresc, that same workload is handled smoothly on the **$19/mo Standard** or **$39/mo Premium** tier with vastly smaller delta payloads (~42 KB each instead of 5 MiB!).
 
 ## How Cresc scales
 
@@ -108,17 +118,18 @@ extraDays = floor(currentRemainingDays * currentPlanMonthlyPrice / newPlanMonthl
 newExpiry = now + 30 days + extraDays
 ```
 
-That is the economic story worth emphasizing: **fixed public ceilings, intentional upgrades, and preserved unused value instead of a usage bill that can grow across multiple meters**.
+That is the economic story worth emphasizing: **fixed public ceilings, intentional upgrades, massive cost savings, and preserved unused value instead of a usage bill that can grow across multiple meters**.
 
 ## Which pricing model is easier to budget?
 
-- Choose **Expo** if you are already deep into Expo services and are comfortable budgeting around update MAU plus bandwidth overages.
-- Choose **Cresc** if you want OTA pricing to stay closer to a fixed monthly infrastructure cost and prefer adding capacity intentionally as real usage grows.
+- Choose **Expo** if you are already locked into Expo services and are comfortable budgeting around fluctuating update MAU plus bandwidth overages.
+- Choose **Cresc** if you want to slash OTA costs by up to 80%+, keep OTA pricing as a fixed predictable infrastructure cost, and eliminate surprise overage bills.
 
 ## Related pages
 
 - [Expo Updates vs Cresc](/expo-updates-vs-cresc)
+- [CodePush & Expo Updates alternative](/codepush-alternative)
+- [CodePush & Expo Updates migration checklist](/codepush-migration-checklist)
 - [Pricing](/pricing)
-- [CodePush alternative](/codepush-alternative)
 
 <Footer />

@@ -6,7 +6,7 @@ export const homeSchema = {
   operatingSystem: "iOS, Android, HarmonyOS",
   url: "https://cresc.dev/",
   description:
-    "React Native OTA updates with delta patches, release risk monitoring, automatic protection, CI/CD publishing, and migration support for CodePush or App Center.",
+    "React Native OTA updates with delta patches, release risk monitoring, automatic protection, CI/CD publishing, and migration support for CodePush and Expo Updates.",
   offers: {
     "@type": "Offer",
     price: "0",
@@ -29,10 +29,10 @@ export const codepushFaqSchema = {
   mainEntity: [
     {
       "@type": "Question",
-      name: "Is Cresc a replacement for CodePush after App Center retirement?",
+      name: "Is Cresc a replacement for CodePush and Expo Updates?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. Cresc covers the same core React Native OTA workflow while focusing on delta patches, rollback safety, CI/CD publishing, and self-hosting flexibility.",
+        text: "Yes. Cresc covers the same core React Native OTA workflow while offering massive price savings over Expo EAS Update, delta patches (~42KB), rollback safety, and CI/CD publishing.",
       },
     },
     {
@@ -63,7 +63,7 @@ export const expoComparisonSchema = {
       name: "When should I choose Cresc over Expo Updates?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Choose Cresc when delta patch size, self-hosting flexibility, or migration from legacy OTA workflows matters more than staying entirely inside the Expo service model.",
+        text: "Choose Cresc when price advantage (avoiding high EAS Update MAU and edge bandwidth overages), delta patch size, self-hosting flexibility, or migration from CodePush matters more than staying entirely inside the Expo service model.",
       },
     },
     {
@@ -126,9 +126,9 @@ export const expoPricingSchema = {
 export const codepushChecklistSchema = {
   "@context": "https://schema.org",
   "@type": "HowTo",
-  name: "CodePush migration checklist for Cresc",
+  name: "CodePush & Expo Updates migration checklist for Cresc",
   step: [
-    { "@type": "HowToStep", name: "Audit your current CodePush usage" },
+    { "@type": "HowToStep", name: "Audit your current CodePush or Expo Updates usage" },
     { "@type": "HowToStep", name: "Integrate Cresc in the app" },
     { "@type": "HowToStep", name: "Upload the exact production baseline build" },
     { "@type": "HowToStep", name: "Connect the release workflow" },

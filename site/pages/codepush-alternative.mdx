@@ -1,6 +1,6 @@
 ---
-title: Cresc as a CodePush and App Center alternative
-description: Cresc gives React Native teams a practical CodePush and App Center alternative with delta OTA updates, rollback support, CI/CD publishing, and self-hosting flexibility.
+title: Cresc as a CodePush & Expo Updates alternative
+description: Cresc gives React Native teams a modern CodePush and Expo Updates alternative with massive price savings, delta OTA updates, rollback safety, CI/CD publishing, and self-hosting flexibility.
 pageType: doc-wide
 sidebar: false
 footer: false
@@ -13,13 +13,13 @@ head:
       content: https://cresc.dev/codepush-alternative
   - - meta
     - property: og:title
-      content: Cresc as a CodePush and App Center alternative
+      content: Cresc as a CodePush & Expo Updates alternative
   - - meta
     - property: og:description
-      content: Cresc gives React Native teams a practical CodePush and App Center alternative with delta OTA updates, rollback support, CI/CD publishing, and self-hosting flexibility.
+      content: Cresc gives React Native teams a modern CodePush and Expo Updates alternative with massive price savings, delta OTA updates, rollback safety, CI/CD publishing, and self-hosting flexibility.
   - - meta
     - name: keywords
-      content: codepush alternative, app center alternative, app center retirement react native, react native ota migration
+      content: codepush alternative, expo updates alternative, eas update alternative, expo update pricing, react native ota migration
 ---
 
 import Footer from "../components/Footer";
@@ -28,76 +28,90 @@ import { codepushFaqSchema } from "../lib/schema";
 
 <JsonLd data={codepushFaqSchema} />
 
-# Cresc as a CodePush and App Center alternative
+# Cresc as a CodePush & Expo Updates alternative
 
-If your React Native team still needs over-the-air updates after App Center's retirement, Cresc is the practical replacement path: keep the OTA workflow, move to smaller delta patches, and keep rollback and CI/CD automation in reach.
+If your React Native team is moving away from discontinued CodePush or seeking a cost-effective alternative to Expo Updates (EAS Update), Cresc is the ideal drop-in replacement: keep the OTA workflow, slash update bandwidth and MAU costs by up to 80%+, deliver 90% smaller delta patches, and keep rollback and CI/CD automation in reach.
 
 ## Why teams look for a replacement
 
-- App Center and CodePush are no longer the long-term path for React Native OTA workflows.
-- Teams still need to fix JavaScript bugs quickly without waiting for full store review cycles.
-- Full-bundle update systems often waste bandwidth compared with delta delivery.
-- Release engineers still need CI-friendly publishing, rollback behavior, and auditability.
+- **CodePush reached end-of-life** and is no longer maintained. Teams need a future-proof, actively developed home for React Native hot updates.
+- **Expo Updates (EAS Update) is costly at scale**: Metered billing ($0.005 per additional update MAU and $0.10/GiB edge bandwidth) creates unpredictable, runaway monthly invoices for high-traffic apps.
+- **Full-bundle delivery wastes bandwidth**: Re-downloading whole multi-megabyte JavaScript bundles on every bugfix wastes end-user data and cellular battery compared to differential patches.
+- **Teams still need rapid release cycles**: Shipping critical bug fixes and improvements in seconds without waiting for app store review delays remains essential.
+- **Release engineers demand predictability**: Engineering teams need transparent flat pricing, CI-friendly publishing, automated rollback protection, and full release auditability.
 
 ## What Cresc gives you
 
-- Delta OTA updates instead of shipping the full bundle on every change.
-- Rollback support when a release fails after download.
-- CLI and dashboard flows that fit existing CI/CD release pipelines.
-- Self-host-friendly architecture for teams that want more control.
-- Support across React Native, Expo-based workflows, Hermes, and Harmony integrations.
+- **Massive price advantage over Expo Updates**: Transparent flat monthly tiers ($19/mo Standard, $99/mo Pro covering 1,000,000 daily checks) with global CDN delivery included—no surprise per-user overage charges.
+- **True delta OTA updates (HDiff)**: Generate micro-updates averaging ~42 KB instead of shipping full multi-megabyte JavaScript bundles.
+- **Automated rollback protection**: Automated health checks detect release issues and revert users safely to the last known good build.
+- **Source-mapped JS crash reporting (included free)**: View production stack traces symbolicated back to your original source lines—Sentry-style observability without an extra subscription.
+- **CI/CD native workflow**: CLI and dashboard tools built to slot cleanly into GitHub Actions, Bitrise, Fastlane, and custom deployment pipelines.
+- **Self-hosting flexibility**: Option to self-host backend components for complete control and data sovereignty.
+- **Cross-ecosystem support**: Works seamlessly across React Native CLI, Expo prebuild/bare workflows, Hermes bytecode, and HarmonyOS.
 
-## Cresc vs legacy CodePush and App Center
+## Feature & Pricing Comparison
 
-| Capability | Cresc | Legacy CodePush / App Center |
-| --- | --- | --- |
-| OTA updates for React Native | Yes | Historically yes |
-| Delta patch delivery | Yes | Limited / older workflow expectations |
-| Active migration path today | Yes | No |
-| Self-host friendly | Yes | No practical long-term path |
-| CLI + dashboard publishing | Yes | Yes |
-| Rollback support | Yes | Yes |
-| Source-mapped JS crash reporting | Yes, included free | No |
-| Harmony-focused workflow support | Yes | No |
+| Capability | Cresc | CodePush (Discontinued) | Expo Updates (EAS Update) |
+| --- | --- | --- | --- |
+| **Pricing predictability** | **Fixed flat tiers, $0 overages** | Free (no longer available) | Metered usage: MAU + bandwidth ($$$) |
+| **Entry paid tier** | **$19/mo** (10,000 checks/day) | N/A | $19/mo (restricted to 3,000 MAUs) |
+| **Production tier** | **$99/mo** (1,000,000 checks/day) | N/A | **$199/mo** (restricted to 50,000 MAUs) |
+| **Overage penalties** | **None (zero surprise bills)** | N/A | **$0.005/user + $0.10/GiB bandwidth** |
+| **Average update size** | **~42 KB (HDiff delta patch)** | Multi-megabytes | Multi-megabytes (full bundle) |
+| **Global CDN bandwidth** | **Included on every plan** | Discontinued | Costly edge bandwidth overages |
+| **Automated rollback** | **Yes (automatic crash detection)** | Yes | Limited |
+| **Source-mapped crash reporting** | **Yes, included free** | No | Requires separate paid service (Sentry) |
+| **Active maintenance & updates** | **Active & continually evolving** | Discontinued (March 2025) | Active |
+| **HarmonyOS OTA support** | **Yes** | No | No |
+| **Self-hosting support** | **Yes** | Community forks only | Complex EAS lock-in |
 
 ## Migration path in four steps
 
-1. Install the Cresc CLI and integrate the SDK into your app.
-2. Upload the production APK or IPA that matches the build users actually have installed.
-3. Connect the app in your CI or release workflow.
-4. Publish the next JavaScript update through Cresc and validate rollback plus adoption behavior.
+1. Install the Cresc CLI (`npm i -g react-native-update-cli`) and integrate the SDK into your React Native or Expo app.
+2. Upload the production APK or IPA matching the build users currently have installed as the baseline package.
+3. Connect Cresc into your CI/CD pipeline using your API Key.
+4. Publish your next OTA update through Cresc, observing micro delta patch downloads, adoption rates, and rollback safety.
 
 Start here:
 
 - [Installation and configuration](/docs/getting-started)
 - [Code integration](/docs/integration)
 - [Publishing hot updates](/docs/publish)
+- [Expo pricing vs Cresc](/expo-pricing-vs-cresc)
 
 ## Who should choose Cresc
 
-Choose Cresc if your team needs at least one of these:
+Choose Cresc if your team:
 
-- A CodePush replacement that is still actively maintained.
-- Smaller OTA downloads than full-bundle update systems.
-- More control over hosting, observability, and release mechanics.
-- A migration path that keeps your existing React Native release workflow recognizable.
+- Needs an actively maintained, drop-in replacement for discontinued CodePush.
+- Wants to escape high, metered monthly bills from Expo EAS Update.
+- Wants ~42 KB delta downloads instead of multi-megabyte bundles eating users' cellular data.
+- Demands predictable, flat monthly infrastructure costs with global CDN delivery included.
+- Needs source-mapped JS error monitoring without paying for an external crash reporting service.
 
 ## FAQ
 
-### Is Cresc a direct replacement for CodePush?
+### Is Cresc a direct replacement for CodePush and Expo Updates?
 
-Yes for the core OTA use case. You still upload a native baseline, publish JavaScript updates, and control rollout behavior, but Cresc is built around its own SDK, CLI, and dashboard instead of the old App Center service.
+Yes. For CodePush users, Cresc provides the exact same operational mental model: upload a baseline native package, build and push JavaScript updates, and manage rollout targets—backed by an active CLI, SDK, and dashboard. For Expo users, Cresc provides identical OTA delivery capabilities at a fraction of the cost, eliminating EAS Update lock-in and meter anxiety.
+
+### How much cheaper is Cresc compared to Expo Updates?
+
+For most active apps, Cresc delivers **70% to 90% cost savings**:
+- Expo charges $199/month for its Production plan, which only includes 50,000 update MAUs and 1 TiB bandwidth. Every additional updated user costs $0.005, and each extra GiB of bandwidth costs $0.10. An app serving 150,000 users with two 5 MB updates a month can easily face monthly bills of **$700+**.
+- With Cresc, the **Pro tier is just $99/month** (less than half Expo's base fee) and covers **1,000,000 daily queries** with global CDN bandwidth included and zero overage fees. Furthermore, Cresc's HDiff delta compression shrinks downloads to tens of kilobytes, drastically reducing data transfer.
 
 ### What still requires a native release?
 
-Native code changes, native dependency changes, and anything that modifies files under `ios/` or `android/` still requires a new compiled build. JavaScript and bundled assets are good OTA candidates.
+Native code modifications, native dependency changes, and anything that modifies files under `ios/` or `android/` still requires a standard store submission. Pure JavaScript logic, styling, and bundled image assets can be updated instantly over the air.
 
-### Can I migrate without redoing the whole app?
+### Can I migrate without rewriting the whole app?
 
-Usually yes. The migration work is mostly SDK integration, baseline upload, and release-process updates. The app does not need a full architecture rewrite.
+Yes. The migration consists solely of swapping the SDK import, uploading the initial production baseline package, and adjusting your build scripts. Your app's core architecture and component code remain untouched.
 
 ### Where should I start?
 
-If you want the fastest route, go to [Getting Started](/docs/getting-started) and [register a Cresc account](https://admin.cresc.dev/#/register).
+Visit [Getting Started](/docs/getting-started) to install the SDK, or check our [CodePush & Expo Migration Checklist](/codepush-migration-checklist) for a step-by-step migration guide.
 
 <Footer />

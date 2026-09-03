@@ -129,10 +129,13 @@ function Banner(_props: BannerProps) {
                   →
                 </span>
               </a>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/40 backdrop-blur-md px-4 py-1.5 text-sm text-slate-200 shadow-lg">
+              <a
+                href="/codepush-alternative"
+                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/40 backdrop-blur-md px-4 py-1.5 text-sm text-slate-200 shadow-lg hover:border-amber-400/50 hover:text-white transition-all duration-300"
+              >
                 <span className="w-2 h-2 rounded-full bg-amber-400" />
-                CodePush & App Center Alternative
-              </span>
+                CodePush & Expo Updates Alternative
+              </a>
             </div>
 
             {/* Headline with dynamic highlight replacement */}

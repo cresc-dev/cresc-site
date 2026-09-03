@@ -1,7 +1,7 @@
 {
   "name": "Cresc - React Native OTA Updates",
   "short_name": "Cresc",
-  "description": "React Native OTA updates with delta patches, rollback safety, CI/CD publishing, and migration paths for CodePush or App Center teams.",
+  "description": "React Native OTA updates with delta patches, rollback safety, CI/CD publishing, and migration paths for CodePush and Expo Updates teams.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

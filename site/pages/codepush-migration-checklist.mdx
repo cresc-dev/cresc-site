@@ -1,6 +1,6 @@
 ---
-title: CodePush migration checklist for Cresc
-description: Use this practical checklist to migrate from CodePush or App Center to Cresc without losing your React Native OTA workflow.
+title: CodePush & Expo Updates migration checklist for Cresc
+description: Use this practical checklist to migrate from CodePush or Expo Updates to Cresc without losing your React Native OTA workflow, and slash your update costs.
 pageType: doc-wide
 sidebar: false
 footer: false
@@ -13,13 +13,13 @@ head:
       content: https://cresc.dev/codepush-migration-checklist
   - - meta
     - property: og:title
-      content: CodePush migration checklist for Cresc
+      content: CodePush & Expo Updates migration checklist for Cresc
   - - meta
     - property: og:description
-      content: Use this practical checklist to migrate from CodePush or App Center to Cresc without losing your React Native OTA workflow.
+      content: Use this practical checklist to migrate from CodePush or Expo Updates to Cresc without losing your React Native OTA workflow, and slash your update costs.
   - - meta
     - name: keywords
-      content: codepush migration checklist, app center migration react native, codepush to cresc
+      content: codepush migration checklist, expo updates migration, eas update alternative, codepush to cresc, expo to cresc
 ---
 
 import Footer from "../components/Footer";
@@ -28,34 +28,35 @@ import { codepushChecklistSchema } from "../lib/schema";
 
 <JsonLd data={codepushChecklistSchema} />
 
-# CodePush migration checklist for Cresc
+# CodePush & Expo Updates migration checklist for Cresc
 
-Use this checklist if your React Native team is moving away from CodePush or App Center and wants the cleanest path onto Cresc.
+Use this checklist if your React Native team is moving away from deprecated CodePush or migrating from Expo Updates (EAS Update) to dramatically cut OTA delivery costs, eliminate surprise overage bills, and adopt high-speed delta patches.
 
-## 1. Audit your current OTA workflow
+## 1. Audit your current OTA workflow and costs
 
 Write down:
 
-- which apps still use CodePush or App Center
+- which apps still use CodePush or Expo Updates (EAS Update)
+- current OTA costs and overage risks (if using Expo EAS Update, note your monthly update MAUs and bandwidth overage charges—Cresc can slash this by 70–90% with predictable flat tiers)
 - which channels or rollout groups exist
 - how often you publish JavaScript updates
 - which CI jobs publish or promote releases today
 
 ## 2. Integrate Cresc in the app
 
-- install the SDK
-- wire the native bundle URL
-- confirm a release build can boot with Cresc enabled
+- install the SDK (`npm i @react-native-update/cresc`)
+- wire the native bundle URL (or use Expo auto integration)
+- confirm a release build boots cleanly with Cresc enabled
 
 Start here: [Installation & Config](/docs/getting-started)
 
 ## 3. Upload the exact baseline build
 
-Before publishing OTA patches, upload the exact APK or IPA that matches the build users actually install. Cresc uses that build as the baseline for later delta comparisons.
+Before publishing OTA patches, upload the exact APK or IPA that matches the build users actually install. Cresc uses that build as the baseline for later HDiff differential comparisons, ensuring updates stay at micro-sizes (~42 KB).
 
 ## 4. Recreate the release workflow
 
-Move the old publishing path onto Cresc:
+Move your publishing path onto Cresc (compatible with React Native CLI, bare React Native, or Expo workflows):
 
 - CLI login or API Key
 - build artifact upload
@@ -67,7 +68,7 @@ See: [Publishing Hot Updates](/docs/publish) and [API Key](/docs/api-token)
 ## 5. Test a real OTA release end to end
 
 - publish a small JavaScript-only change
-- verify the update prompt or silent strategy
+- verify the update prompt or silent download strategy
 - verify the switch version behavior
 - verify rollback on failure
 
@@ -75,23 +76,25 @@ See: [Publishing Hot Updates](/docs/publish) and [API Key](/docs/api-token)
 
 Track:
 
-- update adoption
-- rollback events
+- update adoption speed
+- automated rollback events
 - app-open check behavior
-- package size and release cadence
+- package size and release cadence (notice the massive bandwidth drop from delta patches)
 
 ## 7. Remove the old operational dependency
 
-Once Cresc is working in production:
+Once Cresc is verified in production:
 
-- remove old OTA credentials from CI
-- document the new workflow
+- cancel expensive Expo EAS Update tiers or remove sunset CodePush dependencies
+- remove legacy OTA credentials and keys from CI
+- document the new workflow for your team
 - point engineers to the Cresc dashboard and docs
 
 ## Quick links
 
-- [CodePush alternative](/codepush-alternative)
-- [React Native OTA updates](/react-native-ota-updates)
+- [CodePush & Expo Updates alternative](/codepush-alternative)
 - [Expo pricing vs Cresc](/expo-pricing-vs-cresc)
+- [Expo Updates vs Cresc](/expo-updates-vs-cresc)
+- [React Native OTA updates](/react-native-ota-updates)
 
 <Footer />

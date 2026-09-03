@@ -55,18 +55,22 @@ Measured on a real React Native 0.86 app (~4.4 MB bytecode; the [benchmark code 
 - **Nothing to change in your app**: both optimizations run at build time, so apps already in the store benefit from their next release onwards
 - Fail-safe by design: each build is verified against an unoptimized one and any mismatch falls back automatically; new Hermes versions are supported with **zero client-side changes**
 
-## 💰 Unbeatable Value
+## 💰 Unbeatable Value: Up to 80%+ Savings vs Expo Updates
 
-Compared to other alternatives, Cresc is more powerful yet highly affordable:
+Compared to other alternatives, Cresc is far more cost-efficient, faster, and predictable:
 
-| Feature | Cresc | Expo Updates |
-|--------|-------|-------------|
-| **Starting Price** | Free plan or $19/mo | ~$30/mo |
-| **Bandwidth Limits** | Built-in, no extra fees | Extra costs apply over limits |
-| **Package Size** | KB scale (Incremental) | MB scale (Full bundle) |
+| Feature | Cresc | Expo Updates (EAS Update) | CodePush (Discontinued) |
+|--------|-------|-------------|---|
+| **Entry Price** | **Free plan or $19/mo** (10K checks/day) | $19/mo (capped at 3K update MAUs) | Free (No longer available) |
+| **Production Scale** | **$99/mo** (1,000,000 checks/day) | **$199/mo** + usage fees | Discontinued |
+| **Overage Fees** | **$0** (Predictable flat tiers) | **$0.005/extra user + $0.10/GiB bandwidth** | N/A |
+| **CDN Bandwidth** | **Global edge CDN included** | Metered edge bandwidth overages | Discontinued |
+| **Average Download Size** | **~42 KB** (HDiff delta patches) | Multi-MB (Full bundle) | Multi-MB |
+| **Crash Reporting** | **Included free** (Source-mapped JS stacks) | Separate paid service (e.g. Sentry) | None |
+| **Rollback Safety** | **Automated rollback** on boot crash | Manual rollouts | Manual |
 
 :::warning
-**Note**: Microsoft App Center (Code Push) officially shut down on March 31, 2025. If you are using Code Push, now is the best time to migrate to Cresc!
+**Migrating from CodePush or Expo Updates**: CodePush officially reached end-of-life on March 31, 2025, and Expo EAS Update imposes costly per-update-MAU and bandwidth overages. Whether you are replacing sunset CodePush or slashing your Expo update bills, Cresc provides a seamless drop-in migration with true delta updates and transparent pricing! See our [CodePush & Expo Updates Alternative guide](/codepush-alternative).
 :::  
 
 With Cresc, your team gains:

@@ -22,8 +22,8 @@ function Footer() {
       title: "Help & Support",
       links: [
         { text: "FAQ", href: "/docs/faq" },
-        { text: "CodePush Alternative", href: "/codepush-alternative" },
-        { text: "CodePush Migration", href: "/codepush-migration-checklist" },
+        { text: "CodePush & Expo Updates Alternative", href: "/codepush-alternative" },
+        { text: "CodePush & Expo Migration", href: "/codepush-migration-checklist" },
         { text: "Expo Updates vs Cresc", href: "/expo-updates-vs-cresc" },
         {
           text: "GitHub Issues",

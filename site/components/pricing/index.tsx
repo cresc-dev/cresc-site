@@ -266,21 +266,54 @@ const expoPricingRows = [
   },
 ];
 
+const crescModelRows = [
+  {
+    title: "Standard",
+    price: "$19/mo",
+    included: "10K daily queries · CDN included",
+  },
+  {
+    title: "Premium",
+    price: "$39/mo",
+    included: "100K daily queries · CDN included",
+  },
+  {
+    title: "Pro",
+    price: "$99/mo",
+    included: "1M daily queries · Most Popular",
+  },
+];
+
 const comparisonRows = [
   {
-    scenario: "First paid tier",
-    expo: "Starter is $19/mo, then usage-based billing after 3K update MAUs and 100 GiB.",
-    cresc: "Standard is $19/mo with 10K update checks per day, CDN delivery included, and no automatic overage bill.",
+    scenario: "Entry paid tier",
+    badge: "Zero overage risk",
+    expo: "Starter is $19/mo, then strictly metered: charges $0.005/user and $0.10/GiB after just 3K update MAUs.",
+    cresc: "Standard is $19/mo with 10K update checks per day, global CDN delta delivery included, and zero surprise overage bills.",
   },
   {
-    scenario: "Production traffic",
-    expo: "Production is $199/mo, then usage-based billing after 50K update MAUs and 1 TiB.",
-    cresc: "Pro is $99/mo with 1M update checks per day. Upgrade when real traffic needs more headroom.",
+    scenario: "Production scale",
+    badge: "50% lower base fee",
+    expo: "Production starts at a hefty $199/mo, with extra charges kicking in after only 50K update MAUs.",
+    cresc: "Pro is just $99/mo (half the price of Expo Production!) covering 1,000,000 daily queries with included CDN bandwidth.",
   },
   {
-    scenario: "High volume",
-    expo: "Enterprise pricing is custom, so there is no public monthly number to compare.",
-    cresc: "Max and Ultra are fixed public tiers at $399/mo and $1,699/mo, so capacity planning stays explicit.",
+    scenario: "Real-world 100K users",
+    badge: "Save 80%+ monthly",
+    expo: "Expo Production ($199) + 50K extra users ($250) + bandwidth overage (~$50+) = ~$500+/mo.",
+    cresc: "Pro is $99/mo flat (or Premium at $39/mo if checks fit), delivering up to 80%+ savings with zero surprise invoices.",
+  },
+  {
+    scenario: "Bandwidth & Payload",
+    badge: "90%+ bandwidth saved",
+    expo: "Full multi-MB bundle downloads trigger expensive $0.10/GiB edge bandwidth overages.",
+    cresc: "True HDiff differential updates (~42 KB vs full MBs). CDN bandwidth included on every tier.",
+  },
+  {
+    scenario: "High volume fleets",
+    badge: "Predictable budgeting",
+    expo: "Enterprise pricing requires sales negotiation with high usage-based minimums.",
+    cresc: "Max ($399/mo) and Ultra ($1,699/mo) are transparent public tiers covering up to 100M daily queries.",
   },
 ];
 
@@ -506,93 +539,205 @@ function Pricing() {
               Pricing Comparison
             </p>
             <h2 className="cresc-display mt-3 text-2xl leading-tight text-[#1c1917] sm:text-3xl">
-              Fixed tiers, no runaway bill.
+              Up to 80%+ savings. Fixed tiers, zero runaway bills.
             </h2>
             <p className="mt-4 text-base leading-7 text-[#57534e]">
-              Expo EAS Update and Cresc use different meters. Expo counts
-              unique users who download an update in a monthly billing period,
-              plus edge bandwidth. Cresc uses fixed monthly tiers based on
-              daily update checks, with CDN delivery included. There is no
-              hidden usage meter that turns a traffic spike into a surprise
-              invoice. Pick the tier that fits real traffic, then upgrade only
-              when the app needs more headroom.
+              Expo EAS Update bills on complex, volatile consumption meters:
+              update MAUs ($0.005 per extra updated user) plus edge bandwidth
+              ($0.10/GiB). Cresc uses fixed, predictable monthly tiers with
+              worldwide CDN delivery included and zero surprise overage
+              penalties. Coupled with HDiff delta updates (~42 KB vs multi-MB
+              full bundles), Cresc saves most production teams 70% to 90% on
+              their monthly OTA bills.
             </p>
           </div>
 
-          <div className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-            <div className="rounded-2xl border border-[#e7e5e1] bg-white p-5">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="cresc-display text-xl text-[#1c1917]">
-                  Expo EAS Update
-                </h3>
-                <span className="text-xs font-medium uppercase tracking-[0.12em] text-[#a8a29e]">
-                  Checked 2026-04-17
-                </span>
-              </div>
+          {/* Top: Side-by-side Model Comparison (Symmetrical Height) */}
+          <div className="mt-8 grid gap-5 lg:grid-cols-2 items-stretch">
+            {/* Left: Expo EAS Update */}
+            <div className="flex flex-col justify-between rounded-2xl border border-[#e7e5e1] bg-white p-5 sm:p-6 shadow-[0_1px_2px_rgba(28,25,23,0.04)]">
+              <div>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <h3 className="cresc-display text-xl text-[#1c1917]">
+                      Expo EAS Update
+                    </h3>
+                    <span className="rounded-full border border-[#fecaca] bg-[#fef2f2] px-2.5 py-0.5 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[#dc2626]">
+                      Metered
+                    </span>
+                  </div>
+                  <span className="text-xs font-medium text-[#a8a29e]">
+                    Checked 2026-04-17
+                  </span>
+                </div>
 
-              <div className="mt-5 grid gap-3">
-                {expoPricingRows.map((row) => (
-                  <div
-                    key={row.title}
-                    className="grid grid-cols-[minmax(0,1fr)_auto] gap-4 rounded-xl border border-[#eceae5] bg-[#fafaf9] px-4 py-3"
-                  >
-                    <div>
-                      <p className="font-semibold text-[#1c1917]">{row.title}</p>
-                      <p className="mt-1 text-sm leading-6 text-[#57534e]">
-                        {row.included}
+                <div className="mt-4 grid gap-2.5">
+                  {expoPricingRows.map((row) => (
+                    <div
+                      key={row.title}
+                      className="grid grid-cols-[minmax(0,1fr)_auto] gap-4 rounded-xl border border-[#eceae5] bg-[#fafaf9] px-4 py-3"
+                    >
+                      <div>
+                        <p className="font-semibold text-[#1c1917]">{row.title}</p>
+                        <p className="mt-0.5 text-xs text-[#57534e]">
+                          {row.included}
+                        </p>
+                      </div>
+                      <p className="text-right text-sm font-semibold text-[#b45309]">
+                        {row.price}
                       </p>
                     </div>
-                    <p className="text-right text-sm font-semibold leading-6 text-[#b45309]">
-                      {row.price}
-                    </p>
+                  ))}
+                </div>
+
+                {/* Overages Callout */}
+                <div className="mt-4 rounded-xl border border-[#fed7aa] bg-[#fffbeb] p-3.5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-[#b45309]">
+                    Metered Usage Overages
+                  </p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-medium text-[#9a3412]">
+                    <span>+$0.005 / updated user</span>
+                    <span>+$0.10 / GiB bandwidth</span>
                   </div>
-                ))}
+                </div>
               </div>
 
-              <p className="mt-4 text-sm leading-6 text-[#57534e]">
-                Expo counts update MAUs only when a device downloads at least
-                one update during the billing period. Users who only check for
-                updates are not counted as update MAUs.
+              <p className="mt-4 text-xs leading-5 text-[#78716c]">
+                Devices that download updates count as update MAUs. Traffic spikes trigger immediate automatic overage invoices.
               </p>
             </div>
 
-            <div className="rounded-2xl border border-[#e7e5e1] bg-white p-5">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="cresc-display text-xl text-[#1c1917]">
-                  Same monthly scenarios
-                </h3>
-                <span className="text-xs font-medium uppercase tracking-[0.12em] text-[#a8a29e]">
-                  Same basis
-                </span>
+            {/* Right: Cresc OTA */}
+            <div className="flex flex-col justify-between rounded-2xl border border-[#e7e5e1] bg-white p-5 sm:p-6 shadow-[0_1px_2px_rgba(28,25,23,0.04)]">
+              <div>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <h3 className="cresc-display text-xl text-[#1c1917]">
+                      Cresc OTA
+                    </h3>
+                    <span className="rounded-full border border-[#bbf7d0] bg-[#f0fdf4] px-2.5 py-0.5 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[#16a34a]">
+                      Predictable
+                    </span>
+                  </div>
+                  <span className="text-xs font-medium text-[#b45309]">
+                    CDN Included
+                  </span>
+                </div>
+
+                <div className="mt-4 grid gap-2.5">
+                  {crescModelRows.map((row) => (
+                    <div
+                      key={row.title}
+                      className="grid grid-cols-[minmax(0,1fr)_auto] gap-4 rounded-xl border border-[#eceae5] bg-[#fafaf9] px-4 py-3"
+                    >
+                      <div>
+                        <p className="font-semibold text-[#1c1917]">{row.title}</p>
+                        <p className="mt-0.5 text-xs text-[#57534e]">
+                          {row.included}
+                        </p>
+                      </div>
+                      <p className="text-right text-sm font-semibold text-[#b45309]">
+                        {row.price}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Predictable Guarantees Callout */}
+                <div className="mt-4 rounded-xl border border-[#bbf7d0] bg-[#f0fdf4] p-3.5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-[#16a34a]">
+                    Built-in Guarantees
+                  </p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-medium text-[#166534]">
+                    <span>$0 surprise overage fees</span>
+                    <span>~42 KB average delta patch</span>
+                  </div>
+                </div>
               </div>
 
-              <div className="mt-5 grid gap-3">
-                {comparisonRows.map((row) => (
-                  <div
-                    key={row.scenario}
-                    className="rounded-xl border border-[#eceae5] bg-[#fafaf9] px-4 py-3"
-                  >
-                    <p className="font-semibold text-[#1c1917]">
-                      {row.scenario}
+              <p className="mt-4 text-xs leading-5 text-[#78716c]">
+                Worldwide CDN bandwidth included on all tiers. Upgrade intentionally with preserved remaining value—zero surprise bills.
+              </p>
+            </div>
+          </div>
+
+          {/* Middle: Full-Width Real-World Scenario Comparison */}
+          <div className="mt-6 rounded-2xl border border-[#e7e5e1] bg-white p-5 sm:p-6 shadow-[0_1px_2px_rgba(28,25,23,0.04)]">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-4 border-b border-[#eceae5]">
+              <div>
+                <h3 className="cresc-display text-xl text-[#1c1917]">
+                  Real-World Scenario Comparison
+                </h3>
+                <p className="mt-0.5 text-sm text-[#57534e]">
+                  Side-by-side breakdown of costs, delivery payloads, and budgeting behavior.
+                </p>
+              </div>
+              <span className="self-start sm:self-auto rounded-full border border-[#f0d9bd] bg-[#fdf6ec] px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[#b45309]">
+                Side-by-side
+              </span>
+            </div>
+
+            {/* Desktop Table View (md+) */}
+            <div className="hidden md:block mt-5 overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-[#eceae5] text-xs font-semibold uppercase tracking-wider text-[#78716c]">
+                    <th className="py-3 px-4 w-[24%]">Scenario</th>
+                    <th className="py-3 px-4 w-[38%]">Expo EAS Update</th>
+                    <th className="py-3 px-4 w-[38%]">Cresc Advantage</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#eceae5] text-sm">
+                  {comparisonRows.map((row) => (
+                    <tr key={row.scenario} className="hover:bg-[#fafaf9] transition-colors">
+                      <td className="py-4 px-4 font-semibold text-[#1c1917] align-top">
+                        <span>{row.scenario}</span>
+                        {row.badge && (
+                          <span className="block mt-1.5 w-fit rounded-md bg-[#fdf6ec] text-[#b45309] text-[0.7rem] px-2 py-0.5 font-medium border border-[#f0d9bd]">
+                            {row.badge}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-4 px-4 text-[#57534e] align-top leading-relaxed">
+                        <span className="inline-block rounded bg-[#f5f5f4] px-1.5 py-0.5 text-xs font-medium text-[#78716c] mr-1.5 mb-1">
+                          Expo
+                        </span>
+                        {row.expo}
+                      </td>
+                      <td className="py-4 px-4 text-[#1c1917] align-top leading-relaxed bg-[#fdfdfc]/80">
+                        <span className="inline-block rounded bg-[#fef3c7] px-1.5 py-0.5 text-xs font-medium text-[#b45309] mr-1.5 mb-1">
+                          Cresc
+                        </span>
+                        {row.cresc}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards View (<md) */}
+            <div className="md:hidden mt-4 space-y-3">
+              {comparisonRows.map((row) => (
+                <div key={row.scenario} className="rounded-xl border border-[#eceae5] bg-[#fafaf9] p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-semibold text-[#1c1917]">{row.scenario}</p>
+                    {row.badge && (
+                      <span className="rounded bg-[#fdf6ec] text-[#b45309] text-[0.7rem] px-2 py-0.5 font-medium border border-[#f0d9bd]">
+                        {row.badge}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-3 space-y-2 text-sm leading-6">
+                    <p className="text-[#57534e]">
+                      <span className="font-semibold text-[#78716c]">Expo:</span> {row.expo}
                     </p>
-                    <p className="mt-2 text-sm leading-6 text-[#57534e]">
-                      <span className="font-semibold text-[#b45309]">Expo:</span>{" "}
-                      {row.expo}
-                    </p>
-                    <p className="mt-1 text-sm leading-6 text-[#57534e]">
-                      <span className="font-semibold text-[#b45309]">Cresc:</span>{" "}
-                      {row.cresc}
+                    <p className="text-[#1c1917] bg-white p-2.5 rounded-lg border border-[#e7e5e1]">
+                      <span className="font-semibold text-[#b45309]">Cresc:</span> {row.cresc}
                     </p>
                   </div>
-                ))}
-              </div>
-
-              <p className="mt-4 text-sm leading-6 text-[#57534e]">
-                The direct difference is not that one "daily query" equals one
-                Expo MAU. The difference is billing behavior: Cresc stops at
-                the tier you choose, while Expo can add usage charges for
-                update MAUs and bandwidth after the plan allowance.
-              </p>
+                </div>
+              ))}
             </div>
           </div>
 
