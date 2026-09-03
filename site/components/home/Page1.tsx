@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const movements = [
   {
@@ -231,6 +231,10 @@ function Page1() {
   const [progress, setProgress] = useState(0);
   const [motionPoints, setMotionPoints] = useState<MotionPoints | null>(null);
   const [sequenceTop, setSequenceTop] = useState(88);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const isCompletedRef = useRef(false);
+  const completionAnchorRef = useRef<number | null>(null);
+  const progressRef = useRef(0);
 
   const measureMotionPoints = (): MotionPoints | null => {
     const stage = stageRef.current;
@@ -281,6 +285,10 @@ function Page1() {
   };
 
   const updateAnimation = () => {
+    if (isCompletedRef.current) {
+      return;
+    }
+
     const sequence = sequenceRef.current;
     const sticky = stickyRef.current;
     const stage = stageRef.current;
@@ -305,10 +313,38 @@ function Page1() {
       );
     }
 
+    if (!isDesktop) {
+      const stageRect = stage.getBoundingClientRect();
+      const targetProgress = clamp((viewportHeight * 0.8 - stageRect.top) / (viewportHeight * 0.6), 0, 1);
+      const nextProgress = Math.max(progressRef.current, targetProgress);
+      if (nextProgress >= 0.995) {
+        isCompletedRef.current = true;
+        progressRef.current = 1;
+        setIsCompleted(true);
+        setProgress(1);
+        return;
+      }
+      progressRef.current = nextProgress;
+      setProgress(nextProgress);
+      return;
+    }
+
     const maxScroll = Math.max(sequenceRect.height - stickyRect.height, 1);
     const scrolled = nextSequenceTop - sequenceRect.top;
-    const nextProgress = clamp(scrolled / maxScroll, 0, 1);
+    const targetProgress = clamp(scrolled / maxScroll, 0, 1);
+    // Monotonically non-decreasing so the animation never rewinds on backward scroll
+    const nextProgress = Math.max(progressRef.current, targetProgress);
 
+    if (nextProgress >= 0.995) {
+      completionAnchorRef.current = stickyRect.top;
+      isCompletedRef.current = true;
+      progressRef.current = 1;
+      setIsCompleted(true);
+      setProgress(1);
+      return;
+    }
+
+    progressRef.current = nextProgress;
     setProgress((current) =>
       Math.abs(current - nextProgress) > 0.001 ? nextProgress : current,
     );
@@ -318,6 +354,21 @@ function Page1() {
       setMotionPoints(nextPoints);
     }
   };
+
+  useLayoutEffect(() => {
+    if (!isCompleted || completionAnchorRef.current === null) {
+      return;
+    }
+
+    const sticky = stickyRef.current;
+    if (sticky) {
+      const delta = sticky.getBoundingClientRect().top - completionAnchorRef.current;
+      if (Math.abs(delta) > 1) {
+        window.scrollBy(0, delta);
+      }
+    }
+    completionAnchorRef.current = null;
+  }, [isCompleted]);
 
   useEffect(() => {
     let rafId = 0;
@@ -353,7 +404,7 @@ function Page1() {
       className="cresc-section relative py-24"
     >
 
-      {pearlPoint && pearlOpacity > 0.01 && (
+      {!isCompleted && pearlPoint && pearlOpacity > 0.01 && (
         <div
           className="pointer-events-none fixed z-[90]"
           style={{
@@ -386,12 +437,14 @@ function Page1() {
 
         <div
           ref={sequenceRef}
-          className="relative mt-16 min-h-[200vh] lg:min-h-[250vh]"
+          className={`relative mt-16 ${isCompleted ? "" : "min-h-[200vh] lg:min-h-[250vh]"}`}
         >
           <div
             ref={stickyRef}
-            className="grid gap-10 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.9fr)] lg:items-stretch lg:sticky"
-            style={{ top: `${sequenceTop}px` }}
+            className={`grid gap-10 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.9fr)] lg:items-stretch ${
+              isCompleted ? "" : "lg:sticky"
+            }`}
+            style={isCompleted ? undefined : { top: `${sequenceTop}px` }}
           >
             <div className="self-start">
               <div className="cresc-frame rounded-3xl p-5 sm:p-6">
