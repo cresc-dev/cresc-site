@@ -1,0 +1,105 @@
+---
+order: 12
+title: Analytics
+description: Follow React Native OTA releases through traffic, version funnels, activation timing, regional reach and failure diagnostics with Cresc.
+---
+
+# Analytics
+
+After shipping an update, you need to know whether devices downloaded it, whether it activated, and where failures occurred. Cresc brings **Overview, Version Funnel, Traffic and Failures** together for each application, so you can investigate a rollout with the same context throughout.
+
+Open [Analytics in the console](https://admin.cresc.dev/#/realtime-metrics) and select an app. Choose **7, 14 or 35 days** at the top. The app, selected view and day range stay in the URL for sharing with your team.
+
+> These are screenshots of the real local Cresc console. Atlas Travel, its releases and all metrics are fictional demonstration data, not customer results or performance promises. Click any screenshot to open the original.
+
+## Overview: understand traffic and outcomes
+
+<a href="/images/analytics/overview.webp" target="_blank" rel="noreferrer">
+  <img src="/images/analytics/overview.webp" alt="Atlas Travel analytics overview with daily update checks, active devices and outcome trends" width="1280" height="720" loading="lazy" />
+</a>
+
+See today's update checks and active devices, total checks in the selected window, and peak daily active devices. Switch the daily chart between **Outcomes** and **Active devices**.
+
+Below the chart, the outcome mix distinguishes up-to-date clients, hdiff and pdiff delivery, full bundles, paused apps, expired versions, blocked requests and unregistered native packages. Versions at a glance brings delivery, activation, cumulative activation rate, coverage and health together before you open the full funnel.
+
+Active devices are distinct device uuids observed by the update service. They describe update-check activity; request volume is not a count of people using your application.
+
+## Version funnel: follow delivery through activation
+
+<a href="/images/analytics/versions.webp" target="_blank" rel="noreferrer">
+  <img src="/images/analytics/versions.webp" alt="Expanded Atlas Travel 4.8.2 funnel showing native packages, cumulative devices and activation lag" width="1280" height="720" loading="lazy" />
+</a>
+
+For every OTA version, compare **served → downloaded → activated → rolled back**, alongside failures and rates. Filter by bundle or native package, then expand a version to see:
+
+- **Native-package breakdowns:** delivery, downloads, activations, failures and rollbacks for each native version.
+- **Cumulative downloaded and activated devices:** distinct-device adoption for the release.
+- **Time from release to download and activation:** under 1 hour, 1–6 hours, 6–24 hours, 1–3 days, 3–7 days and over 7 days.
+- **Health:** after at least 10 startup samples, a rollback rate of 1% or more is marked Watch; 5% or more is Critical. Consider sample size alongside the label.
+
+In the sample, version 4.8.1 has a higher rollback rate than 4.8.2. Filter that release, compare its native packages, and move to Failures to investigate its errors.
+
+### Read the rates correctly
+
+| Metric | Definition | Interpretation |
+| --- | --- | --- |
+| Activation, all time | Cumulative activated devices / cumulative downloaded devices | Both counts are deduplicated across days for the version; changing the day range does not change this rate |
+| Coverage | Cumulative activated devices / active devices today | A comparison with today's active-device scale, not the share of today's devices running this version; it can exceed 100% |
+| Download success rate | Download-success events / (download-success + download-failure events) | Event counts in the selected window |
+| Rollback rate | Rollback events / (activation-success + rollback events) | Startup outcomes in the selected window; interpret with sample size |
+
+Downloads and activations within a window may belong to different device cohorts. Dividing those event counts does not give a reliable adoption conversion rate. The cumulative activation rate uses a consistent distinct-device basis.
+
+## Traffic: inspect when and where checks happen
+
+<a href="/images/analytics/traffic.webp" target="_blank" rel="noreferrer">
+  <img src="/images/analytics/traffic.webp" alt="Atlas Travel request hosts, IPv4 and IPv6 shares and international request distribution" width="1280" height="720" loading="lazy" />
+</a>
+
+The Traffic view combines the real-time version chart with detailed breakdowns:
+
+| Dimension | What it tells you |
+| --- | --- |
+| Real-time version series | Which OTA bundles and native packages are checking for updates, with a separate time range and top categories |
+| Hourly distribution | The busiest hours across the selected days |
+| Native packages | Request counts, shares and peak daily devices by installed native version |
+| Network categories | IP-derived carrier categories; traffic outside mainland China is grouped as Overseas |
+| Request hosts | The Host values clients use to reach the update service |
+| IP versions | IPv4 and IPv6 request shares |
+| Regions | Request counts and shares by country, or province within mainland China |
+
+<a href="/images/analytics/traffic-hours.webp" target="_blank" rel="noreferrer">
+  <img src="/images/analytics/traffic-hours.webp" alt="Hourly request patterns and native-package and network distributions" width="1280" height="720" loading="lazy" />
+</a>
+
+Regions have a separate **Today / Last 7 days / Last 30 days** selector. Names follow the console language. This is an IP-derived breakdown of completed update checks, not device-location tracking.
+
+Native-package device counts show the **peak single day** in the window. Daily deduplicated counts cannot be added to obtain distinct devices across multiple days.
+
+## Failures: narrow the investigation
+
+<a href="/images/analytics/failures.webp" target="_blank" rel="noreferrer">
+  <img src="/images/analytics/failures.webp" alt="Version-filtered failure reasons with counts, shares, event types and affected releases" width="1280" height="720" loading="lazy" />
+</a>
+
+Start with total failure events, the most frequent reason and the OS version with the highest failure rate. The reason table includes counts, shares, event types and affected versions, with a bundle filter.
+
+Reasons include timeouts, network errors, insufficient disk space, integrity mismatches, patch errors, HTTP errors, file I/O and unzip failures. Events without a reported reason stay in their own category rather than being assigned an inferred cause.
+
+<a href="/images/analytics/failure-dimensions.webp" target="_blank" rel="noreferrer">
+  <img src="/images/analytics/failure-dimensions.webp" alt="OS-version and network comparisons for download, patch, activation and rollback events" width="1280" height="720" loading="lazy" />
+</a>
+
+Compare events by **OS version** and **network category** to see whether failures concentrate in a particular environment. Carrier events do not currently have a bundle dimension: selecting one bundle displays that limitation instead of showing unfiltered carrier data as if it matched.
+
+For JavaScript exceptions, continue to [JS Error Monitoring](/docs/errors) under Version Health for grouped errors, environment details and symbolicated source stacks.
+
+## Time windows and collection
+
+- Overview, Traffic and Failures use **Beijing-time calendar days (UTC+8)**. Version-funnel event windows use **UTC days**.
+- Today accumulates live and the page refreshes periodically. A partial day should not be compared directly with a completed day.
+- Daily analytics are retained for up to **35 days**; regional data for **30 days**. The real-time series and regional panel have independent time selectors.
+- Cumulative device counts and release-to-event lag do not change with the day range. Filtering a native package does not change those version-wide cumulative metrics.
+- Device metrics depend on uuid reporting; client events depend on SDK telemetry. Missing telemetry is not evidence of zero failures. Distinct-device counts are approximate.
+
+Start with traffic and outcomes, identify the affected release and native packages in the funnel, then use failure reasons and OS comparisons to focus your investigation. Together, the views help distinguish an update that was never served, one that failed to download, and one that downloaded but has not activated.

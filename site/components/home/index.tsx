@@ -1,6 +1,7 @@
 import Banner from "./Banner";
 import Page1 from "./Page1";
 import HealthSection from "./HealthSection";
+import AnalyticsSection from "./AnalyticsSection";
 import Page2 from "./Page2";
 import Page3 from "./Page3";
 import Footer from "../Footer";
@@ -10,6 +11,7 @@ function Home() {
     <div className="home-wrapper cresc-home">
       <Banner />
       <Page1 />
+      <AnalyticsSection />
       <HealthSection />
       <Page2 />
       <Page3 />
