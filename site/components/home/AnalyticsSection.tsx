@@ -125,22 +125,8 @@ export default function AnalyticsSection() {
             <div className="analytics-frame-bar">
               <span className="analytics-dot" aria-hidden="true" />
               <span>Cresc / {view.caption}</span>
-              <a
-                href={`/images/analytics/${view.id}.webp`}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={`View original screenshot: ${view.caption}`}
-              >
-                View original screenshot <span aria-hidden="true">↗</span>
-              </a>
             </div>
-            <a
-              className="analytics-image-link"
-              href={`/images/analytics/${view.id}.webp`}
-              target="_blank"
-              rel="noreferrer"
-              aria-label={`View original screenshot: ${view.caption}`}
-            >
+            <div className="analytics-image-link">
               <img
                 key={view.id}
                 src={`/images/analytics/${view.id}.webp`}
@@ -150,10 +136,10 @@ export default function AnalyticsSection() {
                 loading="lazy"
                 decoding="async"
               />
-            </a>
+            </div>
             <figcaption>
               <span>
-                Real console screenshots · Fictional apps and sample data
+                Cresc analytics console
               </span>
               <a href="https://admin.cresc.dev/#/realtime-metrics">
                 Explore the console <span aria-hidden="true">→</span>

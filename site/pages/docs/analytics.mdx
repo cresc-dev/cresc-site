@@ -10,13 +10,11 @@ After shipping an update, you need to know whether devices downloaded it, whethe
 
 Open [Analytics in the console](https://admin.cresc.dev/#/realtime-metrics) and select an app. Choose **7, 14 or 35 days** at the top. The app, selected view and day range stay in the URL for sharing with your team.
 
-> These are screenshots of the real local Cresc console. Atlas Travel, its releases and all metrics are fictional demonstration data, not customer results or performance promises. Click any screenshot to open the original.
+
 
 ## Overview: understand traffic and outcomes
 
-<a href="/images/analytics/overview.webp" target="_blank" rel="noreferrer">
-  <img src="/images/analytics/overview.webp" alt="Atlas Travel analytics overview with daily update checks, active devices and outcome trends" width="1280" height="720" loading="lazy" />
-</a>
+<img src="/images/analytics/overview.webp" alt="Atlas Travel analytics overview with daily update checks, active devices and outcome trends" width="1280" height="720" loading="lazy" />
 
 See today's update checks and active devices, total checks in the selected window, and peak daily active devices. Switch the daily chart between **Outcomes** and **Active devices**.
 
@@ -26,9 +24,7 @@ Active devices are distinct device uuids observed by the update service. They de
 
 ## Version funnel: follow delivery through activation
 
-<a href="/images/analytics/versions.webp" target="_blank" rel="noreferrer">
-  <img src="/images/analytics/versions.webp" alt="Expanded Atlas Travel 4.8.2 funnel showing native packages, cumulative devices and activation lag" width="1280" height="720" loading="lazy" />
-</a>
+<img src="/images/analytics/versions.webp" alt="Expanded Atlas Travel 4.8.2 funnel showing native packages, cumulative devices and activation lag" width="1280" height="720" loading="lazy" />
 
 For every OTA version, compare **served → downloaded → activated → rolled back**, alongside failures and rates. Filter by bundle or native package, then expand a version to see:
 
@@ -37,7 +33,7 @@ For every OTA version, compare **served → downloaded → activated → rolled 
 - **Time from release to download and activation:** under 1 hour, 1–6 hours, 6–24 hours, 1–3 days, 3–7 days and over 7 days.
 - **Health:** after at least 10 startup samples, a rollback rate of 1% or more is marked Watch; 5% or more is Critical. Consider sample size alongside the label.
 
-In the sample, version 4.8.1 has a higher rollback rate than 4.8.2. Filter that release, compare its native packages, and move to Failures to investigate its errors.
+version 4.8.1 has a higher rollback rate than 4.8.2. Filter that release, compare its native packages, and move to Failures to investigate its errors.
 
 ### Read the rates correctly
 
@@ -52,9 +48,7 @@ Downloads and activations within a window may belong to different device cohorts
 
 ## Traffic: inspect when and where checks happen
 
-<a href="/images/analytics/traffic.webp" target="_blank" rel="noreferrer">
-  <img src="/images/analytics/traffic.webp" alt="Atlas Travel request hosts, IPv4 and IPv6 shares and international request distribution" width="1280" height="720" loading="lazy" />
-</a>
+<img src="/images/analytics/traffic.webp" alt="Atlas Travel request hosts, IPv4 and IPv6 shares and international request distribution" width="1280" height="720" loading="lazy" />
 
 The Traffic view combines the real-time version chart with detailed breakdowns:
 
@@ -68,9 +62,7 @@ The Traffic view combines the real-time version chart with detailed breakdowns:
 | IP versions | IPv4 and IPv6 request shares |
 | Regions | Request counts and shares by country, or province within mainland China |
 
-<a href="/images/analytics/traffic-hours.webp" target="_blank" rel="noreferrer">
-  <img src="/images/analytics/traffic-hours.webp" alt="Hourly request patterns and native-package and network distributions" width="1280" height="720" loading="lazy" />
-</a>
+<img src="/images/analytics/traffic-hours.webp" alt="Hourly request patterns and native-package and network distributions" width="1280" height="720" loading="lazy" />
 
 Regions have a separate **Today / Last 7 days / Last 30 days** selector. Names follow the console language. This is an IP-derived breakdown of completed update checks, not device-location tracking.
 
@@ -78,17 +70,13 @@ Native-package device counts show the **peak single day** in the window. Daily d
 
 ## Failures: narrow the investigation
 
-<a href="/images/analytics/failures.webp" target="_blank" rel="noreferrer">
-  <img src="/images/analytics/failures.webp" alt="Version-filtered failure reasons with counts, shares, event types and affected releases" width="1280" height="720" loading="lazy" />
-</a>
+<img src="/images/analytics/failures.webp" alt="Version-filtered failure reasons with counts, shares, event types and affected releases" width="1280" height="720" loading="lazy" />
 
 Start with total failure events, the most frequent reason and the OS version with the highest failure rate. The reason table includes counts, shares, event types and affected versions, with a bundle filter.
 
 Reasons include timeouts, network errors, insufficient disk space, integrity mismatches, patch errors, HTTP errors, file I/O and unzip failures. Events without a reported reason stay in their own category rather than being assigned an inferred cause.
 
-<a href="/images/analytics/failure-dimensions.webp" target="_blank" rel="noreferrer">
-  <img src="/images/analytics/failure-dimensions.webp" alt="OS-version and network comparisons for download, patch, activation and rollback events" width="1280" height="720" loading="lazy" />
-</a>
+<img src="/images/analytics/failure-dimensions.webp" alt="OS-version and network comparisons for download, patch, activation and rollback events" width="1280" height="720" loading="lazy" />
 
 Compare events by **OS version** and **network category** to see whether failures concentrate in a particular environment. Carrier events do not currently have a bundle dimension: selecting one bundle displays that limitation instead of showing unfiltered carrier data as if it matched.
 
