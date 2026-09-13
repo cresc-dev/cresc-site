@@ -31,6 +31,16 @@ building.
 > Errors went up yesterday — compare the Sentry exceptions with the Cresc
 > release history
 
+**Check that a new version is healthy**
+
+> Did 1.2.4 roll back anywhere since yesterday? Show its JS errors and map the
+> most frequent one back to the source line
+
+The agent sums up how the version was delivered and the download failures,
+patch failures, activations and rollbacks clients reported, lists the JS errors
+that version raised, and maps a stack back to your source with the source map
+archived at publish time (needs `pushy:health:read`, see below).
+
 ## Getting started
 
 ### 1. Create a token
@@ -38,6 +48,11 @@ building.
 In the [Cresc console](https://admin.cresc.dev) open "MCP Server",
 give it a name and a client label, **tick the apps it may read**, then copy the
 token right away — it is shown only once.
+
+Tokens get `pushy:apps:read` and `pushy:diagnose` by default, which is enough to
+debug update delivery. To let the agent read version health and JS errors as
+well, also tick `pushy:health:read`. Existing tokens do not gain it
+automatically — create a new one.
 
 ### 2. Let your agent install it (recommended)
 
@@ -112,6 +127,9 @@ to name a tool.
 | Release topology | The version each native package serves, plus any gray release and its percentage |
 | Update decision | Replays the decision for a set of client parameters and explains the outcome |
 | Artifact status | Whether the patch was generated, and whether its task failed |
+| Request observation | Recent real requests per native package version: the build timestamps and content fingerprints clients report and their SDK versions, checked against the registered packages |
+| Version health | Per OTA version, how updates were delivered and the download failures, patch failures, activations and rollbacks clients reported, plus cumulative devices observed (needs `pushy:health:read`, client v10.47.0+) |
+| JS errors | Error issues grouped by fingerprint, with stacks mapped to your source when a source map is archived (needs `pushy:health:read`, client v10.55.0+, see [JS error monitoring](/docs/errors)) |
 
 ## Good to know
 
@@ -122,4 +140,11 @@ to name a tool.
 - **Where the data goes**: results go to the AI client you authorized, which may
   forward them to the model provider you chose — Cresc controls neither;
 - Responses never contain email addresses, IPs, device identifiers, secrets or
-  payment data.
+  payment data;
+- **Error data**: messages, stacks and source snippets come from your own app
+  code. URL query strings, email addresses, IPs and `token=`-style secrets are
+  removed, but business context may remain; for the custom context passed to
+  `captureException` only the field names are returned, never the values;
+- **Rate limit**: mapping an error to source for the first time downloads the
+  source map, limited to 30 per account every 10 minutes. Over the limit the raw
+  stack is returned; errors already mapped are not affected.
