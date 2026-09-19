@@ -52,6 +52,7 @@ export default defineConfig({
           text: 'Advanced Usage',
           items: [
             { text: 'API Reference', link: '/docs/api' },
+            { text: 'Native Configuration and Updates', link: '/docs/native-api' },
             { text: 'API Key', link: '/docs/api-token' },
             { text: 'MCP Server', link: '/docs/mcp' },
             { text: 'CLI Tools', link: '/docs/cli' },

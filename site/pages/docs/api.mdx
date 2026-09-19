@@ -100,6 +100,14 @@ interface CrescOptions {
   // See the "Native cold-start check" section below
   // Requires v10.52.1+
   disableNativeCheck?: boolean;
+
+  // Native configuration owner; default: javascript (JS synchronizes settings).
+  // native: native configure owns the settings; JS initialization/setOptions
+  // no longer overwrite them. In this mode, configure.disabled controls
+  // native checks; disableNativeCheck is not synchronized from JavaScript.
+  // Requires v10.57.0+. Native configure/checkAndUpdate require a rebuilt
+  // native application with v10.57.0 or later.
+  nativeConfigSource?: "javascript" | "native";
 }
 
 // State reported after an update check finishes
@@ -209,17 +217,25 @@ crescClient.captureException(error, {
 
 It is part of every plan at no extra cost. To opt out, set `disableErrorReporting: true` at initialization. The full story — console UI, source map requirements and manual reporting — is in [JS Error Monitoring](errors).
 
+#### Native configuration and manual checks
+
+Since **v10.57.0**, Android, iOS, and HarmonyOS hosts can call native `configure` before JavaScript starts, then `checkAndUpdate` after the normal launch bundle resolution. These APIs prepare updates without displaying dialogs or immediately reloading React Native. Rebuild and distribute the native application when upgrading; a JS-only OTA update cannot add native methods.
+
+See [Native Configuration and Updates](/docs/native-api) for platform examples, result handling, and `nativeConfigSource` ownership rules. **Cresc native configurations must explicitly provide Cresc endpoints**; omitting `endpoints` selects the shared SDK's Pushy preset. The guide includes both Cresc service addresses and the matching discovery URL.
+
 #### Native cold-start check
 
 Since v10.52.1, the client runs an independent background update check from **native code** a few seconds after every cold start, with no JS involved. Its purpose is brick rescue: if a hot update kills your JS, the device can never run the JS-side check again — this native channel is the only one left that can pull the fix back down (activated via the console's [force boot](publish#force-boot-brick-rescue) flag).
 
+The behavior below assumes the default JavaScript-owned configuration (`nativeConfigSource: "javascript"`). With `nativeConfigSource: "native"`, native `configure` controls checking through `disabled` and ordinary activation through `afterDownload`; JS strategy changes do not update these native settings.
+
 Key behaviors:
 
-- **Never disrupts the normal flow**: ordinarily it only downloads and caches; activation follows your configured strategy — with `checkStrategy: null` native downloads but never activates on its own; only a server-issued force-boot flag overrides the strategy
+- **No immediate reload**: native checking downloads and caches updates. With JavaScript-owned settings, silent strategies allow next-launch activation, while `checkStrategy: null` leaves ordinary activation to JS. Server force-boot and existing crash-rescue rules still apply
 - **JS reuses its result**: the JS-side check reuses the response the native check just fetched, saving one network round-trip on cold start
 - **Safety guards**: the device-local rollback guard has top priority, and first-launch crash protection still rolls back automatically if the activated version fails to start
 
-If you genuinely need to (traffic/battery budgets, consent-gated networking for compliance), disable it at init:
+With JavaScript-owned configuration, disable native checking at init when required by your networking or consent policy:
 
 ```js
 const crescClient = new Cresc({
@@ -228,7 +244,9 @@ const crescClient = new Cresc({
 });
 ```
 
-Note: a client with this disabled loses the force-boot rescue capability — once stuck on a broken update, reinstalling the app is the only way out.
+With native-owned configuration, instead pass `disabled: true` with your complete Cresc native configuration. This disables both automatic and manual native checks; it does not disable JavaScript checks. Gate the initial native configuration/startup flow as needed rather than relying only on a JS hook for consent.
+
+Disabling native checking removes this force-boot rescue route. A broken JS update may then require a native app upgrade or reinstall to recover.
 
 #### beforeReload Example: Clean Up Native SDKs Before Reload
 
