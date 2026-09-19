@@ -17,6 +17,10 @@ These projects usually have this shape:
 
 Do not change the host app inheritance just to integrate Cresc. Wire Cresc where the AAR module creates `ReactHost`, `ReactNativeHost`, or `ReactInstanceManager`.
 
+:::info Native-host update controls (v10.57.0+)
+The host can also configure and trigger OTA updates without a JS bridge call. Follow [Native Configuration and Updates](/docs/native-api) for `PushyNativeUpdate.configure(...)`, `checkAndUpdate(...)`, explicit Cresc endpoints, and `nativeConfigSource: "native"`. Configure before normal RN startup, or check after an already-completed launch resolution; do not call `getBundleUrl` again merely to initialize checking. Rebuild both the React Native AAR and the host APK/AAB with v10.57.0 or later. The JavaScript example below retains the default JS-owned configuration; use the native guide's ownership option when the host should remain in control.
+:::
+
 <Steps>
 ### Install the dependency
 
