@@ -1,0 +1,354 @@
+---
+order: 13
+title: Native Configuration and Updates
+type: Advanced Usage
+description: Configure and trigger Cresc OTA updates from Android, iOS, and HarmonyOS native code with react-native-update v10.57.0 or later.
+---
+
+# Native Configuration and Updates
+
+Cresc supports a native-host update flow: **configure from native code → resolve the launch bundle normally → check and download updates**. Neither configuration nor checking needs a JavaScript bridge call. Native configuration can therefore run on the first installation, before JavaScript has ever executed successfully.
+
+`configure` only validates and stores settings: it does not perform network requests, download an update, or resolve the bundle. `checkAndUpdate` is not a version-query-only API: when an applicable OTA update exists, it downloads and verifies it, then follows the activation policy. Neither API displays a dialog or immediately reloads a running React Native instance.
+
+:::warning Version and native rebuild requirements
+The native `configure` and `checkAndUpdate` APIs, together with the JavaScript `nativeConfigSource` option, are available from **react-native-update v10.57.0** on Android, iOS, and HarmonyOS. Earlier SDKs may support automatic native checks, but do not expose these host APIs. See the [v10.57.0 release notes](https://github.com/reactnativecn/react-native-update/releases/tag/v10.57.0).
+
+Upgrade the dependency and **rebuild and distribute the native application**. A JavaScript-only OTA update cannot add native methods. The npm package includes the updated Harmony HAR; source-based HarmonyOS integrations must rebuild and integrate their HAR. Android brownfield integrations must also rebuild the React Native AAR and the final host app.
+:::
+
+## Cresc service configuration
+
+:::warning Set Cresc endpoints explicitly
+Cresc uses the shared `react-native-update` native SDK. In v10.57.0, calling native `configure` without `endpoints` selects the **Pushy** service preset, not Cresc. Use the explicit Cresc addresses below in every native configuration, including reconfiguration. An `appKey` does not select the service preset automatically.
+
+The shared native names remain `PushyNativeUpdate`, `RCTPushy`, and `PushyFileJSBundleProvider`; do not rename these symbols to Cresc. Only the JavaScript client is constructed with `new Cresc(...)`.
+:::
+
+The following native options match the [Cresc JavaScript preset in v10.57.0](https://github.com/reactnativecn/react-native-update/blob/v10.57.0/src/client.ts):
+
+```json
+{
+  "appKey": "YOUR_PLATFORM_CRESC_APP_KEY",
+  "endpoints": ["https://api.cresc.dev", "https://api.cresc.app"],
+  "queryUrls": [
+    "https://cdn.jsdelivr.net/gh/reactnativecn/react-native-update@master/endpoints_cresc.json"
+  ],
+  "afterDownload": "setNeedUpdate"
+}
+```
+
+Explicit `endpoints` with omitted `queryUrls` means an empty discovery list. Set `queryUrls` as shown to retain Cresc endpoint discovery, or use `[]` to restrict checks to your configured endpoints. Do not copy Pushy's `endpoints.json` discovery list into a Cresc integration.
+
+## First-launch sequence
+
+Complete [Installation](/docs/getting-started) and [Integration](/docs/integration), keeping the existing bundle loading, success marking, and rollback integration. The native APIs change where configuration and checks originate; they do not replace React Native startup.
+
+1. Call native `configure` and wait for its successful completion. JavaScript and the RN bridge do not need to exist yet.
+2. Continue the application's normal startup. Resolve the actual launch bundle through `UpdateContext.getBundleUrl(...)` on Android, `RCTPushy.bundleURL` on iOS, or the application's `PushyFileJSBundleProvider` on HarmonyOS.
+3. After that resolution, call `checkAndUpdate`, or let the existing delayed native cold-start check run.
+
+**Do not block the main thread waiting for configuration, and do not resolve the bundle a second time merely to initialize checking.** Bundle resolution consumes first-load and rollback state. When the app has already completed its normal launch resolution, configure and then check without resolving again.
+
+Configuration persists across launches. Reapplying the same configuration is idempotent. Native-first provisioning creates and stores an installation identifier if one does not exist; subsequent configuration and JavaScript startup reuse it rather than generating a new identity.
+
+## Configuration options
+
+Android accepts a `JSONObject`, iOS accepts a dictionary, and HarmonyOS accepts the exported `NativeUpdateConfig` type. The native schema is distinct from JavaScript constructor options: for example, native code uses `endpoints`, not `server.main`.
+
+| Field | Type / default | Meaning |
+| --- | --- | --- |
+| `appKey` | Required string | The Cresc app key for the current platform, not an admin API token |
+| `endpoints` | Optional string array in the SDK | **Set explicitly for Cresc** to `https://api.cresc.dev` and `https://api.cresc.app`; if omitted, the shared SDK uses Pushy's preset |
+| `queryUrls` | Optional string array | Endpoint discovery URLs. With explicit `endpoints`, omission means `[]`; provide Cresc's `endpoints_cresc.json` URL to use discovery |
+| `afterDownload` | `none` by default | `none` leaves ordinary activation to the app; `setNeedUpdate` selects the prepared version for the next launch. Neither reloads RN immediately |
+| `disabled` | `false` by default | Disables both automatic and manually triggered native checks, not JavaScript checks |
+| `packageVersion` | Optional string | Overrides the native package version sent in check requests. Usually omit it to use the installed app's actual version |
+| `rnu`, `rn` | Optional strings | SDK and RN diagnostic version strings; not prerequisites for a first native check |
+
+`configure` is a **full replacement, not a partial merge**. For example, configuring with only `appKey` resets the endpoints to Pushy's defaults, `afterDownload` to `none`, and `disabled` to `false`. Always pass the complete intended Cresc configuration when changing a field.
+
+Validation covers required values, field types, unknown options, activation policy, and absolute HTTP(S) URLs. Endpoint base URLs cannot contain credentials, query parameters, or fragments; surrounding whitespace and trailing endpoint slashes are removed, and duplicate addresses are discarded. Use HTTPS in production. Validation failures leave the existing configuration unchanged. Storage failures are returned through the callback or rejected Promise; do not continue as though configuration succeeded.
+
+Server `forceBoot` and the existing crash-rescue rules still apply. `afterDownload: 'none'` is not a global switch that disables rescue activation.
+
+## Android: Kotlin and Java
+
+The public entry points do not require a `ReactContext` or native module instance:
+
+```java
+PushyNativeUpdate.configure(Context context, JSONObject options,
+    PushyNativeUpdate.ConfigurationCallback callback);
+PushyNativeUpdate.checkAndUpdate(Context context,
+    PushyNativeUpdate.Callback callback);
+```
+
+Both methods are asynchronous and deliver callbacks on the **main thread**. A configuration callback with `error == null` means success. Null context, options, or required callbacks cause `IllegalArgumentException`.
+
+### Kotlin configuration
+
+```kotlin
+import android.util.Log
+import cn.reactnative.modules.update.PushyNativeUpdate
+import org.json.JSONArray
+import org.json.JSONObject
+
+val options = JSONObject()
+    .put("appKey", "YOUR_ANDROID_CRESC_APP_KEY")
+    .put("endpoints", JSONArray()
+        .put("https://api.cresc.dev")
+        .put("https://api.cresc.app"))
+    .put("queryUrls", JSONArray().put(
+        "https://cdn.jsdelivr.net/gh/reactnativecn/react-native-update@master/endpoints_cresc.json"))
+    .put("afterDownload", "setNeedUpdate")
+
+PushyNativeUpdate.configure(applicationContext, options) { error ->
+    if (error != null) {
+        Log.e("Cresc", "Native configuration failed", error)
+        return@configure
+    }
+    // Continue normal RN startup here. Do not resolve the bundle twice.
+    // Call the check example below after normal launch resolution completes.
+}
+```
+
+### Kotlin check
+
+Invoke this from a separate host entry point after successful configuration and normal launch bundle resolution:
+
+```kotlin
+import android.util.Log
+import cn.reactnative.modules.update.NativeUpdateResult
+import cn.reactnative.modules.update.PushyNativeUpdate
+
+PushyNativeUpdate.checkAndUpdate(applicationContext) { result ->
+    when (result.status) {
+        NativeUpdateResult.DOWNLOADED -> {
+            val message = if (result.isActivated) {
+                "Update selected for the next launch"
+            } else {
+                "Update downloaded; activation is still pending"
+            }
+            Log.i("Cresc", "$message: ${result.hash}")
+        }
+        NativeUpdateResult.NO_UPDATE -> Log.i("Cresc", "No applicable OTA update")
+        else -> Log.i("Cresc", "${result.status}: ${result.reason}")
+    }
+}
+```
+
+### Java configuration and check
+
+Handle JSON construction errors in your host method:
+
+```java
+import android.util.Log;
+import cn.reactnative.modules.update.PushyNativeUpdate;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+try {
+    JSONObject options = new JSONObject()
+        .put("appKey", "YOUR_ANDROID_CRESC_APP_KEY")
+        .put("endpoints", new JSONArray()
+            .put("https://api.cresc.dev")
+            .put("https://api.cresc.app"))
+        .put("queryUrls", new JSONArray().put(
+            "https://cdn.jsdelivr.net/gh/reactnativecn/react-native-update@master/endpoints_cresc.json"))
+        .put("afterDownload", "setNeedUpdate");
+
+    PushyNativeUpdate.configure(getApplicationContext(), options, error -> {
+        if (error != null) {
+            Log.e("Cresc", "Native configuration failed", error);
+            return;
+        }
+        // Continue normal RN startup here.
+    });
+} catch (JSONException error) {
+    Log.e("Cresc", "Invalid configuration JSON", error);
+}
+```
+
+The following belongs in an entry point reached **after** configuration and normal bundle resolution, not immediately alongside the asynchronous call above:
+
+```java
+PushyNativeUpdate.checkAndUpdate(getApplicationContext(), result -> {
+    Log.i("Cresc", "status=" + result.getStatus()
+        + ", reason=" + result.getReason()
+        + ", hash=" + result.getHash()
+        + ", activated=" + result.isActivated());
+});
+```
+
+`NativeUpdateResult` is immutable. Before updating UI from a callback, check that the host screen is still alive. For AAR-based applications, see [Brownfield Integration](/docs/brownfield).
+
+## iOS: Objective-C and Swift
+
+These are class methods; no `RCTPushy` instance or bridge lookup is required. Configuration and checking complete on the **main queue**.
+
+### Objective-C
+
+```objc
+#import "RCTPushy.h"
+
+[RCTPushy configure:@{
+    @"appKey": @"YOUR_IOS_CRESC_APP_KEY",
+    @"endpoints": @[@"https://api.cresc.dev", @"https://api.cresc.app"],
+    @"queryUrls": @[
+        @"https://cdn.jsdelivr.net/gh/reactnativecn/react-native-update@master/endpoints_cresc.json"
+    ],
+    @"afterDownload": @"setNeedUpdate"
+} completion:^(NSError *error) {
+    if (error != nil) {
+        NSLog(@"Cresc configuration failed: %@", error.localizedDescription);
+        return;
+    }
+    // Continue normal RN startup here.
+}];
+```
+
+After the normal launch bundle has been resolved, trigger the check from your host entry point:
+
+```objc
+[RCTPushy checkAndUpdateWithCompletion:^(NSDictionary<NSString *, id> *result) {
+    if ([result[@"status"] isEqualToString:@"downloaded"]
+        && [result[@"activated"] boolValue]) {
+        NSLog(@"Cresc update %@ selected for the next launch", result[@"hash"]);
+    } else {
+        NSLog(@"Cresc: %@ / %@", result[@"status"], result[@"reason"]);
+    }
+}];
+```
+
+### Swift
+
+Import `RCTPushy.h` in the project's existing Objective-C bridging header. The Swift method names are `configure(_:completion:)` and `checkAndUpdate(completion:)`:
+
+```swift
+RCTPushy.configure([
+    "appKey": "YOUR_IOS_CRESC_APP_KEY",
+    "endpoints": ["https://api.cresc.dev", "https://api.cresc.app"],
+    "queryUrls": [
+        "https://cdn.jsdelivr.net/gh/reactnativecn/react-native-update@master/endpoints_cresc.json"
+    ],
+    "afterDownload": "setNeedUpdate"
+], completion: { error in
+    if let error = error {
+        print("Cresc configuration failed: \(error.localizedDescription)")
+        return
+    }
+    // Continue normal RN startup; check only after normal bundle resolution.
+})
+```
+
+```swift
+RCTPushy.checkAndUpdate(completion: { result in
+    let status = result["status"] as? String ?? "failed"
+    let reason = result["reason"] as? String ?? ""
+    let activated = result["activated"] as? Bool ?? false
+    print("Cresc: \(status), activated=\(activated), reason=\(reason)")
+})
+```
+
+Completions may be `nil`, but provide a configuration completion when startup depends on its success. Do not guess completion with an arbitrary delay. Use weak references where callbacks capture a screen's lifecycle.
+
+## HarmonyOS: ArkTS
+
+Use the application's actual `PushyFileJSBundleProvider`. Do not construct an extra provider or call `getURL()` / `getBundle()` again just to initialize checking.
+
+```ts
+import {
+  PushyFileJSBundleProvider,
+  NativeUpdateConfig,
+  NativeUpdateResult,
+} from 'pushy';
+
+// Await this in the existing provider setup, before normal bundle loading.
+async function configureCresc(provider: PushyFileJSBundleProvider): Promise<void> {
+  const options: NativeUpdateConfig = {
+    appKey: 'YOUR_HARMONYOS_CRESC_APP_KEY',
+    endpoints: ['https://api.cresc.dev', 'https://api.cresc.app'],
+    queryUrls: [
+      'https://cdn.jsdelivr.net/gh/reactnativecn/react-native-update@master/endpoints_cresc.json',
+    ],
+    afterDownload: 'setNeedUpdate',
+  };
+  await provider.configure(options);
+}
+
+// Call only after configuration and this provider's normal launch resolution.
+async function checkFromNative(provider: PushyFileJSBundleProvider): Promise<void> {
+  const result: NativeUpdateResult = await provider.checkAndUpdate();
+  console.info(`Cresc: ${result.status} / ${result.reason}`);
+}
+```
+
+Catch configuration rejection in your startup code before continuing. Use your project's actual HAR dependency name if it differs from `pushy`. When development uses a Metro provider without normal Pushy bundle resolution, checking reports `not_initialized`. Use a release build to validate the full flow.
+
+## JavaScript and native configuration ownership
+
+### Native-owned configuration
+
+Set `nativeConfigSource: 'native'` when constructing your **existing Cresc instance for the first time**:
+
+```ts
+import { Cresc } from 'react-native-update';
+
+export const crescClient = new Cresc({
+  appKey: 'SAME_PLATFORM_CRESC_APP_KEY_AS_NATIVE',
+  nativeConfigSource: 'native',
+  checkStrategy: null, // Optional: turn off JS automatic checks.
+});
+```
+
+This prevents JavaScript initialization and subsequent `setOptions` calls from overwriting native settings. It neither reads native settings back into JavaScript nor disables JS checks by itself. If both sides check, keep their app key, service addresses, and package version overrides consistent. `new Cresc(...)` already selects the Cresc JavaScript service preset; native `configure` still needs the explicit endpoints shown above.
+
+In this mode, native `disabled` and `afterDownload` control native checking and activation. JS `disableNativeCheck`, `checkStrategy`, and `updateStrategy` are not written into native configuration. In particular, `checkStrategy: null` disables **JS** automatic checks, not the delayed native check. There is no native automatic-only opt-out here: `disabled: true` disables both automatic and manual native checks. Keep the normal version success-marking and rollback integration.
+
+### JavaScript-owned configuration (default)
+
+Omit `nativeConfigSource`, or set it to `'javascript'`, to preserve the existing JS-to-native synchronization. Native code can provide initial Cresc settings before JavaScript subsequently takes over. Both paths write to the same configuration store: the last completed write wins, with no cross-source field merge.
+
+Do not alternate between owners. Changing the JS option does not cancel an already-issued asynchronous bridge write. Native-owned applications should choose `'native'` at initial construction and avoid concurrent JS configuration writes. Update the existing singleton instead of creating a second Cresc client.
+
+## Results and activation
+
+All platforms return the same fields:
+
+| Field | Meaning |
+| --- | --- |
+| `status` | The outcome described below |
+| `reason` | A diagnostic reason for a skip, failure, cancellation, or no applicable update; empty after a successful download |
+| `hash` | The version prepared by this round, or an empty string when none was prepared |
+| `activated` | Whether this round selected that version for the next launch; **not** whether the running RN instance was reloaded |
+
+| `status` | Meaning |
+| --- | --- |
+| `skipped` | A prerequisite is missing, configuration disables checking, or the build is in debug mode |
+| `noUpdate` | A valid response was received, but native rules found no applicable OTA update; the server may still have other versions |
+| `downloaded` | A complete version is ready locally, possibly reused from an existing download; inspect `activated` next |
+| `failed` | Configuration reading, checking, downloading, or committing state failed; do not display "already up to date" |
+| `cancelled` | Reconfiguration or resetting to the packaged bundle invalidated the round |
+
+Common `reason` values include `not_initialized`, `not_configured`, `disabled`, `debug`, `invalid_config`, `check_failed`, `download_failed`, `commit_failed`, `internal_error`, `reset`, and `config_changed`. Android may also report `interrupted`. Branch primarily on `status`, using `reason` for diagnostics.
+
+Results describe a **round snapshot**, not a live query of the running bundle. `downloaded` with `activated: false` does not guarantee the next launch will use that version: activation still needs subsequent handling. The native entry point does not invoke a JS confirmation dialog. **Do not call `markSuccess` in the download callback**; success marking belongs to the existing startup lifecycle of the applied version.
+
+## Repeated calls and configuration changes
+
+Manual native calls, delayed cold-start checking, and Android/iOS crash rescue share **at most one actual native round per process**. The first manual call starts it immediately if it has not started; concurrent calls share it; later calls reuse the completed result, including failure. Repeated clicks do not re-query the server, and recreating an RN instance is not a process restart.
+
+Missing or disabled configuration checked before a round begins does not consume this opportunity. Later native configuration can still enable the first real check in that process. Configuration alone does not start a check, reset a completed round, or grant another round.
+
+Configuration replacement invalidates old native response caches and pending decisions, so an old round cannot commit activation using superseded settings. Downloaded files may remain for later reuse. An in-flight transfer need not stop immediately, but its invalidated result is not reported as a usable success; a common outcome is `cancelled / config_changed`. The next process starts with the new configuration.
+
+Native and JS checks are separate network tasks. Existing native response caching and suppression of a delayed native check after a matching successful JS check remain in place, but an explicit native call is not guaranteed to join an in-flight JS request.
+
+## Integration checks and limits
+
+Native rounds do not execute JS hooks such as `beforeCheckUpdate`, `beforeDownloadUpdate`, `afterDownloadUpdate`, `afterCheckUpdate`, or `beforeReload`. Perform any required consent, connectivity, or screen-state checks in native host code before triggering the operation. Gate initial configuration and the automatic native flow as well; guarding only a manual button does not prevent a delayed native check from networking.
+
+Android/iOS debug builds report `skipped / debug`; the JavaScript `debug: true` option does not enable the native-host check. The APIs only deliver OTA updates compatible with the current native package, not native module changes, APK upgrades, or App Store releases.
+
+Validate first-install configuration before JS runs, normal launch resolution, and a release-build check against **Cresc** endpoints. Also verify that concurrent calls share one round, invalid options do not replace valid configuration, offline checks report failure, reconfiguration/reset invalidates old decisions, and an activated version loads at the next actual process launch. Confirm that JavaScript in `'native'` mode does not overwrite the native settings.
