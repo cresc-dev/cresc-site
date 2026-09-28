@@ -105,8 +105,8 @@ interface CrescOptions {
   // native: native configure owns the settings; JS initialization/setOptions
   // no longer overwrite them. In this mode, configure.disabled controls
   // native checks; disableNativeCheck is not synchronized from JavaScript.
-  // Requires v10.57.0+. Native configure/checkAndUpdate require a rebuilt
-  // native application with v10.57.0 or later.
+  // Requires v10.59.0+. Native configure/prepareBundle require a rebuilt
+  // native application with v10.59.0 or later.
   nativeConfigSource?: "javascript" | "native";
 }
 
@@ -219,7 +219,7 @@ It is part of every plan at no extra cost. To opt out, set `disableErrorReportin
 
 #### Native configuration and manual checks
 
-Since **v10.57.0**, Android, iOS, and HarmonyOS hosts can call native `configure` before JavaScript starts, then `checkAndUpdate` after the normal launch bundle resolution. These APIs prepare updates without displaying dialogs or immediately reloading React Native. Rebuild and distribute the native application when upgrading; a JS-only OTA update cannot add native methods.
+Since **v10.59.0**, Android, iOS, and HarmonyOS hosts can call native `configure` before JavaScript starts, then `prepareBundle` after the normal launch bundle resolution. These APIs prepare updates without displaying dialogs or immediately reloading React Native. Rebuild and distribute the native application when upgrading; a JS-only OTA update cannot add native methods.
 
 See [Native Configuration and Updates](/docs/native-api) for platform examples, result handling, and `nativeConfigSource` ownership rules. **Cresc native configurations must explicitly provide Cresc endpoints**; omitting `endpoints` selects the shared SDK's Pushy preset. The guide includes both Cresc service addresses and the matching discovery URL.
 
