@@ -32,6 +32,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Video is streamed with Range requests (206); leave those to the network.
+  if (request.headers.has('range')) {
+    return;
+  }
+
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) {
     return;
