@@ -46,7 +46,7 @@ function ChapterRail({ player }: { player: LaunchPlayer | null }) {
   }, [player]);
 
   return (
-    <ol className="mt-6 sm:mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-5 gap-y-5">
+    <ol className="mt-5 sm:mt-6 grid grid-cols-2 sm:grid-cols-3 gap-x-5 gap-y-4">
       {chapters.map((c, i) => (
         <li key={c.id}>
           <button
@@ -55,23 +55,23 @@ function ChapterRail({ player }: { player: LaunchPlayer | null }) {
             aria-current={active === i ? "step" : undefined}
             className="group w-full text-left"
           >
-            <span className="block h-[3px] rounded-full bg-stone-900/10 overflow-hidden">
+            <span className="block h-[3px] rounded-full bg-white/10 overflow-hidden">
               <span
                 ref={(el) => {
                   fills.current[i] = el;
                 }}
-                className="block h-full w-full origin-left scale-x-0 rounded-full bg-[linear-gradient(90deg,#d97706,#b45309)]"
+                className="block h-full w-full origin-left scale-x-0 rounded-full bg-[linear-gradient(90deg,#fbbf24,#d97706)]"
               />
             </span>
             <span className="mt-3 flex items-baseline gap-2">
-              <span className="font-mono text-xs text-stone-400">
+              <span className="font-mono text-xs text-stone-500">
                 {String(i + 1).padStart(2, "0")}
               </span>
               <span
                 className={`text-sm transition-colors duration-300 ${
                   active === i
-                    ? "text-stone-900 font-semibold"
-                    : "text-stone-500 group-hover:text-stone-800"
+                    ? "text-white font-semibold"
+                    : "text-stone-400 group-hover:text-stone-200"
                 }`}
               >
                 {c.label}
@@ -118,13 +118,13 @@ function LaunchFilm() {
   }, [player]);
 
   return (
-    <div className="cresc-launch-stage relative mt-14 sm:mt-16 lg:mt-20 mx-auto max-w-[1180px]">
+    <div className="relative w-full max-w-[1180px] mx-auto">
       <div className="cresc-launch-glow" aria-hidden="true" />
       <div className="cresc-launch-frame relative rounded-[18px] sm:rounded-[28px] p-[5px] sm:p-[7px]">
         <div className="relative overflow-hidden rounded-[13px] sm:rounded-[21px] bg-[#05060a] aspect-video">
           <iframe
             ref={frameRef}
-            src="/launch/index.html"
+            src="/launch/"
             title="Cresc launch film: one-command releases, 3.4 KB delta updates, staged rollouts with crash rollback, native cold-start recovery, and MCP debugging"
             className="absolute inset-0 h-full w-full border-0"
           />
@@ -137,10 +137,10 @@ function LaunchFilm() {
 
 function Banner(_props: BannerProps) {
   return (
-    <section className="cresc-launch-hero relative isolate overflow-hidden pt-28 sm:pt-32 lg:pt-36 pb-20 sm:pb-28">
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-7 sm:mb-9">
+    <section className="cresc-launch-hero relative overflow-hidden pt-24 sm:pt-32 lg:pt-20 pb-20 sm:pb-28 lg:pb-20 lg:min-h-[100svh] lg:flex lg:items-center">
+      <div className="relative z-10 w-full max-w-[1600px] mx-auto px-5 sm:px-6 lg:px-10 grid lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] gap-y-8 lg:gap-y-5 lg:gap-x-12 xl:gap-x-16">
+        <div className="max-w-2xl mx-auto lg:mx-0 text-center lg:text-left lg:col-start-1 lg:row-start-1 lg:self-end">
+          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 mb-7 sm:mb-9 lg:mb-7">
             <a
               href="/docs/skills"
               className="group inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/[0.04] backdrop-blur-md px-4 py-1.5 text-sm text-stone-200 hover:border-amber-400/50 hover:text-white transition-all duration-300"
@@ -162,20 +162,27 @@ function Banner(_props: BannerProps) {
             </a>
           </div>
 
-          <h1 className="cresc-hero-title text-[2.6rem] leading-[1.08] sm:text-6xl lg:text-[5.25rem] font-extrabold tracking-tight">
+          <h1 className="cresc-hero-title text-[2.6rem] leading-[1.08] sm:text-6xl lg:text-[3.25rem] xl:text-[4rem] 2xl:text-[4.5rem] font-extrabold tracking-tight">
             Ship at the speed of{" "}
             <span className="bg-clip-text text-transparent bg-[linear-gradient(100deg,#ffffff_0%,#fde68a_40%,#f59e0b_95%)]">
               thought.
             </span>
           </h1>
 
-          <p className="mt-6 sm:mt-7 text-lg sm:text-xl text-stone-300 leading-relaxed max-w-2xl mx-auto">
+        </div>
+
+        <div className="lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:self-center">
+          <LaunchFilm />
+        </div>
+
+        <div className="max-w-2xl mx-auto lg:mx-0 text-center lg:text-left lg:col-start-1 lg:row-start-2 lg:self-start">
+          <p className="text-lg sm:text-xl lg:text-lg xl:text-xl text-stone-300 leading-relaxed max-w-2xl mx-auto lg:mx-0">
             Cresc delivers over-the-air updates for React Native. Fix the code
             and reach every device in seconds — no app store review queue, and a
             one-line change ships as a 3.4 KB patch.
           </p>
 
-          <div className="mt-9 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="mt-9 sm:mt-10 lg:mt-8 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
             <a href="/docs/skills" className="w-full sm:w-auto">
               <button
                 type="button"
@@ -192,7 +199,7 @@ function Banner(_props: BannerProps) {
                 5-Min Quickstart
               </button>
             </a>
-            <div className="cresc-gh-dark scale-125 sm:ml-3 mt-2 sm:mt-0">
+            <div className="cresc-gh-dark scale-125 lg:origin-left sm:ml-3 mt-2 sm:mt-0">
               <GitHubButton
                 type="stargazers"
                 namespace="reactnativecn"
@@ -202,7 +209,6 @@ function Banner(_props: BannerProps) {
           </div>
         </div>
 
-        <LaunchFilm />
       </div>
     </section>
   );

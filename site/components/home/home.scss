@@ -183,23 +183,12 @@
 
 /* ---------- Hero launch video ---------- */
 
-/* The dark hero backdrop hangs off the player itself and stops partway down
-   it, so the video straddles the dark hero and the light page at any width. */
-.cresc-launch-stage::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  top: -3000px;
-  bottom: 42%;
-  left: 50%;
-  width: 100vw;
-  transform: translateX(-50%);
+.cresc-launch-hero {
   background:
-    radial-gradient(ellipse 45% 38% at 30% 72%, rgba(217, 119, 6, 0.2), transparent 70%),
-    radial-gradient(ellipse 40% 35% at 72% 80%, rgba(168, 106, 66, 0.22), transparent 70%),
-    radial-gradient(ellipse 60% 30% at 50% 96%, rgba(120, 53, 15, 0.35), transparent 75%),
+    radial-gradient(ellipse 40% 45% at 72% 55%, rgba(217, 119, 6, 0.16), transparent 70%),
+    radial-gradient(ellipse 35% 40% at 12% 30%, rgba(168, 106, 66, 0.14), transparent 70%),
+    radial-gradient(ellipse 70% 30% at 50% 100%, rgba(120, 53, 15, 0.3), transparent 75%),
     #0c0a09;
-  pointer-events: none;
 }
 
 .cresc-launch-glow {
