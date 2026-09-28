@@ -131,8 +131,8 @@ export default function AnalyticsSection() {
                 key={view.id}
                 src={`/images/analytics/${view.id}.webp`}
                 alt={view.caption}
-                width={1280}
-                height={720}
+                width={1200}
+                height={919}
                 loading="lazy"
                 decoding="async"
               />

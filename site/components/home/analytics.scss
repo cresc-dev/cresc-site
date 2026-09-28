@@ -37,7 +37,7 @@
   .analytics-frame-bar > a { margin-left: auto; flex-shrink: 0; }
   .analytics-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--analytics-accent); flex-shrink: 0; }
   .analytics-image-link { display: block; background: #f5f6f8; }
-  img { width: 100%; height: auto; display: block; aspect-ratio: 16/9; }
+  img { width: 100%; height: auto; display: block; aspect-ratio: 1200/919; }
   figcaption { display: flex; justify-content: space-between; gap: 16px; padding: 15px 20px; color: var(--analytics-muted); font-size: 12px; line-height: 1.6; }
   button:focus-visible, a:focus-visible { outline: 3px solid var(--analytics-accent); outline-offset: 4px; }
 }
