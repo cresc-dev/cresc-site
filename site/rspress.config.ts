@@ -113,13 +113,6 @@ export default defineConfig({
         {
           tag: 'meta',
           attrs: {
-            property: 'og:keywords',
-            content: 'OTA,hotupdate,no-review,fast-publish',
-          },
-        },
-        {
-          tag: 'meta',
-          attrs: {
             name: 'keywords',
             content: 'react native ota update,codepush alternative,expo updates alternative,expo update pricing,react native hot update,harmony ota',
           },

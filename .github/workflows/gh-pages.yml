@@ -21,6 +21,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Full history so the sitemap can date each page by its last commit.
+          fetch-depth: 0
 
       - uses: oven-sh/setup-bun@v2
         with:

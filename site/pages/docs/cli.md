@@ -1,6 +1,7 @@
 ---
 order: 12
 title: CLI Tools
+description: "Cresc CLI reference (react-native-update-cli): bundle, publish and upload native packages, manage apps and versions, and automate React Native OTA releases."
 type: Guide
 ---
 

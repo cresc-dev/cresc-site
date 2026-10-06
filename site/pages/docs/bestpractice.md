@@ -1,6 +1,7 @@
 ---
 order: 13
 title: Best Practices
+description: "Best practices for Cresc React Native OTA updates: shrink ipa/apk/ppk sizes, handle multi-channel APKs and AAB, test and roll back hot updates, and use meta info."
 type: Guide
 ---
 

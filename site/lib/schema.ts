@@ -1,17 +1,46 @@
+import { quotas } from "../components/pricing/quota";
+
+const organization = {
+  "@type": "Organization",
+  "@id": "https://cresc.dev/#organization",
+  name: "Cresc",
+  url: "https://cresc.dev/",
+  logo: "https://cresc.dev/images/logo.svg",
+  email: "hi@cresc.dev",
+  sameAs: ["https://github.com/reactnativecn/react-native-update"],
+};
+
 export const homeSchema = {
   "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: "Cresc",
-  applicationCategory: "DeveloperApplication",
-  operatingSystem: "iOS, Android, HarmonyOS",
-  url: "https://cresc.dev/",
-  description:
-    "React Native OTA updates with delta patches, release risk monitoring, automatic protection, CI/CD publishing, and migration support for CodePush and Expo Updates.",
-  offers: {
-    "@type": "Offer",
-    price: "0",
-    priceCurrency: "USD",
-  },
+  "@graph": [
+    organization,
+    {
+      "@type": "WebSite",
+      "@id": "https://cresc.dev/#website",
+      name: "Cresc",
+      url: "https://cresc.dev/",
+      publisher: { "@id": "https://cresc.dev/#organization" },
+    },
+    {
+      "@type": "SoftwareApplication",
+      name: "Cresc",
+      applicationCategory: "DeveloperApplication",
+      operatingSystem: "iOS, Android, HarmonyOS",
+      url: "https://cresc.dev/",
+      image: "https://cresc.dev/images/og-cover.png",
+      description:
+        "React Native OTA updates with delta patches, release risk monitoring, automatic protection, CI/CD publishing, and migration support for CodePush and Expo Updates.",
+      publisher: { "@id": "https://cresc.dev/#organization" },
+      offers: {
+        "@type": "AggregateOffer",
+        lowPrice: "0",
+        highPrice: String(quotas.ultra.monthlyPrice),
+        priceCurrency: "USD",
+        offerCount: Object.keys(quotas).length,
+        url: "https://cresc.dev/pricing",
+      },
+    },
+  ],
 };
 
 export const pricingSchema = {
@@ -21,6 +50,20 @@ export const pricingSchema = {
   url: "https://cresc.dev/pricing",
   description:
     "Pricing plans for Cresc React Native OTA updates, including free and paid tiers.",
+  itemListElement: Object.values(quotas).map((plan) => ({
+    "@type": "Offer",
+    name: `Cresc ${plan.title}`,
+    description: `Up to ${plan.app} apps and ${plan.pv.toLocaleString("en-US")} daily update checks.`,
+    price: String(plan.monthlyPrice),
+    priceCurrency: "USD",
+    url: "https://cresc.dev/pricing",
+    priceSpecification: {
+      "@type": "UnitPriceSpecification",
+      price: String(plan.monthlyPrice),
+      priceCurrency: "USD",
+      unitCode: "MON",
+    },
+  })),
 };
 
 export const codepushFaqSchema = {
