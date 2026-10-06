@@ -1,22 +1,78 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
-const movements = [
+// Hermes bytecode benchmark from the react-native-update README
+// (RN 0.86, Hermes HBC v98, ~4.4 MB bytecode; full OTA sizes are gzipped).
+// Source: https://github.com/sunnylqm/hbc-diff-benchmark
+
+const scenarios = [
   {
-    label: "Movement I",
-    title: "Hold the full base",
-    desc: "The first native release stays on device as the baseline, so later React Native OTA patches can remain much smaller.",
+    label: "One-line text change",
+    fullKb: 1901.5,
+    bsdiffKb: 93.7,
+    crescKb: 3.4,
+    ratio: "28×",
   },
   {
-    label: "Movement II",
-    title: "Drop only the new pearl",
-    desc: "When something changes, Cresc ships only the delta instead of repeating the whole JavaScript bundle.",
+    label: "Small feature · ~60 LOC",
+    fullKb: 1913.9,
+    bsdiffKb: 411.6,
+    crescKb: 50.2,
+    ratio: "8.2×",
   },
   {
-    label: "Movement III",
-    title: "Set it in place locally",
-    desc: "The client applies the patch against the installed baseline and confirms the update in place.",
+    label: "Medium feature · ~300 LOC",
+    fullKb: 1973.7,
+    bsdiffKb: 551.6,
+    crescKb: 97.8,
+    ratio: "5.6×",
   },
 ];
+
+const libraries = {
+  bsdiff: {
+    name: "Other bsdiff-based OTA libraries",
+    note: null,
+    color: "#a8a29e",
+  },
+  rnu: {
+    name: "react-native-update",
+    note: "Hermes-optimized",
+    color: "#b45309",
+  },
+} as const;
+
+const MAX_BSDIFF_KB = Math.max(...scenarios.map((scenario) => scenario.bsdiffKb));
+
+// A short scroll nudges the pearl off the logo; from there it glides into
+// place on its own, then the punchline and the benchmark cards play. The page
+// stays pinned until the last card is in.
+const AUTOPLAY_TRIGGER_PX = 48;
+const PIN_GAP_PX = 16;
+const AUTOPLAY_TRIGGER_PROGRESS = 0.06;
+const PEARL_GLIDE_MS = 1800;
+const PUNCHLINE_DELAY_MS = 250;
+const CARD_REVEAL_DELAY_MS = 450;
+const CARD_REVEAL_STAGGER_MS = 300;
+const CARD_REVEAL_DURATION_MS = 650;
+const BAR_GROW_DELAY_MS = 200;
+const BAR_GROW_DURATION_MS = 900;
+const REVEAL_HOLD_MS =
+  CARD_REVEAL_DELAY_MS +
+  (scenarios.length - 1) * CARD_REVEAL_STAGGER_MS +
+  CARD_REVEAL_DURATION_MS;
+const SCROLL_KEYS = new Set([
+  " ",
+  "PageDown",
+  "PageUp",
+  "ArrowDown",
+  "ArrowUp",
+  "Home",
+  "End",
+]);
+
+const formatKb = (kb: number) => `${kb} KB`;
+
+const formatFullSize = (kb: number) => `${(kb / 1024).toFixed(1)} MB`;
 
 interface Point {
   x: number;
@@ -232,7 +288,15 @@ function Page1() {
   const [motionPoints, setMotionPoints] = useState<MotionPoints | null>(null);
   const [sequenceTop, setSequenceTop] = useState(88);
   const [isCompleted, setIsCompleted] = useState(false);
+  // Pin and hold the page only on screens where the whole grid fits below the nav.
+  const [canPin, setCanPin] = useState(false);
+  const canPinRef = useRef(false);
+  const [isPearlSet, setIsPearlSet] = useState(false);
   const isCompletedRef = useRef(false);
+  const isPlayingRef = useRef(false);
+  const glideFrameRef = useRef(0);
+  const revealTimerRef = useRef(0);
+  const releaseScrollLockRef = useRef<(() => void) | null>(null);
   const completionAnchorRef = useRef<number | null>(null);
   const progressRef = useRef(0);
 
@@ -284,8 +348,89 @@ function Page1() {
     };
   };
 
+  // Freeze the page in place while the sequence plays on its own.
+  const lockScroll = (lockedY: number) => {
+    const preventScroll = (event: Event) => event.preventDefault();
+    const preventScrollKeys = (event: KeyboardEvent) => {
+      if (SCROLL_KEYS.has(event.key)) {
+        event.preventDefault();
+      }
+    };
+    const holdPosition = () => {
+      if (Math.abs(window.scrollY - lockedY) > 1) {
+        window.scrollTo(0, lockedY);
+      }
+    };
+
+    holdPosition();
+    window.addEventListener("wheel", preventScroll, { passive: false });
+    window.addEventListener("touchmove", preventScroll, { passive: false });
+    window.addEventListener("keydown", preventScrollKeys);
+    window.addEventListener("scroll", holdPosition);
+
+    releaseScrollLockRef.current = () => {
+      window.removeEventListener("wheel", preventScroll);
+      window.removeEventListener("touchmove", preventScroll);
+      window.removeEventListener("keydown", preventScrollKeys);
+      window.removeEventListener("scroll", holdPosition);
+      releaseScrollLockRef.current = null;
+    };
+  };
+
+  const finishSequence = () => {
+    releaseScrollLockRef.current?.();
+    const sticky = stickyRef.current;
+    completionAnchorRef.current = sticky
+      ? sticky.getBoundingClientRect().top
+      : null;
+    isCompletedRef.current = true;
+    setIsCompleted(true);
+  };
+
+  const showFinalState = () => {
+    isPlayingRef.current = true;
+    progressRef.current = 1;
+    setProgress(1);
+    setIsPearlSet(true);
+    finishSequence();
+  };
+
+  // After a short nudge, the pearl glides the rest of the way by itself, like
+  // a flick carried by inertia. The cards follow once it has clicked in.
+  const playSequence = (lockedY: number | null) => {
+    isPlayingRef.current = true;
+    if (lockedY !== null) {
+      lockScroll(lockedY);
+    }
+
+    const from = progressRef.current;
+    const startedAt = performance.now();
+    const glide = (now: number) => {
+      const elapsed = clamp((now - startedAt) / PEARL_GLIDE_MS, 0, 1);
+      const nextProgress = lerp(from, 1, easeOutCubic(elapsed));
+      progressRef.current = nextProgress;
+      setProgress(nextProgress);
+      const nextPoints = measureMotionPoints();
+      if (nextPoints) {
+        setMotionPoints(nextPoints);
+      }
+
+      if (elapsed < 1) {
+        glideFrameRef.current = window.requestAnimationFrame(glide);
+        return;
+      }
+
+      setIsPearlSet(true);
+      revealTimerRef.current = window.setTimeout(
+        finishSequence,
+        REVEAL_HOLD_MS,
+      );
+    };
+    glideFrameRef.current = window.requestAnimationFrame(glide);
+  };
+
   const updateAnimation = () => {
-    if (isCompletedRef.current) {
+    if (isCompletedRef.current || isPlayingRef.current) {
       return;
     }
 
@@ -297,61 +442,70 @@ function Page1() {
       return;
     }
 
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      showFinalState();
+      return;
+    }
+
     const sequenceRect = sequence.getBoundingClientRect();
     const stickyRect = sticky.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
     const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
 
+    const navBottom =
+      document.querySelector(".rp-nav")?.getBoundingClientRect().bottom ?? 64;
+    const fitsBelowNav =
+      stickyRect.height <= viewportHeight - navBottom - PIN_GAP_PX * 2;
+    const nextCanPin = isDesktop && fitsBelowNav;
+    if (nextCanPin !== canPinRef.current) {
+      canPinRef.current = nextCanPin;
+      setCanPin(nextCanPin);
+    }
+
+    if (!nextCanPin) {
+      // Nothing is pinned: play once the portrait is in view.
+      const stageRect = stage.getBoundingClientRect();
+      if (stageRect.bottom < 0) {
+        showFinalState();
+      } else if (stageRect.top < viewportHeight * 0.7) {
+        playSequence(null);
+      }
+      return;
+    }
+
     const nextSequenceTop = Math.max(
-      88,
+      Math.round(navBottom + PIN_GAP_PX),
       Math.round(viewportHeight * 0.5 - stickyRect.height * 0.5),
     );
-
-    if (isDesktop) {
-      setSequenceTop((current) =>
-        Math.abs(current - nextSequenceTop) > 1 ? nextSequenceTop : current,
-      );
-    }
-
-    if (!isDesktop) {
-      const stageRect = stage.getBoundingClientRect();
-      const targetProgress = clamp((viewportHeight * 0.8 - stageRect.top) / (viewportHeight * 0.6), 0, 1);
-      const nextProgress = Math.max(progressRef.current, targetProgress);
-      if (nextProgress >= 0.995) {
-        isCompletedRef.current = true;
-        progressRef.current = 1;
-        setIsCompleted(true);
-        setProgress(1);
-        return;
-      }
-      progressRef.current = nextProgress;
-      setProgress(nextProgress);
-      return;
-    }
-
-    const maxScroll = Math.max(sequenceRect.height - stickyRect.height, 1);
-    const scrolled = nextSequenceTop - sequenceRect.top;
-    const targetProgress = clamp(scrolled / maxScroll, 0, 1);
-    // Monotonically non-decreasing so the animation never rewinds on backward scroll
-    const nextProgress = Math.max(progressRef.current, targetProgress);
-
-    if (nextProgress >= 0.995) {
-      completionAnchorRef.current = stickyRect.top;
-      isCompletedRef.current = true;
-      progressRef.current = 1;
-      setIsCompleted(true);
-      setProgress(1);
-      return;
-    }
-
-    progressRef.current = nextProgress;
-    setProgress((current) =>
-      Math.abs(current - nextProgress) > 0.001 ? nextProgress : current,
+    setSequenceTop((current) =>
+      Math.abs(current - nextSequenceTop) > 1 ? nextSequenceTop : current,
     );
 
+    const scrolled = nextSequenceTop - sequenceRect.top;
+    const runway = Math.max(sequenceRect.height - stickyRect.height, 1);
+
+    // Arrived from below or reloaded further down: just show the result.
+    if (scrolled >= runway + viewportHeight * 0.5) {
+      showFinalState();
+      return;
+    }
+
+    const nudge = clamp(scrolled / AUTOPLAY_TRIGGER_PX, 0, 1);
+    const nextProgress = Math.max(
+      progressRef.current,
+      nudge * AUTOPLAY_TRIGGER_PROGRESS,
+    );
+    progressRef.current = nextProgress;
+    setProgress(nextProgress);
     const nextPoints = measureMotionPoints();
     if (nextPoints) {
       setMotionPoints(nextPoints);
+    }
+
+    if (nudge >= 1) {
+      // A fast flick may have carried the page past the pin; pull it back.
+      const overshoot = Math.max(scrolled - AUTOPLAY_TRIGGER_PX, 0);
+      playSequence(window.scrollY - overshoot);
     }
   };
 
@@ -386,17 +540,32 @@ function Page1() {
 
     return () => {
       cancelAnimationFrame(rafId);
+      cancelAnimationFrame(glideFrameRef.current);
+      window.clearTimeout(revealTimerRef.current);
+      releaseScrollLockRef.current?.();
       window.removeEventListener("scroll", scheduleUpdate);
       window.removeEventListener("resize", scheduleUpdate);
     };
   }, []);
 
-  const pearlPoint = motionPoints ? getPearlPoint(progress, motionPoints) : null;
+  const isPinned = canPin && !isCompleted;
+  const pearlPoint = motionPoints
+    ? getPearlPoint(progress, motionPoints)
+    : null;
   const pearlOpacity =
-    clamp(progress / 0.05, 0, 1) * (1 - clamp((progress - 0.95) / 0.05, 0, 1));
+    clamp(progress / 0.05, 0, 1) *
+    (1 - clamp((progress - 0.95) / 0.05, 0, 1));
   const pearlScale = getPearlScale(progress);
-  const toastReveal = easeOutCubic(getRevealProgress(progress, 0.955, 0.998));
-  const activeIndex = progress < 0.43 ? 0 : progress < 0.66 ? 1 : 2;
+  const toastReveal = easeOutCubic(
+    getRevealProgress(progress, 0.955, 0.998),
+  );
+  const revealTransition = (delayMs: number, durationMs: number) =>
+    ["opacity", "transform", "filter"]
+      .map(
+        (property) =>
+          `${property} ${durationMs}ms cubic-bezier(0.22, 1, 0.36, 1) ${delayMs}ms`,
+      )
+      .join(", ");
 
   return (
     <section
@@ -437,18 +606,32 @@ function Page1() {
 
         <div
           ref={sequenceRef}
-          className={`relative mt-16 ${isCompleted ? "" : "min-h-[200vh] lg:min-h-[250vh]"}`}
+          className="relative mt-16"
         >
           <div
             ref={stickyRef}
-            className={`grid gap-10 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.9fr)] lg:items-stretch ${
-              isCompleted ? "" : "lg:sticky"
+            className={`grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] lg:items-stretch ${
+              isPinned ? "sticky" : ""
             }`}
-            style={isCompleted ? undefined : { top: `${sequenceTop}px` }}
+            style={isPinned ? { top: `${sequenceTop}px` } : undefined}
           >
-            <div className="self-start">
-              <div className="cresc-frame rounded-3xl p-5 sm:p-6">
-                <div className="cresc-stage-panel relative overflow-hidden rounded-2xl p-4 sm:p-6">
+            <div className="self-start lg:self-stretch">
+              <div className="cresc-frame rounded-3xl p-5 sm:p-6 lg:flex lg:h-full lg:flex-col">
+                <h3 className="cresc-display mb-5 px-1 text-2xl leading-tight text-[#1c1917] sm:text-[1.9rem]">
+                  Don&rsquo;t repaint the Vermeer.
+                  <span
+                    className="block text-[#b45309]"
+                    style={{
+                      opacity: isPearlSet ? 1 : 0,
+                      transform: isPearlSet ? "none" : "translateY(12px)",
+                      filter: isPearlSet ? "none" : "blur(6px)",
+                      transition: revealTransition(PUNCHLINE_DELAY_MS, 600),
+                    }}
+                  >
+                    Just ship the pearl.
+                  </span>
+                </h3>
+                <div className="cresc-stage-panel relative overflow-hidden rounded-2xl p-4 sm:p-6 lg:flex lg:flex-1 lg:flex-col lg:justify-center">
                   <div
                     ref={stageRef}
                     className="relative aspect-[13/16] overflow-hidden rounded-xl bg-[#09070f]"
@@ -482,45 +665,151 @@ function Page1() {
             </div>
 
             <div className="flex flex-col gap-3 lg:h-full lg:self-stretch lg:justify-between">
-              {movements.map((movement, index) => {
-                const reveal = easeOutCubic(
-                  getRevealProgress(
-                    progress,
-                    0.22 + index * 0.21,
-                    0.42 + index * 0.21,
-                  ),
+              <div
+                className="flex flex-wrap items-center gap-x-5 gap-y-1.5 px-1 text-xs text-[#57534e]"
+                style={{
+                  opacity: isPearlSet ? 1 : 0,
+                  transition: `opacity 500ms ease-out ${PUNCHLINE_DELAY_MS}ms`,
+                }}
+              >
+                {Object.values(libraries).map((library) => (
+                  <span
+                    key={library.name}
+                    className="inline-flex items-center gap-2"
+                  >
+                    <span
+                      className="h-2.5 w-2.5 shrink-0 rounded-[3px]"
+                      style={{ backgroundColor: library.color }}
+                      aria-hidden="true"
+                    />
+                    <span
+                      className={
+                        library.note ? "font-semibold text-[#1c1917]" : ""
+                      }
+                    >
+                      {library.name}
+                      {library.note && (
+                        <span className="font-normal text-[#78716c]">
+                          {" "}
+                          ({library.note})
+                        </span>
+                      )}
+                    </span>
+                  </span>
+                ))}
+              </div>
+              {scenarios.map((scenario, index) => {
+                const revealDelay =
+                  CARD_REVEAL_DELAY_MS + index * CARD_REVEAL_STAGGER_MS;
+                const barTransition = `width ${BAR_GROW_DURATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1) ${revealDelay + BAR_GROW_DELAY_MS}ms`;
+                // The one-line hotfix is the headline number, so it keeps the accent.
+                const isActive = index === 0;
+                const bsdiffWidth = (scenario.bsdiffKb / MAX_BSDIFF_KB) * 100;
+                const crescWidth = Math.max(
+                  (scenario.crescKb / MAX_BSDIFF_KB) * 100,
+                  1.5,
                 );
-                const isActive = index === activeIndex;
 
                 return (
                   <article
-                    key={movement.label}
-                    className={`cresc-score-card flex min-h-[9.75rem] flex-col justify-center rounded-2xl border px-6 py-5 lg:min-h-0 lg:flex-1 lg:px-7 ${
+                    key={scenario.label}
+                    className={`cresc-score-card flex min-h-[9.75rem] flex-col justify-center rounded-2xl border px-6 py-5 lg:min-h-0 lg:flex-1 lg:px-7 lg:py-4 ${
                       isActive
                         ? "border-[#b45309]/45 shadow-[0_16px_40px_-12px_rgba(180,83,9,0.2)]"
                         : "border-[#e7e5e1]"
-                    } ${reveal > 0.02 ? "" : "pointer-events-none"}`}
+                    } ${isPearlSet ? "" : "pointer-events-none"}`}
                     style={{
-                      opacity: reveal,
-                      transform: `translateY(${(1 - reveal) * 64}px) scale(${0.955 + reveal * 0.045})`,
-                      filter: `blur(${(1 - reveal) * 12}px)`,
+                      opacity: isPearlSet ? 1 : 0,
+                      transform: isPearlSet
+                        ? "none"
+                        : "translateY(64px) scale(0.955)",
+                      filter: isPearlSet ? "none" : "blur(12px)",
+                      // Inline so it wins over the card's own border/shadow transition.
+                      transition: `${revealTransition(revealDelay, CARD_REVEAL_DURATION_MS)}, border-color 0.3s ease, box-shadow 0.3s ease`,
                     }}
                   >
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#b45309]">
-                      {movement.label}
+                      {scenario.label}
                     </p>
-                    <h3 className="cresc-display mt-2.5 text-2xl leading-snug text-[#1c1917]">
-                      {movement.title}
-                    </h3>
-                    <p className="mt-2.5 text-[0.95rem] leading-6 text-[#57534e]">
-                      {movement.desc}
+                    <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <h3 className="cresc-display text-3xl leading-none text-[#1c1917]">
+                        {formatKb(scenario.crescKb)}
+                      </h3>
+                      <span className="text-sm font-semibold text-[#15803d]">
+                        {scenario.ratio} smaller than bsdiff-based OTA
+                      </span>
+                    </div>
+
+                    <div className="mt-3 space-y-2 text-xs text-[#57534e]">
+                      {[
+                        {
+                          library: libraries.bsdiff,
+                          kb: scenario.bsdiffKb,
+                          width: bsdiffWidth,
+                        },
+                        {
+                          library: libraries.rnu,
+                          kb: scenario.crescKb,
+                          width: crescWidth,
+                        },
+                      ].map(({ library, kb, width }) => (
+                        <div
+                          key={library.name}
+                          className="grid grid-cols-[minmax(0,1fr)_4.25rem] items-center gap-3"
+                        >
+                          <div
+                            className="h-2 overflow-hidden rounded-full bg-[#f5f5f4]"
+                            role="img"
+                            aria-label={`${library.name}: ${formatKb(kb)}`}
+                          >
+                            <div
+                              className="h-full rounded-full"
+                              style={{
+                                backgroundColor: library.color,
+                                width: isPearlSet ? `${width}%` : "0%",
+                                transition: barTransition,
+                              }}
+                            />
+                          </div>
+                          <span
+                            className={`text-right tabular-nums ${
+                              library === libraries.rnu
+                                ? "font-semibold text-[#1c1917]"
+                                : ""
+                            }`}
+                          >
+                            {formatKb(kb)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="mt-2.5 text-xs text-[#78716c]">
+                      Full bundle OTA: {formatFullSize(scenario.fullKb)} ·{" "}
+                      <span className="font-semibold text-[#57534e]">
+                        {Math.round(scenario.fullKb / scenario.crescKb)}× smaller
+                      </span>
                     </p>
                   </article>
                 );
               })}
             </div>
           </div>
+          {/* Scroll runway that keeps the grid pinned while the sequence plays. */}
+          {isPinned && <div className="h-[45vh]" aria-hidden="true" />}
         </div>
+        <p className="mt-6 text-center text-xs leading-5 text-[#78716c]">
+          Real release bundles of a React Native 0.86 app (Hermes HBC
+          v98, ~4.4 MB bytecode). Every patch verified by a round-trip.
+          react-native-update is the open-source SDK behind Cresc.{" "}
+          <a
+            href="https://github.com/sunnylqm/hbc-diff-benchmark"
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-[#b45309] underline-offset-2 hover:underline"
+          >
+            Reproducible benchmark →
+          </a>
+        </p>
       </div>
     </section>
   );
