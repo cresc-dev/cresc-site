@@ -1,19 +1,32 @@
+# Cresc welcomes search engines and AI assistants.
+# Content-Signal: https://contentsignals.org/
 User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
+# Search & answer engines
+User-agent: Googlebot
+User-agent: Bingbot
 User-agent: OAI-SearchBot
-Allow: /
-
-User-agent: GPTBot
-Allow: /
-
 User-agent: Claude-SearchBot
-Allow: /
-
-User-agent: ClaudeBot
-Allow: /
-
 User-agent: PerplexityBot
+User-agent: Applebot
+User-agent: DuckAssistBot
+Allow: /
+
+# Fetches made on behalf of a user in a chat
+User-agent: ChatGPT-User
+User-agent: Claude-User
+User-agent: Perplexity-User
+Allow: /
+
+# Model training / grounding
+User-agent: GPTBot
+User-agent: ClaudeBot
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: CCBot
+User-agent: meta-externalagent
 Allow: /
 
 Sitemap: https://cresc.dev/sitemap.xml

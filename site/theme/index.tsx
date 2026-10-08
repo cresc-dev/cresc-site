@@ -64,7 +64,7 @@ function SeoHead() {
               url,
               inLanguage: 'en',
               image: OG_IMAGE,
-              ...(page.lastUpdatedTime ? { dateModified: page.lastUpdatedTime } : {}),
+              ...(page.lastModified ? { dateModified: page.lastModified } : {}),
               publisher: { '@type': 'Organization', name: 'Cresc', url: `${SITE_URL}/` },
             },
             {
@@ -86,7 +86,12 @@ function SeoHead() {
       ? { meta: [{ name: 'robots', content: 'noindex' }] }
       : {
           ...(customTitle ? { title } : {}),
-          link: declared.has('link:canonical') ? [] : [{ rel: 'canonical', href: url }],
+          link: [
+            ...(declared.has('link:canonical') ? [] : [{ rel: 'canonical', href: url }]),
+            // The Markdown export rspress writes next to every page; agents
+            // that follow alternates get clean text instead of the app shell.
+            { rel: 'alternate', type: 'text/markdown', href: `${SITE_URL}${routePath === '/' ? '/index' : routePath}.md` },
+          ],
           meta,
           script,
         },

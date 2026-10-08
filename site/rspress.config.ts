@@ -1,4 +1,5 @@
 import * as path from 'path';
+import { execFileSync } from 'child_process';
 import { defineConfig } from '@rspress/core';
 import { pluginSass } from '@rsbuild/plugin-sass';
 import rspressPluginMermaid from 'rspress-plugin-mermaid';
@@ -23,6 +24,7 @@ export default defineConfig({
       { icon: 'github', mode: 'link', content: 'https://github.com/reactnativecn/react-native-update' },
     ],
     darkMode: false,
+    lastUpdated: true,
     llmsUI: {
       viewOptions: ['markdownLink', 'chatgpt', 'claude'],
       placement: 'outline',
@@ -141,5 +143,20 @@ export default defineConfig({
       ],
     },
   },
-  plugins: [rspressPluginMermaid()],
+  plugins: [
+    rspressPluginMermaid(),
+    {
+      // lastUpdatedTime is a locale string for display; structured data
+      // needs ISO 8601, so record the page's last commit date separately.
+      name: 'cresc-last-modified',
+      extendPageData(pageData) {
+        try {
+          const iso = execFileSync('git', ['log', '-1', '--format=%cI', '--', pageData._filepath], {
+            encoding: 'utf8',
+          }).trim();
+          if (iso) pageData.lastModified = iso;
+        } catch {}
+      },
+    },
+  ],
 });
