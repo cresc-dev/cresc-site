@@ -48,13 +48,15 @@ Hermes bytecode resists generic binary diffing in two independent ways. Cresc re
 - Hermes **re-sorts its string table on every compile**, so a one-line JS edit renumbers most string IDs and two nearly identical bytecode files end up differing almost everywhere. Cresc compiles each release against an earlier bytecode of the same app, pinning those IDs so that only real changes ever reach the diff.
 - Hermes bytecode is also full of **offset tables**, where inserting a few bytes shifts every offset after it. Cresc applies an **exclusive HBC (Hermes bytecode) structure-aware reversible transform** that removes this amplification at the source.
 
-Measured on a real React Native 0.86 app (~4.4 MB bytecode; the [benchmark code and data are fully open and reproducible](https://github.com/sunnylqm/hbc-diff-benchmark)):
+Cresc also compiles the bytecode without its debug-info section (kept in a separate source map), which makes every full package and every patch built from it about **21% smaller**.
 
-| Release scenario | Full update | Classic incremental (bsdiff) | Cresc incremental (Hermes-optimized) |
+Measured on real release bundles of a React Native 0.86 app (Hermes HBC v98, ~3.5 MB bytecode; the [benchmark code and data are fully open and reproducible](https://github.com/sunnylqm/hbc-diff-benchmark)):
+
+| Release scenario | Full update (gzip) | Classic incremental (bsdiff) | Cresc incremental (Hermes-optimized) |
 |---|---|---|---|
-| One-line text change | 1.9 MB | 93.7 KB | **3.4 KB** (28× smaller) |
-| Small feature (~60 LOC) | 1.9 MB | 411.6 KB | **50.2 KB** (8.2× smaller) |
-| Medium feature (~300 LOC) | 1.9 MB | 551.6 KB | **97.8 KB** (5.6× smaller) |
+| One-line text change | 1.5 MB | 93.7 KB | **3.4 KB** (28× smaller) |
+| Small feature (~60 LOC) | 1.5 MB | 411.6 KB | **50.2 KB** (8.2× smaller) |
+| Medium feature (~300 LOC) | 1.6 MB | 551.6 KB | **97.8 KB** (5.6× smaller) |
 
 - A one-line hotfix ships in **3.4 KB** — **99.8% less** than a full update, and **28× smaller** than a classic bsdiff incremental update
 - **The smaller the change, the bigger the win** — exactly the high-frequency hotfix scenario OTA is for

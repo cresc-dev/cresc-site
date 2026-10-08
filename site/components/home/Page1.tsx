@@ -1,27 +1,28 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
-// Hermes bytecode benchmark from the react-native-update README
-// (RN 0.86, Hermes HBC v98, ~4.4 MB bytecode; full OTA sizes are gzipped).
+// Hermes bytecode benchmark (RN 0.86, Hermes HBC v98). Full OTA sizes are the
+// gzipped debug-info-stripped bytecode that actually ships (~3.5 MB raw); bsdiff
+// is the classic pipeline on default hermesc output.
 // Source: https://github.com/sunnylqm/hbc-diff-benchmark
 
 const scenarios = [
   {
     label: "One-line text change",
-    fullKb: 1901.5,
+    fullKb: 1544.6,
     bsdiffKb: 93.7,
     crescKb: 3.4,
     ratio: "28×",
   },
   {
     label: "Small feature · ~60 LOC",
-    fullKb: 1913.9,
+    fullKb: 1555.8,
     bsdiffKb: 411.6,
     crescKb: 50.2,
     ratio: "8.2×",
   },
   {
     label: "Medium feature · ~300 LOC",
-    fullKb: 1973.7,
+    fullKb: 1604.7,
     bsdiffKb: 551.6,
     crescKb: 97.8,
     ratio: "5.6×",
@@ -799,7 +800,7 @@ function Page1() {
         </div>
         <p className="mt-6 text-center text-xs leading-5 text-[#78716c]">
           Real release bundles of a React Native 0.86 app (Hermes HBC
-          v98, ~4.4 MB bytecode). Every patch verified by a round-trip.
+          v98, ~3.5 MB bytecode). Every patch verified by a round-trip.
           react-native-update is the open-source SDK behind Cresc.{" "}
           <a
             href="https://github.com/sunnylqm/hbc-diff-benchmark"
