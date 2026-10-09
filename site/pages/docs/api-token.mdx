@@ -80,20 +80,34 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [ios, android]
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
-          
+        with:
+          node-version: 22
+
       - name: Install dependencies
-        run: npm install && npm i -g react-native-update-cli
-        
-      - name: Publish update
+        run: npm ci && npm i -g react-native-update-cli
+
+      - name: Bundle, publish and bind
         env:
           CRESC_API_TOKEN: ${{ secrets.CRESC_API_TOKEN }}
-        run: cresc bundle --platform android
+        run: |
+          cresc bundle --platform ${{ matrix.platform }} \
+            --name "${GITHUB_SHA::7}" \
+            --description "OTA ${GITHUB_SHA::7}" \
+            --packageVersionRange ">=1.0.0 <2.0.0" \
+            --rollout 10
 ```
+
+:::warning
+CI has no interactive terminal, so the CLI runs non-interactively and skips the "publish?" and "bind?" prompts. Without `--name` it only builds the bundle, and without a binding option (`--packageVersionRange`, `--packageVersion`, `--packageId`, `--minPackageVersion` or `--maxPackageVersion`) the version is published but **no users receive it**. Commit `update.json` so CI can resolve the app, and set `--packageVersionRange` to the native versions that should get this update. `--rollout` is optional (1–100, default 100). See [CLI Tools](/docs/cli#cresc-bundle).
+:::
 
 :::tip
 In CI/CD pipelines, always store your API Key securely using the platform's Secret Manager (e.g., GitHub Secrets) rather than hardcoding them in your configuration scripts.
