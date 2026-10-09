@@ -35,7 +35,7 @@ Expo Updates and Cresc both help React Native teams ship JavaScript changes outs
 ## Short answer
 
 - Choose **Expo Updates** if your team is heavily standardized on Expo services, has a small user base within free/starter limits, and prefers the default Expo release path.
-- Choose **Cresc** if your team wants massive price savings over EAS Update, smaller delta updates (~42 KB), a CodePush-style migration path, or more control over how OTA delivery fits your release system.
+- Choose **Cresc** if your team wants massive price savings over EAS Update, smaller delta updates (3.4 KB for a one-line fix), a CodePush-style migration path, or more control over how OTA delivery fits your release system.
 
 ## Comparison table
 
@@ -44,7 +44,7 @@ Expo Updates and Cresc both help React Native teams ship JavaScript changes outs
 | OTA updates for React Native | Yes | Yes |
 | **Pricing & Cost Efficiency** | **Metered: $0.005/extra MAU + $0.10/GiB** | **Predictable flat tiers, zero overages (70–90% savings)** |
 | **Production Plan Pricing** | **$199/mo (capped at 50K MAUs)** | **$99/mo (covers 1,000,000 daily checks)** |
-| **Update payload size** | Full bundle (Megabytes) | **~42 KB (HDiff micro-patches)** |
+| **Update payload size** | Full bundle (Megabytes) | **3.4–98 KB (benchmarked delta patch)** |
 | **CDN Bandwidth** | Metered edge bandwidth ($$$) | **Included on every plan** |
 | Expo-oriented workflow | Strong default fit | Supported (CLI, bare, prebuild) |
 | Delta patch delivery | Not the main positioning | Core positioning |
@@ -80,7 +80,7 @@ See [Expo pricing vs Cresc](/expo-pricing-vs-cresc) for a comprehensive side-by-
 
 In contrast:
 - **Pro tier is $99/mo** for 1,000,000 daily queries—less than half the price of Expo Production ($199/mo for just 50,000 update MAUs).
-- **HDiff differential delivery** shrinks update payloads down to ~42 KB average, slashing bandwidth consumption by over 90%.
+- **HDiff differential delivery** shrinks a one-line fix to 3.4 KB and a ~300-line feature to under 100 KB, slashing bandwidth consumption by over 90%.
 - **Zero surprise invoices**: Cresc plans are fixed monthly tiers with CDN delivery included. You choose when to upgrade.
 
 ## Related documentation

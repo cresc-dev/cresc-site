@@ -307,7 +307,7 @@ const comparisonRows = [
     scenario: "Bandwidth & Payload",
     badge: "90%+ bandwidth saved",
     expo: "Full multi-MB bundle downloads trigger expensive $0.10/GiB edge bandwidth overages.",
-    cresc: "True HDiff differential updates (~42 KB vs full MBs). CDN bandwidth included on every tier.",
+    cresc: "Hermes-optimized delta updates (3.4 KB for a one-line fix vs full MBs). CDN bandwidth included on every tier.",
   },
   {
     scenario: "High volume fleets",
@@ -546,7 +546,7 @@ function Pricing() {
               update MAUs ($0.005 per extra updated user) plus edge bandwidth
               ($0.10/GiB). Cresc uses fixed, predictable monthly tiers with
               worldwide CDN delivery included and zero surprise overage
-              penalties. Coupled with HDiff delta updates (~42 KB vs multi-MB
+              penalties. Coupled with delta updates (3.4 KB for a one-line fix vs multi-MB
               full bundles), Cresc saves most production teams 70% to 90% on
               their monthly OTA bills.
             </p>
@@ -650,7 +650,7 @@ function Pricing() {
                   </p>
                   <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-medium text-[#166534]">
                     <span>$0 surprise overage fees</span>
-                    <span>~42 KB average delta patch</span>
+                    <span>3.4 KB one-line hotfix patch</span>
                   </div>
                 </div>
               </div>

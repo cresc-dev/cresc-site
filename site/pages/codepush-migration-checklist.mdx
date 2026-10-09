@@ -52,7 +52,7 @@ Start here: [Installation & Config](/docs/getting-started)
 
 ## 3. Upload the exact baseline build
 
-Before publishing OTA patches, upload the exact APK or IPA that matches the build users actually install. Cresc uses that build as the baseline for later HDiff differential comparisons, ensuring updates stay at micro-sizes (~42 KB).
+Before publishing OTA patches, upload the exact APK or IPA that matches the build users actually install. Cresc uses that build as the baseline for later HDiff differential comparisons, which keeps patches tiny: 3.4 KB for a one-line fix in our [Hermes benchmark](https://github.com/sunnylqm/hbc-diff-benchmark).
 
 ## 4. Recreate the release workflow
 

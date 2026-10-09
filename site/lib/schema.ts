@@ -75,7 +75,7 @@ export const codepushFaqSchema = {
       name: "Is Cresc a replacement for CodePush and Expo Updates?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. Cresc covers the same core React Native OTA workflow while offering massive price savings over Expo EAS Update, delta patches (~42KB), rollback safety, and CI/CD publishing.",
+        text: "Yes. Cresc covers the same core React Native OTA workflow while offering massive price savings over Expo EAS Update, delta patches (3.4 KB for a one-line fix), rollback safety, and CI/CD publishing.",
       },
     },
     {

@@ -86,7 +86,7 @@ Teams moving off discontinued Microsoft CodePush often evaluate Expo EAS Update 
 
 Cresc provides the true spiritual and operational successor to CodePush:
 - **Transparent flat pricing**: starting at $19/mo (Standard) or $99/mo (Pro covering 1M checks/day), with zero per-user overage charges.
-- **Micro delta updates (~42 KB)**: HDiff differential patches cut data transfer by 90%+ compared to Expo's full multi-megabyte bundles.
+- **Micro delta updates (3.4 KB for a one-line fix)**: Hermes-optimized differential patches cut data transfer by 90%+ compared to Expo's full multi-megabyte bundles.
 - **Global CDN included**: Worldwide edge delivery is included in the plan price.
 
 ## Expo's own usage example
@@ -97,7 +97,7 @@ Expo's official billing documentation gives this example for the Starter plan:
 - 5 MiB each
 - 10,000 updated users
 
-Their documented **extra usage** comes to **$95.31** for that month. Adding the Starter subscription itself means the all-in monthly cost would be **$114.31**. That total is an inference from the official example plus the public Starter plan fee. On Cresc, that same workload is handled smoothly on the **$19/mo Standard** or **$39/mo Premium** tier with vastly smaller delta payloads (~42 KB each instead of 5 MiB!).
+Their documented **extra usage** comes to **$95.31** for that month. Adding the Starter subscription itself means the all-in monthly cost would be **$114.31**. That total is an inference from the official example plus the public Starter plan fee. On Cresc, that same workload is handled smoothly on the **$19/mo Standard** or **$39/mo Premium** tier with vastly smaller delta payloads (3.4 KB to ~98 KB each in our [reproducible Hermes benchmark](https://github.com/sunnylqm/hbc-diff-benchmark), instead of 5 MiB).
 
 ## How Cresc scales
 

@@ -43,7 +43,7 @@ If your React Native team is moving away from discontinued CodePush or seeking a
 ## What Cresc gives you
 
 - **Massive price advantage over Expo Updates**: Transparent flat monthly tiers ($19/mo Standard, $99/mo Pro covering 1,000,000 daily checks) with global CDN delivery included—no surprise per-user overage charges.
-- **True delta OTA updates (HDiff)**: Generate micro-updates averaging ~42 KB instead of shipping full multi-megabyte JavaScript bundles.
+- **True delta OTA updates (HDiff)**: Ship a one-line fix as a 3.4 KB patch and a small feature in about 50 KB instead of shipping full multi-megabyte JavaScript bundles.
 - **Automated rollback protection**: Automated health checks detect release issues and revert users safely to the last known good build.
 - **Source-mapped JS crash reporting (included free)**: View production stack traces symbolicated back to your original source lines—Sentry-style observability without an extra subscription.
 - **CI/CD native workflow**: CLI and dashboard tools built to slot cleanly into GitHub Actions, Bitrise, Fastlane, and custom deployment pipelines.
@@ -58,7 +58,7 @@ If your React Native team is moving away from discontinued CodePush or seeking a
 | **Entry paid tier** | **$19/mo** (10,000 checks/day) | N/A | $19/mo (restricted to 3,000 MAUs) |
 | **Production tier** | **$99/mo** (1,000,000 checks/day) | N/A | **$199/mo** (restricted to 50,000 MAUs) |
 | **Overage penalties** | **None (zero surprise bills)** | N/A | **$0.005/user + $0.10/GiB bandwidth** |
-| **Average update size** | **~42 KB (HDiff delta patch)** | Multi-megabytes | Multi-megabytes (full bundle) |
+| **Typical update size** | **3.4–98 KB (benchmarked delta patch)** | Multi-megabytes | Multi-megabytes (full bundle) |
 | **Global CDN bandwidth** | **Included on every plan** | Discontinued | Costly edge bandwidth overages |
 | **Automated rollback** | **Yes (automatic crash detection)** | Yes | Limited |
 | **Source-mapped crash reporting** | **Yes, included free** | No | Requires separate paid service (Sentry) |
@@ -86,7 +86,7 @@ Choose Cresc if your team:
 
 - Needs an actively maintained, drop-in replacement for discontinued CodePush.
 - Wants to escape high, metered monthly bills from Expo EAS Update.
-- Wants ~42 KB delta downloads instead of multi-megabyte bundles eating users' cellular data.
+- Wants 3.4 KB hotfix downloads instead of multi-megabyte bundles eating users' cellular data.
 - Demands predictable, flat monthly infrastructure costs with global CDN delivery included.
 - Needs source-mapped JS error monitoring without paying for an external crash reporting service.
 
