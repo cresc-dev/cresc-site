@@ -47,6 +47,9 @@ jobs:
       - uses: actions/upload-pages-artifact@v5
         with:
           path: ./out
+          # Without this the artifact drops dot-directories, so nothing under
+          # /.well-known/ (agent skills, API catalog, MCP server card) is served.
+          include-hidden-files: true
 
   deploy:
     needs: build
