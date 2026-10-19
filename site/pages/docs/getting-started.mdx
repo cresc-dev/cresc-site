@@ -146,13 +146,39 @@ If you don't use `expo`, or use an expo version under 48, manually follow the st
 
 #### iOS
 
-Add the following to your `AppDelegate.mm` / `AppDelegate.m` / `AppDelegate.swift` file (different RN versions have different file suffixes):
+Add the following to the file that provides `bundleURL`. Starting with RN 0.88, the iOS template for new projects uses the UIScene life cycle (required for apps built with the iOS 27 SDK), so the React Native entry point and the `bundleURL` method moved from `AppDelegate.swift` to `SceneDelegate.swift`. Older versions keep it in `AppDelegate.mm` / `AppDelegate.m` / `AppDelegate.swift` (different RN versions have different file suffixes). Whichever file it lives in, it is the same `bundleURL` method you change.
 
 :::warning
 Note: If your project mixes native apps with RN, ensure you **do not directly assign the bundleURL while initializing the rootView**. Always initialize bridge using `initWithDelegate`, then initialize rootView via `initWithBridge`. Otherwise, the updating feature will likely break. 
 :::
 
 <Tabs>
+<Tab label="Swift (RN 0.88 or up, SceneDelegate)">
+
+```swift
+import React
+import React_RCTAppDelegate
+import ReactAppDependencyProvider
+import UIKit
+import react_native_update
+
+class SceneDelegate: RCTDefaultReactNativeFactoryDelegate, UIWindowSceneDelegate {
+  // ... Other code (keep scene(_:willConnectTo:options:) and the rest as the template has them)
+
+  override func bundleURL() -> URL? {
+    #if DEBUG
+    // Leave the DEBUG branch as is (hot updates are not available in DEBUG mode)
+    RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
+    #else
+    RCTPushy.bundleURL()  // <-- Replace the non-DEBUG section with our hot update bundle URL provider
+    #endif
+  }
+}
+```
+
+When upgrading from RN 0.87 or earlier to 0.88, if you follow the [Upgrade Helper](https://react-native-community.github.io/upgrade-helper/?from=0.87.1&to=0.88.0) and move the entry point to `SceneDelegate`, bring `RCTPushy.bundleURL()` over from your old `AppDelegate` (or `ReactNativeDelegate`) too. Otherwise Release builds keep loading the bundle embedded in the app and hot updates never take effect. For Objective-C projects, see the [example project](https://github.com/reactnativecn/react-native-update/blob/master/Example/testHotUpdate/ios/AwesomeProject/AppDelegate.mm).
+
+</Tab>
 <Tab label="Objective-C">
 
 ```c
@@ -195,7 +221,7 @@ Note: If your project mixes native apps with RN, ensure you **do not directly as
 ```
 
 </Tab>
-<Tab label="Swift">
+<Tab label="Swift (RN 0.87 or under, AppDelegate)">
 
 ```swift
 import UIKit
@@ -205,6 +231,7 @@ import ReactAppDependencyProvider
 import react_native_update    
 
 
+// In the RN 0.79 ~ 0.87 templates, bundleURL lives in the ReactNativeDelegate class in this file; change it the same way
 @main
 class AppDelegate: RCTAppDelegate {
   // ... Other code
