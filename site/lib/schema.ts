@@ -5,7 +5,12 @@ const organization = {
   "@id": "https://cresc.dev/#organization",
   name: "Cresc",
   url: "https://cresc.dev/",
-  logo: "https://cresc.dev/images/logo.svg",
+  logo: {
+    "@type": "ImageObject",
+    url: "https://cresc.dev/images/logo-512.png",
+    width: 512,
+    height: 512,
+  },
   email: "hi@cresc.dev",
   sameAs: ["https://github.com/reactnativecn/react-native-update"],
 };

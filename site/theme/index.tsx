@@ -6,6 +6,11 @@ import '../components/home/home.scss';
 const SITE_URL = 'https://cresc.dev';
 const OG_IMAGE = `${SITE_URL}/images/og-cover.png`;
 
+// scripts/build-og-images.mjs renders /og/<route>.png for every page except
+// home, which keeps the hand-made cover.
+const ogImageFor = (routePath: string) =>
+  routePath === '/' ? OG_IMAGE : `${SITE_URL}/og${routePath}.png`;
+
 type HeadEntry = [string, Record<string, string>];
 
 // Fills in the per-page SEO tags Rspress leaves out: canonical URLs, social
@@ -37,17 +42,18 @@ function SeoHead() {
       .content ?? title;
 
   const isDoc = routePath.startsWith('/docs/');
+  const image = ogImageFor(routePath);
   const meta: Array<Record<string, string>> = [];
   const addMeta = (key: 'name' | 'property', id: string, content: string) => {
     if (!declared.has(id)) meta.push({ [key]: id, content });
   };
   addMeta('property', 'og:url', url);
   if (isDoc) addMeta('property', 'og:type', 'article');
-  addMeta('property', 'og:image', OG_IMAGE);
+  addMeta('property', 'og:image', image);
   addMeta('property', 'og:image:width', '1200');
   addMeta('property', 'og:image:height', '630');
-  addMeta('property', 'og:image:alt', 'Cresc — React Native OTA updates');
-  addMeta('name', 'twitter:image', OG_IMAGE);
+  addMeta('property', 'og:image:alt', routePath === '/' ? 'Cresc — React Native OTA updates' : ogTitle);
+  addMeta('name', 'twitter:image', image);
   addMeta('name', 'twitter:title', ogTitle);
   if (description) addMeta('name', 'twitter:description', description);
 
@@ -63,7 +69,7 @@ function SeoHead() {
               description,
               url,
               inLanguage: 'en',
-              image: OG_IMAGE,
+              image,
               ...(page.lastModified ? { dateModified: page.lastModified } : {}),
               publisher: { '@type': 'Organization', name: 'Cresc', url: `${SITE_URL}/` },
             },

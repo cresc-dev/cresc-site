@@ -3,7 +3,8 @@
  * Emit out/sitemap.xml from the pages rspress actually built, so new docs are
  * listed without anyone remembering to edit a static file.
  *
- * <lastmod> is the last commit that touched the page's source. The deploy
+ * <lastmod> is the last commit that touched the page's source or a local
+ * module it imports (the home page is almost entirely components). The deploy
  * workflow checks out full history for this; on a shallow clone every page
  * would report the same date, so lastmod is omitted there instead.
  *
@@ -45,6 +46,17 @@ function sourceOf(route) {
   return ['.mdx', '.md'].map((ext) => base + ext).find(existsSync);
 }
 
+// Local modules a page imports in its MDX header. Imports inside code fences
+// are examples, so only lines before the first fence count.
+const RESOLVE_EXTS = ['', '.tsx', '.ts', '.jsx', '.js', '/index.tsx', '/index.ts'];
+function localImports(source) {
+  const header = readFileSync(source, 'utf8').split(/^```/m)[0];
+  return [...header.matchAll(/^import[^'"]*['"](\.[^'"]+)['"]/gm)]
+    .map(([, spec]) => path.resolve(path.dirname(source), spec))
+    .map((base) => RESOLVE_EXTS.map((ext) => base + ext).find(existsSync))
+    .filter(Boolean);
+}
+
 const urls = [];
 for (const file of htmlFiles(OUT_DIR)) {
   const rel = path.relative(OUT_DIR, file).split(path.sep).join('/');
@@ -53,7 +65,7 @@ for (const file of htmlFiles(OUT_DIR)) {
   if (!source) continue;
   if (/<meta name="robots" content="[^"]*noindex/.test(readFileSync(file, 'utf8'))) continue;
 
-  const lastmod = shallow ? '' : git(['log', '-1', '--format=%cs', '--', source]);
+  const lastmod = shallow ? '' : git(['log', '-1', '--format=%cs', '--', source, ...localImports(source)]);
   urls.push({ loc: `${BASE_URL}${route}`, lastmod });
 }
 
