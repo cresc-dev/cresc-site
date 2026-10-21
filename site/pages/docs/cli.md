@@ -5,6 +5,8 @@ description: "Cresc CLI reference (react-native-update-cli): bundle, publish and
 type: Guide
 ---
 
+Migrating scripts from the App Center CLI? See the [App Center to Cresc command mapping](/codepush-api-migration#5-cli-mapping).
+
 ### Installation
 
 ```bash

@@ -1,0 +1,218 @@
+---
+title: react-native-code-push to Cresc API migration guide
+description: Map every react-native-code-push API, option and App Center CLI command to its Cresc (react-native-update) equivalent, with before-and-after code for sync, checkForUpdate, InstallMode and notifyAppReady.
+pageType: doc-wide
+sidebar: false
+footer: false
+head:
+  - - meta
+    - name: keywords
+      content: react-native-code-push migration, codepush sync alternative, codepush notifyAppReady, codepush InstallMode, appcenter codepush release-react alternative, app center retirement
+---
+
+import Footer from "../components/Footer";
+import JsonLd from "../components/seo/JsonLd";
+import { codepushApiFaqSchema } from "../lib/schema";
+
+<JsonLd data={codepushApiFaqSchema} />
+
+# react-native-code-push to Cresc API migration guide
+
+Microsoft retired App Center, and CodePush with it, on March 31, 2025. If your app still calls `codePush.sync()` or wraps its root component with `codePush()`, this page maps each CodePush API, option and CLI command to its Cresc equivalent so you can port the integration line by line.
+
+Cresc ships as the [`react-native-update`](https://www.npmjs.com/package/react-native-update) package. The release model is the one you already know: upload the native build users have installed, then publish JavaScript updates against it. For the project-level plan (auditing apps, CI, rollout), use the [migration checklist](/codepush-migration-checklist); this page covers the code.
+
+## 1. Swap the native bundle URL
+
+CodePush made the app load its downloaded bundle by replacing the bundle URL. Cresc works the same way, so the native change is a one-line swap.
+
+**iOS** (`AppDelegate` or, from RN 0.88, `SceneDelegate`):
+
+```swift
+// Before
+CodePush.bundleURL()
+
+// After
+import react_native_update
+RCTPushy.bundleURL()
+```
+
+**Android** (`MainApplication`):
+
+```kotlin
+// Before
+override fun getJSBundleFile(): String = CodePush.getJSBundleFile()
+
+// After
+import cn.reactnative.modules.update.UpdateContext
+
+override fun getJSBundleFile(): String? = UpdateContext.getBundleUrl(this@MainApplication)
+```
+
+On RN 0.82 and later the Android template passes `jsBundleFilePath = UpdateContext.getBundleUrl(this)` to `getDefaultReactHost` instead. [Installation & Config](/docs/getting-started#configuring-the-bundle-url) has the exact snippet for every RN version, plus Expo.
+
+Remove the CodePush deployment key from `Info.plist` and `strings.xml`. Cresc reads its `appKey` from JavaScript instead.
+
+## 2. Replace the root wrapper
+
+```js
+// Before: react-native-code-push
+import codePush from "react-native-code-push";
+
+const App = () => <Root />;
+
+export default codePush({
+  checkFrequency: codePush.CheckFrequency.ON_APP_RESUME,
+  installMode: codePush.InstallMode.ON_NEXT_RESTART,
+})(App);
+```
+
+```js
+// After: Cresc
+import { Platform } from "react-native";
+import { Cresc, UpdateProvider } from "react-native-update";
+import updateConfig from "./update.json";
+
+const cresc = new Cresc({
+  appKey: updateConfig[Platform.OS].appKey,
+  checkStrategy: "onAppResume",
+  updateStrategy: "silentAndLater",
+});
+
+export default function App() {
+  return (
+    <UpdateProvider client={cresc}>
+      <Root />
+    </UpdateProvider>
+  );
+}
+```
+
+`update.json` is written by `cresc createApp` or `cresc selectApp` and holds one `appKey` per platform, the way CodePush had one deployment key per app. See [Code Integration](/docs/integration).
+
+## 3. Option mapping
+
+| CodePush option | Cresc option |
+| --- | --- |
+| `deploymentKey` | `appKey` (one per platform, from `update.json`) |
+| `checkFrequency: ON_APP_START` | `checkStrategy: "onAppStart"` |
+| `checkFrequency: ON_APP_RESUME` | `checkStrategy: "onAppResume"` |
+| (start and resume) | `checkStrategy: "both"` (the default) |
+| `checkFrequency: MANUAL` | `checkStrategy: null`, then call `checkUpdate()` yourself |
+| `installMode: IMMEDIATE` | `updateStrategy: "silentAndNow"` |
+| `installMode: ON_NEXT_RESTART` | `updateStrategy: "silentAndLater"` |
+| `installMode: ON_NEXT_RESUME` | `updateStrategy: null`, then call `switchVersion()` from an `AppState` listener |
+| `updateDialog: true` | `updateStrategy: "alwaysAlert"` or `"alertUpdateAndIgnoreError"` |
+| `updateDialog` text overrides | `updateStrategy: null` and render your own UI with `useUpdate()` |
+| `codePush.disallowRestart()` | `beforeReload` returning `false` cancels a pending reload |
+
+All options are listed in the [API reference](/docs/api).
+
+## 4. Method mapping
+
+`useUpdate()` must be called from a component rendered inside `<UpdateProvider>`.
+
+| CodePush | Cresc (`useUpdate()` unless noted) |
+| --- | --- |
+| `codePush.sync()` | The built-in flow driven by `checkStrategy` and `updateStrategy` |
+| `codePush.checkForUpdate()` | `checkUpdate()`, result in `updateInfo` |
+| `remotePackage.download(progressCallback)` | `downloadUpdate()`, progress in `progress` or `useUpdateProgress()` |
+| `localPackage.install(InstallMode.IMMEDIATE)` | `switchVersion()` |
+| `localPackage.install(InstallMode.ON_NEXT_RESTART)` | `switchVersionLater()` |
+| `codePush.notifyAppReady()` | Automatic (`autoMarkSuccess: true`); call `markSuccess()` if you turn it off |
+| `codePush.restartApp()` | `restartApp()` |
+| `codePush.getUpdateMetadata()` | `currentVersionInfo` and `currentHash` |
+| `codePush.clearUpdates()` | `resetToPackagedBundle()` |
+| `remotePackage.isMandatory` | Put a flag in the version's `metaInfo` ([pattern](/docs/bestpractice#using-meta-info)) |
+| `remotePackage.description` | `updateInfo.description` |
+
+A manual check-download-install flow that used to be built on `checkForUpdate` looks like this in Cresc:
+
+```js
+import { useUpdate } from "react-native-update";
+
+function UpdateButton() {
+  const { checkUpdate, downloadUpdate, switchVersion, updateInfo } = useUpdate();
+
+  const onPress = async () => {
+    await checkUpdate();
+  };
+
+  if (updateInfo?.update) {
+    return (
+      <Button
+        title={`Install ${updateInfo.name}`}
+        onPress={async () => {
+          if (await downloadUpdate()) {
+            await switchVersion();
+          }
+        }}
+      />
+    );
+  }
+  return <Button title="Check for updates" onPress={onPress} />;
+}
+```
+
+### Rollback
+
+CodePush rolled back an update when the app restarted without calling `notifyAppReady()`. Cresc does the same automatically: if a new version crashes before it is marked successful, the client reverts to the previous good version on the next launch. On top of that, a native check runs on every cold start without JavaScript, so a version that kills JS on launch can still be replaced with a fixed one. See [Force Boot](/docs/publish#force-boot-brick-rescue).
+
+## 5. CLI mapping
+
+| App Center CLI | Cresc CLI |
+| --- | --- |
+| `appcenter login` | `cresc login`, or an [API key](/docs/api-token) in CI |
+| `appcenter apps create` | `cresc createApp --platform <ios\|android>` |
+| (no equivalent) | `cresc uploadIpa` / `cresc uploadApk` / `cresc uploadAab` to register the store build |
+| `appcenter codepush release-react` | `cresc bundle --platform <ios\|android>` |
+| `--targetBinaryVersion "1.2.x"` | `--packageVersion 1.2.0` or `--packageVersionRange ">=1.2 <1.3"` |
+| `--description "..."` | `--description "..."` |
+| `--rollout 20` | `--rollout 20` (staged rollout by device bucket) |
+| `appcenter codepush patch --rollout 100` | `cresc update --versionId <id> --rollout 100` |
+| `appcenter codepush deployment history` | `cresc versions`, or the dashboard |
+
+The one new step is uploading the native build. Cresc diffs each update against the exact package users installed, which is how a one-line fix ships as a 3.4 KB patch instead of a full bundle. Upload it once per native release: [Publishing](/docs/publish#publishing-native-baseline-version).
+
+A CI job that used to run `appcenter codepush release-react -a org/app-ios -d Production` becomes:
+
+```bash
+cresc bundle --platform ios --name "$GIT_TAG" --description "$CHANGELOG" \
+  --packageVersion "$NATIVE_VERSION" --rollout 20 --no-interactive
+```
+
+Full option list: [CLI Tools](/docs/cli).
+
+## 6. Staging and Production deployments
+
+CodePush separated testers from users with Staging and Production deployment keys. Cresc uses one `appKey` per platform and gives you two ways to stage a release instead:
+
+- **Staged rollout**: publish with `--rollout 5`, watch adoption and errors in [Analytics](/docs/analytics) and [JS Error Monitoring](/docs/errors), then raise the percentage. Moving to 100% promotes the version to a full release.
+- **Test QR codes**: testers scan a version's QR code from the dashboard and load it without binding it to any native package, either through a deep link with no code changes or through `parseTestQrCode` in your own scanner. See [Best Practices](/docs/bestpractice#testing-and-rollbacks).
+
+## FAQ
+
+### Do I have to rewrite my app to leave CodePush?
+
+No. You swap the native bundle URL, replace the `codePush()` wrapper with `<UpdateProvider>`, and port any manual `checkForUpdate` code using the tables above. Components and business logic stay the same.
+
+### Can users on a CodePush build receive Cresc updates?
+
+Not until they install a store build that includes `react-native-update`. Ship one native release with Cresc integrated, upload that build to Cresc, and publish OTA updates against it from then on.
+
+### What replaces `codePush.notifyAppReady()`?
+
+Nothing, by default. Cresc marks a version successful automatically after it starts. Set `autoMarkSuccess: false` and call `markSuccess()` yourself only if you want to confirm a version later, for example after a critical screen has rendered.
+
+### Is there a self-hosted option like code-push-server?
+
+Yes. The client SDK, CLI and admin UI are [open source](https://github.com/reactnativecn/react-native-update). See [Expo Updates vs Cresc](/expo-updates-vs-cresc) for hosting tradeoffs, or [pricing](/pricing) for the hosted plans, which include CDN delivery.
+
+## Related
+
+- [CodePush & Expo Updates alternative](/codepush-alternative)
+- [Migration checklist](/codepush-migration-checklist)
+- [Installation & Config](/docs/getting-started)
+- [API Reference](/docs/api)
+
+<Footer />

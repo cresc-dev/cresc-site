@@ -5,6 +5,8 @@ description: "Cresc JavaScript API reference for react-native-update: client opt
 type: Guide
 ---
 
+Porting code from `react-native-code-push`? The [CodePush API migration guide](/codepush-api-migration#4-method-mapping) maps `sync`, `checkForUpdate`, `notifyAppReady` and other CodePush methods to the APIs on this page.
+
 
 
 ### JavaScript Methods
@@ -280,7 +282,7 @@ const crescClient = new Cresc({
 
 #### useUpdate()
 
-Utility functions for OTA updates. This method can also be imported using the alias `useCresc`.
+Utility functions for OTA updates. This method can also be imported using the alias `usePushy`.
 
 :::info
 Note that `useUpdate` cannot be called directly inside the component that uses `<UpdateProvider>` (typically the root component). It can only be called by its children.

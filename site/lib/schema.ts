@@ -184,3 +184,34 @@ export const codepushChecklistSchema = {
     { "@type": "HowToStep", name: "Validate rollback and monitoring" },
   ],
 };
+
+export const codepushApiFaqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "Do I have to rewrite my app to leave CodePush?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "No. You swap the native bundle URL, replace the codePush() wrapper with UpdateProvider, and port any manual checkForUpdate code. Components and business logic stay the same.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Can users on a CodePush build receive Cresc updates?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Not until they install a store build that includes react-native-update. Ship one native release with Cresc integrated, upload that build to Cresc, and publish OTA updates against it from then on.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What replaces codePush.notifyAppReady()?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Nothing, by default. Cresc marks a version successful automatically after it starts. Set autoMarkSuccess: false and call markSuccess() yourself only if you want to confirm a version later.",
+      },
+    },
+  ],
+};

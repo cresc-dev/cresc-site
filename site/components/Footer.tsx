@@ -24,6 +24,7 @@ function Footer() {
         { text: "FAQ", href: "/docs/faq" },
         { text: "CodePush & Expo Updates Alternative", href: "/codepush-alternative" },
         { text: "CodePush & Expo Migration", href: "/codepush-migration-checklist" },
+        { text: "CodePush API Migration", href: "/codepush-api-migration" },
         { text: "Expo Updates vs Cresc", href: "/expo-updates-vs-cresc" },
         {
           text: "GitHub Issues",
