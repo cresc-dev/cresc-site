@@ -1,6 +1,7 @@
 ---
 order: 23
 title: FAQ
+seoTitle: "React Native OTA Updates FAQ - Cresc"
 description: "Answers to common Cresc questions: App Store review compliance for hot updates, what OTA can change, rollback causes, plans, quotas and billing."
 type: Misc
 ---
@@ -9,21 +10,21 @@ type: Misc
 
 If this page does not answer your question, open a thread in [GitHub Discussions](https://github.com/reactnativecn/react-native-update/discussions), report a bug in [GitHub Issues](https://github.com/reactnativecn/react-native-update/issues), or email us at [hi@cresc.dev](mailto:hi@cresc.dev).
 
-### Business Questions
+## Business Questions
 
-#### Can hot-updated apps pass App Store reviews?
+### Can hot-updated apps pass App Store reviews?
 
 You might have heard mixed information, but extensive practical experience shows that hot updates currently successfully pass App Store and other app market reviews. The only caveat: **do not publish hot updates while your app is under review**, and ensure reviewers do not see update pop-ups or download prompts. If you follow this rule, you will pass smoothly.
 
 ---
 
-#### Does Cresc support global deployments?
+### Does Cresc support global deployments?
 
 Yes. Cresc is designed for globally distributed apps and delivers updates through international CDN routing.
 
 ---
 
-#### What can be hot updated? What cannot?
+### What can be hot updated? What cannot?
 
 App modifications fall into two categories:
 
@@ -38,7 +39,7 @@ App modifications fall into two categories:
 
 ---
 
-#### The update downloads successfully, but after restarting it rolls back. What happened?
+### The update downloads successfully, but after restarting it rolls back. What happened?
 
 If an update succeeds but rolls back on reboot, it usually means one of two things:
 
@@ -49,7 +50,7 @@ If you are absolutely sure both steps were executed perfectly, please leave us f
 
 ---
 
-#### Why do mismatched build timestamps affect update performance?
+### Why do mismatched build timestamps affect update performance?
 
 Every time you compile a native package, a timestamp (`buildTime`) is injected into it (viewable using `cresc parseIpa` or `cresc parseApk`). If you distribute this package to users and want them to receive OTA updates, you must first upload the native package to the Cresc server. The server records this version number and build time for subsequent comparisons.
 
@@ -65,7 +66,7 @@ Remember: Whenever compiling native releases: 1) increment the version string, 2
 
 ---
 
-#### How does Cresc compare to CodePush and Expo Updates (EAS Update)?
+### How does Cresc compare to CodePush and Expo Updates (EAS Update)?
 
 CodePush was officially shut down on March 31, 2025. While many developers looked at Expo Updates (EAS Update) as a potential successor, EAS Update charges on metered usage ($0.005 per additional update MAU and $0.10/GiB edge bandwidth), which often leads to volatile, escalating monthly invoices.
 
@@ -78,15 +79,15 @@ See our [CodePush & Expo Updates alternative guide](/codepush-alternative) and [
 
 ---
 
-### Billing Questions
+## Billing Questions
 
-#### Which plan should I choose?
+### Which plan should I choose?
 
 Start with `Free` if you want to verify the workflow end to end. Choose `Standard` or `Premium` for smaller production apps, and move to `Pro`, `Max`, or `Ultra` as your daily checks, package counts, and app count grow.
 
 ---
 
-#### How does upgrading a subscription work?
+### How does upgrading a subscription work?
 
 Upgrades take effect immediately after payment succeeds. You pay the new plan's monthly price, and the unused value from your current plan is converted into extra days on the new plan.
 
@@ -104,13 +105,13 @@ No unused value is lost. Upgrading changes the quota allowance, not your app int
 
 ---
 
-#### Can I trial a paid version first to evaluate its effectiveness?
+### Can I trial a paid version first to evaluate its effectiveness?
 
 If you need evaluation capacity beyond the published quotas, email [hi@cresc.dev](mailto:hi@cresc.dev) with your expected app count, daily checks, and rollout timeline.
 
 ---
 
-#### How are quotas calculated specifically?
+### How are quotas calculated specifically?
 
 Quotas measure four domains:
 
@@ -125,7 +126,7 @@ Limits #2 and #3 apply to individual applications independently, while #4 aggreg
 
 ---
 
-#### If I hit my quota, does the system break?
+### If I hit my quota, does the system break?
 
 If you hit application, Native Package, or Update Package caps, you will be blocked from new creating/uploading actions. However, existing end-users will still request and download existing patches normally without any interruption. You must either upgrade your tier, or prune old apps/packages to free up storage slots.
 If Update sizes exceed MB limit metrics, the upload will fail. Upgrade your tier, or practice strict asset [Optimization](bestpractice#optimizing-native-and-hot-update-package-size).
@@ -133,24 +134,24 @@ If Total Daily Checks hit their cap, the API refuses queries and returns an empt
 
 ---
 
-#### Can I upgrade just a single limit item independently?
+### Can I upgrade just a single limit item independently?
 
 If you only need to raise one specific limit without moving to the next public tier, email [hi@cresc.dev](mailto:hi@cresc.dev) with your required limits and expected traffic profile.
 
 ---
 
-#### After a paid plan expires unrenewed, do my existing apps continue functioning?
+### After a paid plan expires unrenewed, do my existing apps continue functioning?
 
 After expiration, accounts degrade automatically into the Free Plan tier limitations. If preexisting data exceeds free caps, you won't be authorized to launch new updates or bind properties unless excess data is wiped out down below threshold limits. Users holding old patches won't mysteriously lose access, however.
 
 ---
 
-#### How do I receive dedicated human technical support?
+### How do I receive dedicated human technical support?
 
 For product questions and implementation guidance, use [GitHub Discussions](https://github.com/reactnativecn/react-native-update/discussions). For bug reports, use [GitHub Issues](https://github.com/reactnativecn/react-native-update/issues). For billing, account, or private support requests, email [hi@cresc.dev](mailto:hi@cresc.dev).
 
 ---
 
-#### Do you offer higher-volume enterprise plans?
+### Do you offer higher-volume enterprise plans?
 
 Yes. If your traffic profile goes beyond `Ultra`, or you need tailored limits, rollout controls, or onboarding help, email [hi@cresc.dev](mailto:hi@cresc.dev) with your expected daily checks and app footprint.

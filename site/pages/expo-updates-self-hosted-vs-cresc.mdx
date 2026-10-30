@@ -1,0 +1,88 @@
+---
+title: Self-hosting Expo Updates vs using Cresc
+seoTitle: "Self-Hosted Expo Updates Server vs Cresc: EAS Update Alternative"
+description: "Thinking of running your own expo-updates server to avoid EAS Update pricing? Compare self-hosting the Expo Updates protocol with Cresc on effort and cost."
+pageType: doc-wide
+sidebar: false
+footer: false
+head:
+  - - meta
+    - name: keywords
+      content: self-hosted expo updates, custom expo updates server, eas update alternative, expo updates protocol, eas update pricing alternative, self host eas update
+---
+
+import Footer from "../components/Footer";
+
+# Self-hosting Expo Updates vs using Cresc
+
+When an EAS Update invoice starts growing with monthly active users and bandwidth, the next idea is usually to run your own update server. Expo supports this: the `expo-updates` client (MIT) can point at any server that implements the [Expo Updates protocol](https://docs.expo.dev/technical-specs/expo-updates-1/). This page compares that route with moving to Cresc.
+
+*Facts about Expo are taken from Expo's official documentation and pricing page as of October 2026. Tell us at hi@cresc.dev if anything here is out of date.*
+
+## Short answer
+
+- **Self-host Expo Updates** if you want to keep the `expo-updates` client and are prepared to build and operate a production update server yourself.
+- **Use Cresc** if what you want is lower, predictable OTA cost without building a server: you swap the client library once and get diff patches, rollback and a dashboard from a hosted service. If you must run the server in your own infrastructure, Cresc also offers a supported self-hosted deployment on custom pricing.
+
+## What self-hosting actually involves
+
+Expo publishes [custom-expo-updates-server](https://github.com/expo/custom-expo-updates-server) as a simplified example, not a production server. To run it for real you need to build and own:
+
+- **The protocol server**: manifest and asset endpoints that implement protocol v1, multipart responses, `runtimeVersion` matching and channel selection.
+- **Storage and CDN** for every bundle and asset you publish, with cache headers that don't serve stale manifests.
+- **Code signing** if you want clients to verify manifests, including key rotation.
+- **A publishing pipeline**: export with `npx expo export`, upload assets, write manifests, promote between channels. EAS CLI's `eas update` only publishes to EAS.
+- **Rollback and rollout**: the protocol defines a `rollBackToEmbedded` directive; percentage rollouts, release history and dashboards are up to you.
+- **Diff patches**: EAS Update serves bsdiff patches from Expo SDK 55, but the public protocol spec does not define how a custom server should serve patches. Expect to send full bundles unless you build this yourself.
+
+## Comparison table
+
+| Topic | Self-hosted Expo Updates server | Cresc |
+| --- | --- | --- |
+| Client | `expo-updates` (MIT) | `react-native-update` (MIT), Expo SDK 50+ via prebuild; bundle URL configured automatically |
+| Server | You build and operate it | Hosted with CDN included, or a vendor-supported self-hosted deployment (custom pricing) |
+| Publishing | Your own pipeline around `expo export` | `cresc bundle` from a laptop or [CI](/docs/api-token) |
+| Diff patches | Not defined by the protocol; full bundles unless you build it | Hermes bytecode-aware diff: 3.4 KB for a one-line fix ([benchmark](https://github.com/sunnylqm/hbc-diff-benchmark)) |
+| Rollback | `rollBackToEmbedded` directive; client error recovery for fatal errors before first render | Automatic rollback of updates that crash on launch, plus force boot from the dashboard |
+| Gradual rollout | Build it yourself | Built in |
+| Dashboard and analytics | Build it yourself | Built in, with [analytics](/docs/analytics) and [JS error monitoring](/docs/errors) |
+| Platforms | iOS, Android | iOS, Android, HarmonyOS, tvOS |
+| Cost | Your cloud bill plus engineering time | Flat tiers from $19/mo, no overage bills |
+
+## Where EAS Update pricing sits
+
+For reference, EAS Update's Production plan is $199 a month including 50,000 updated monthly active users and 1 TiB of bandwidth. Beyond that it bills $0.005 per extra MAU up to 200,000 (tiered down after that) and $0.10 per extra GiB. Cresc Pro is $99 a month for 1,000,000 update checks per day with CDN delivery included. See the full model in [Expo pricing vs Cresc](/expo-pricing-vs-cresc).
+
+## Moving an Expo app to Cresc
+
+1. Install `react-native-update` and the CLI, and run `npx expo prebuild`; with Expo SDK 50+ the native bundle URL is configured automatically ([Installation](/docs/getting-started)).
+2. Replace `Updates.checkForUpdateAsync()` and `Updates.fetchUpdateAsync()` with the `useUpdate` hook or an update strategy ([Code Integration](/docs/integration)).
+3. Remove `expo-updates` from the project so the two clients don't compete for the bundle.
+4. Build and upload your native baseline, then publish updates with `cresc bundle` ([Publishing](/docs/publish)).
+
+## FAQ
+
+### Can I self-host EAS Update?
+
+Not EAS Update itself, but Expo supports custom servers: the `expo-updates` client can point at any server implementing the Expo Updates protocol. Expo's example server is a simplified demo, so production use means building your own server, storage, publishing pipeline and rollout tooling.
+
+### Does a self-hosted Expo Updates server support diff patches?
+
+The public Expo Updates protocol spec does not define patch delivery for custom servers. EAS Update's bsdiff patches (Expo SDK 55 and later) are a feature of Expo's hosted service.
+
+### Can Cresc be self-hosted?
+
+Both options exist. The standard plans are hosted with CDN delivery included. Teams that need the server in their own infrastructure can get a supported self-hosted deployment on a separately negotiated plan; contact hi@cresc.dev. The client SDK (MIT) and CLI (BSD-3-Clause) are open source.
+
+### Does Cresc work with Expo?
+
+Yes. Cresc supports Expo SDK 50 and later through prebuild, with the bundle URL configured automatically. Expo Go is not supported, since OTA updates need native code.
+
+## Related
+
+- [Expo Updates vs Cresc](/expo-updates-vs-cresc)
+- [Expo pricing vs Cresc](/expo-pricing-vs-cresc)
+- [hot-updater vs Cresc](/hot-updater-vs-cresc)
+- [CodePush & Expo Updates migration checklist](/codepush-migration-checklist)
+
+<Footer />

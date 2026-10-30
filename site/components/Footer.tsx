@@ -25,7 +25,7 @@ function Footer() {
         { text: "CodePush & Expo Updates Alternative", href: "/codepush-alternative" },
         { text: "CodePush & Expo Migration", href: "/codepush-migration-checklist" },
         { text: "CodePush API Migration", href: "/codepush-api-migration" },
-        { text: "Expo Updates vs Cresc", href: "/expo-updates-vs-cresc" },
+        { text: "App Center Retirement Guide", href: "/app-center-codepush-retirement" },
         {
           text: "GitHub Issues",
           href: "https://github.com/reactnativecn/react-native-update/issues",
@@ -34,10 +34,23 @@ function Footer() {
       ],
     },
     {
+      title: "Compare",
+      links: [
+        { text: "Expo Updates vs Cresc", href: "/expo-updates-vs-cresc" },
+        { text: "Expo Pricing vs Cresc", href: "/expo-pricing-vs-cresc" },
+        { text: "Self-Hosted Expo Updates vs Cresc", href: "/expo-updates-self-hosted-vs-cresc" },
+        { text: "hot-updater vs Cresc", href: "/hot-updater-vs-cresc" },
+        { text: "Revopush vs Cresc", href: "/revopush-vs-cresc" },
+        { text: "Stallion vs Cresc", href: "/stallion-vs-cresc" },
+      ],
+    },
+    {
       title: "Links",
       links: [
         { text: "React Native OTA Guide", href: "/react-native-ota-updates" },
-        { text: "Expo Pricing vs Cresc", href: "/expo-pricing-vs-cresc" },
+        { text: "New Architecture OTA Guide", href: "/react-native-new-architecture-ota" },
+        { text: "HarmonyOS OTA Guide", href: "/docs/harmony" },
+        { text: "Changelog", href: "/docs/changelog" },
         { text: "llms.txt", href: "/llms.txt" },
         { text: "llms-full.txt", href: "/llms-full.txt" },
         {
@@ -58,7 +71,7 @@ function Footer() {
     <footer className="bg-[#f6f5f2] text-[#57534e] mt-auto border-t border-[#e7e5e1]">
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-16">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10 md:gap-8">
           {columns.map((col) => (
             <div key={col.title}>
               <h3 className="text-[#1c1917] font-semibold text-sm uppercase tracking-[0.12em] mb-5">

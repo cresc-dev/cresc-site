@@ -1,0 +1,333 @@
+---
+title: HarmonyOS
+seoTitle: "React Native OTA Updates on HarmonyOS NEXT (RNOH) - Cresc"
+description: "Ship React Native OTA updates to HarmonyOS NEXT apps built with RNOH: set up the react-native-update har and hvigor plugin, upload your .app, publish patches."
+---
+
+import { Steps } from "@rspress/core/theme";
+
+# React Native OTA Updates on HarmonyOS NEXT
+
+Cresc (npm package `react-native-update`) supports HarmonyOS as a first-party platform. The same React Native code can receive delta OTA updates on iOS, Android and HarmonyOS NEXT, and the CLI, dashboard, gradual rollout and crash rollback work the same way on all three.
+
+This page collects everything HarmonyOS-specific in one place: how React Native runs on HarmonyOS, native setup, JavaScript integration, uploading the native baseline, publishing updates, native-side APIs and troubleshooting.
+
+:::tip Let an AI agent do the setup
+If you use an AI coding tool that supports Skills, install the [react-native-update Skill](/docs/skills) first and let it add the dependencies and native configuration for you. Then use this page as a checklist.
+:::
+
+## How React Native runs on HarmonyOS
+
+HarmonyOS NEXT no longer runs Android apps. Native code is written in ArkTS and ArkUI, projects are built with DevEco Studio and hvigor, and third-party native libraries ship through ohpm as `har` packages. React Native has no official HarmonyOS platform. Instead, apps use **RNOH (React Native for OpenHarmony)**, a community adaptation layer built on the React Native New Architecture (Fabric and TurboModules) that renders React components as ArkUI components.
+
+An RNOH project has two halves:
+
+- **JavaScript side**: the npm packages `@react-native-oh/react-native-harmony` and `@react-native-oh/react-native-harmony-cli`, which provides `react-native bundle-harmony`.
+- **Native side**: the HarmonyOS project in `harmony/`, which depends on the ohpm package `@rnoh/react-native-openharmony`. Its `RNApp` component decides where to load the JS bundle from through a `jsBundleProvider`.
+
+At runtime `Platform.OS` is `'harmony'`, so most app code is shared with iOS and Android. The HarmonyOS example in the SDK repository, [harmony_use_pushy](https://github.com/reactnativecn/react-native-update/tree/master/Example/harmony_use_pushy), uses React Native 0.82.1 and RNOH 0.82.33.
+
+### Why OTA matters even more on HarmonyOS
+
+A HarmonyOS native package has to be signed, built and reviewed by AppGallery before users can install it, and users still have to update manually. React Native keeps app logic and images in the JS bundle, which is exactly what an OTA update can replace:
+
+- **Fast fixes**: a JS fix reaches users in minutes, without a new build or store review.
+- **Platforms stay in sync**: publish the same change to iOS, Android and HarmonyOS at once, instead of one platform lagging behind because of a slower review.
+- **Small downloads**: Cresc diffs against the bundle inside the installed native package, so users only download what changed.
+- **Controlled risk**: roll out gradually, and an update that fails to start rolls back automatically.
+
+## Prerequisites
+
+- An RNOH project that builds and runs, with the HarmonyOS project in `harmony/` at the repository root.
+- The CLI installed globally: `npm i -g react-native-update-cli`.
+- `react-native-update` installed in the project: `npm i react-native-update`. The `pushy.har` package, the hvigor plugin and the C++ sources all ship inside its `harmony/` directory; there is nothing else to download.
+- `@react-native-oh/react-native-harmony-cli` in devDependencies. `cresc bundle --platform harmony` calls its `bundle-harmony` command.
+- DevEco Studio with hvigor. The minimum compatible SDK of `pushy.har` is `5.0.0(12)` (API 12).
+
+:::warning
+Don't mix package managers (npm, yarn, pnpm) or their lock files. Any change under `harmony/` only takes effect after a native rebuild.
+:::
+
+## Native setup
+
+<Steps>
+
+### Compile the C++ glue code
+
+In `harmony/entry/src/main/cpp/CMakeLists.txt`, after `add_library(rnoh_app ...)`, add:
+
+```cmake
+set(PUSHY_CPP_DIR "${NODE_MODULES}/react-native-update/harmony/pushy/src/main/cpp")
+target_include_directories(rnoh_app PRIVATE "${PUSHY_CPP_DIR}")
+target_sources(rnoh_app PRIVATE "${PUSHY_CPP_DIR}/PushyTurboModule.cpp")
+```
+
+The RNOH TurboModule glue is compiled into `rnoh_app`; the native patching library comes prebuilt in `pushy.har`.
+
+### Register the C++ package
+
+In `harmony/entry/src/main/cpp/PackageProvider.cpp`, add `PushyPackage`:
+
+```cpp
+#include "RNOH/PackageProvider.h"
+#include "PushyPackage.h"
+using namespace rnoh;
+
+std::vector<std::shared_ptr<Package>> PackageProvider::getPackages(Package::Context ctx) {
+    return {
+         std::make_shared<PushyPackage>(ctx)
+    };
+}
+```
+
+If you already return other packages, append `std::make_shared<PushyPackage>(ctx)` to the list.
+
+### Add the har dependency
+
+In `harmony/entry/oh-package.json5`:
+
+```json5
+"dependencies": {
+  "pushy": "file:../../node_modules/react-native-update/harmony/pushy.har",
+}
+```
+
+The dependency name `pushy` is used by the ArkTS imports and the hvigor plugin below. If you rename it, update those import paths too.
+
+### Register the hvigor plugin
+
+In `harmony/hvigor/hvigor-config.json5`:
+
+```json5
+{
+  dependencies: {
+    pushy: "file:../../node_modules/react-native-update/harmony",
+  },
+}
+```
+
+Then enable it in the module-level `harmony/entry/hvigorfile.ts` (not the project root hvigorfile):
+
+```ts
+import {hapTasks} from '@ohos/hvigor-ohos-plugin';
+import {reactNativeUpdatePlugin} from 'pushy/hvigor-plugin';
+
+export default {
+  system: hapTasks /* Built-in plugin of Hvigor. It cannot be modified. */,
+  plugins: [
+    reactNativeUpdatePlugin(),
+  ] /* Custom plugin to extend the functionality of Hvigor. */,
+};
+```
+
+At build time the plugin writes the build timestamp `pushy_build_time` and the `versionName` from `AppScope/app.json5` into `entry/src/main/resources/rawfile/meta.json`. The server uses them to identify your native package. It only runs for `assemble` builds (including Build and Run in DevEco); IDE sync and `clean` don't touch the file. **Debug builds always write a timestamp of `0`**; only release builds write the real time. That matters when you [upload the native baseline](#upload-the-native-baseline).
+
+### Register the ArkTS package
+
+`harmony/entry/src/main/ets/RNPackagesFactory.ts`:
+
+```ts
+import type {
+  RNPackageContext,
+  RNPackage,
+} from "@rnoh/react-native-openharmony/ts";
+import { PushyPackage } from "pushy/ts";
+
+export function createRNPackages(ctx: RNPackageContext): RNPackage[] {
+  return [new PushyPackage(ctx)];
+}
+```
+
+If you already have other packages, append `new PushyPackage(ctx)`.
+
+### Load the bundle through Cresc
+
+In `harmony/entry/src/main/ets/pages/Index.ets`, add `PushyFileJSBundleProvider` to the `AnyJSBundleProvider` list, **before** the `ResourceJSBundleProvider` for the built-in bundle:
+
+```ts
+// Don't forget this import
+import { PushyFileJSBundleProvider } from 'pushy/src/main/ets/PushyFileJSBundleProvider';
+
+// ... other RNApp options
+jsBundleProvider: new TraceJSBundleProviderDecorator(
+  new AnyJSBundleProvider([
+    // MetroJSBundleProvider.fromServerIp('127.0.0.1'),
+    new PushyFileJSBundleProvider(this.rnohCoreContext.uiAbilityContext),
+
+    // Keep the file name bundle.harmony.js whether or not you use Hermes
+    new ResourceJSBundleProvider(this.rnohCoreContext.uiAbilityContext.resourceManager, 'bundle.harmony.js')
+  ]),
+  this.rnohCoreContext.logger),
+```
+
+`AnyJSBundleProvider` tries providers in order: when an OTA update is active, `PushyFileJSBundleProvider` loads it; otherwise the built-in `bundle.harmony.js` loads. A missing or misplaced provider is the most common reason an update "rolls back after restart": the downloaded update is simply never loaded.
+
+Keep the built-in bundle named `bundle.harmony.js`. The CLI bundles to that name, and uploading the native package and generating diffs both look for it.
+
+</Steps>
+
+## JavaScript integration
+
+JavaScript integration is identical to iOS and Android; see [Code Integration](/docs/integration). `update.json` stores one appKey per platform, HarmonyOS uses the `harmony` key, and `Platform.OS` is `'harmony'` on RNOH, so the usual code needs no change:
+
+```javascript
+import { Platform } from "react-native";
+import { UpdateProvider, Cresc } from "react-native-update";
+import _updateConfig from "./update.json";
+
+const { appKey } = _updateConfig[Platform.OS];
+
+const crescClient = new Cresc({ appKey });
+
+export default function Root() {
+  return (
+    <UpdateProvider client={crescClient}>
+      <App />
+    </UpdateProvider>
+  );
+}
+```
+
+**iOS, Android and HarmonyOS are separate apps in Cresc.** Create or select the HarmonyOS one after logging in:
+
+```bash
+$ cresc login
+$ cresc createApp --platform harmony
+App Name: <your app name>
+# or pick an app you already created in the dashboard
+$ cresc selectApp --platform harmony
+```
+
+`update.json` then looks like:
+
+```json
+{
+  "ios": { "appId": 1, "appKey": "<random string>" },
+  "android": { "appId": 2, "appKey": "<random string>" },
+  "harmony": { "appId": 3, "appKey": "<random string>" }
+}
+```
+
+`update.json` holds no secrets and can be committed. The `.update` file created by login should not be.
+
+## Upload the native baseline
+
+Delta patches are computed against the native package on the user's device, so every HarmonyOS package you distribute must first be uploaded to Cresc.
+
+<Steps>
+
+### Generate the built-in bundle
+
+From the project root:
+
+```bash
+$ cresc bundle --platform harmony --no-interactive
+```
+
+On HarmonyOS the CLI runs `react-native bundle-harmony` (Hermes is on by default for this platform). Besides the ppk, it copies `bundle.harmony.js` into `harmony/entry/src/main/resources/rawfile/` and images and other assets into `assets/` next to it (source maps are not copied), so the native build you make next contains the latest JS. `--no-interactive` skips the "publish now?" prompt.
+
+### Build the .app in release mode
+
+In DevEco Studio choose Build → Build Hap(s)/App(s) → Build App(s). The output is under `harmony/build/outputs/default/`, for example `harmony-default-unsigned.app` (the name depends on your project and signing config).
+
+Make sure the build mode is **release**. Debug builds carry a timestamp of `0`, and uploading them fails because the build timestamp can't be read.
+
+### Upload the .app
+
+```bash
+$ cresc uploadApp harmony/build/outputs/default/harmony-default-unsigned.app
+```
+
+The `versionName` in `AppScope/app.json5` becomes the native package version. Run `cresc parseApp <file.app>` first if you want to see the version and timestamp the CLI reads. The haps nested inside the `.app` are parsed automatically; there is no separate hap upload.
+
+### Distribute exactly that package
+
+Whatever you submit to AppGallery or install with `hdc` for testing must be **the package you just uploaded**. If you change native code and rebuild, bump `versionName`, rebuild, and run `uploadApp` again. A package with the same version but a different build timestamp [can't receive updates](/docs/faq#why-do-mismatched-build-timestamps-affect-update-performance).
+
+</Steps>
+
+## Publish an OTA update
+
+With the baseline uploaded, change your JS code or images and run:
+
+```bash
+$ cresc bundle --platform harmony
+```
+
+Answer `Y` to upload, then enter the version name, description and metadata, and bind it to a native package. Or do it all in one command:
+
+```bash
+$ cresc bundle --platform harmony --name "1.0.1" --description "Fix home screen" --packageVersion "1.0.0"
+```
+
+You can also bind with `--packageId`, `--minPackageVersion`, `--maxPackageVersion` or `--packageVersionRange`; see [CLI Tools](/docs/cli). A ppk built earlier can be uploaded with `cresc publish --platform harmony <file.ppk>` and bound with `cresc update --platform harmony`, or bound by dragging the package onto the version in the dashboard. Once bound, the delta patch is ready within seconds.
+
+`cresc bundle --platform harmony` overwrites `bundle.harmony.js` and `assets/` under `rawfile/` every time. That doesn't affect packages you already uploaded, but your next native build will contain the current JS.
+
+[Gradual rollout](/docs/publish#canary-release-gradual-rollout) and [force boot](/docs/publish#force-boot-brick-rescue) work on HarmonyOS too.
+
+## Check for updates from native code
+
+Besides checking from JavaScript, `react-native-update` 10.59.0 and later expose native host APIs. On HarmonyOS, call `configure` and `prepareBundle` on the same `PushyFileJSBundleProvider` instance your app uses to load the bundle, without going through the JS bridge:
+
+```ts
+import {
+  PushyFileJSBundleProvider,
+  PushyConfiguration,
+  BundlePreparationResult,
+} from 'pushy';
+
+async function configureCresc(provider: PushyFileJSBundleProvider): Promise<void> {
+  const options: PushyConfiguration = {
+    appKey: 'your HarmonyOS appKey',
+    afterDownload: 'setNeedUpdate',
+  };
+  await provider.configure(options);
+}
+
+async function checkFromNative(provider: PushyFileJSBundleProvider): Promise<void> {
+  const result: BundlePreparationResult = await provider.prepareBundle();
+  console.info(`Cresc: ${result.status} / ${result.reason}`);
+}
+```
+
+- Don't create a second provider just to check, and don't call `getURL()` or `getBundle()` yourself.
+- Call `prepareBundle` after the provider has taken part in normal startup resolution, or it returns `not_initialized` (including when loading from Metro in development).
+- Since 10.61.0 you can pass a timeout: `prepareBundle(timeoutMs)` returns `failed / timeout` when it expires, while the check keeps running in the background for the next launch. Without a timeout it waits for the check to finish.
+- After upgrading to a version with these APIs, rebuild and upload the HarmonyOS native package; a JS-only update is not enough.
+
+Configuration fields and result values are covered in [Native Configuration and Updates](/docs/native-api).
+
+## Troubleshooting
+
+### Can iOS, Android and HarmonyOS share one JS codebase?
+
+Yes. You maintain one codebase, but **bundle and publish per platform**: `cresc bundle --platform ios`, `--platform android` and `--platform harmony` each upload to that platform's app and bind to that platform's native packages. The three apps have separate appKeys, native versions and OTA versions. Branch on `Platform.OS` wherever you use a native module that only exists on some platforms.
+
+### What can be updated over the air on HarmonyOS?
+
+The same rules as other platforms ([what can be hot updated](/docs/faq#what-can-be-hot-updated-what-cannot)): JS code, pure-JS libraries, and images you `require` or `import` from JS. Anything under `harmony/` (ArkTS or C++ code, `oh-package.json5` dependencies, permissions, `app.json5`) and any upgrade of a library with native code, including RNOH itself, needs a new native build and upload.
+
+### Why does an update roll back after restart in a debug build?
+
+In RNOH debug builds `isDebugModeEnabled` is true, and the SDK skips `markSuccess`, so the update rolls back on the next launch. That is expected. Test the full update flow with a release build. JavaScript also skips update checks in development (`__DEV__`) by default; set `debug: true` to exercise the check flow, but applying updates still needs a release build.
+
+### Uploading the .app says the build timestamp can't be read
+
+1. Check that `reactNativeUpdatePlugin()` is enabled in `entry/hvigorfile.ts`.
+2. Check that you built in release mode (debug builds write `0`).
+3. Check that `react-native-update` is up to date, and rebuild after upgrading.
+
+`cresc parseApp <file.app>` shows what the CLI reads.
+
+### Uploading says the bundle file can't be found
+
+The CLI looks for `resources/rawfile/bundle.harmony.js` inside the haps nested in the `.app`. Make sure you ran `cresc bundle --platform harmony` (or put the bundle in `harmony/entry/src/main/resources/rawfile/` yourself) before building, and that the file name is unchanged.
+
+### How does the app restart after an update on HarmonyOS?
+
+When JS asks to restart (for example `updateStrategy: 'silentAndNow'`, or switching versions from a custom UI), release builds restart through the system `restartApp`. If the system refuses a restart that soon (for example a few seconds after a cold start), the SDK reloads the React Native instance instead after about 1.5 seconds. Debug builds reload the React Native instance directly.
+
+### Still stuck?
+
+See the [FAQ](/docs/faq) or open a [GitHub issue](https://github.com/reactnativecn/react-native-update/issues) with your React Native, RNOH and `react-native-update` versions.

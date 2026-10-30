@@ -32,9 +32,17 @@ function SeoHead() {
   const description = page.description || site.description;
 
   // Rspress only applies frontmatter titles to doc pages; custom pages
-  // (home, pricing) would otherwise all be titled just "Cresc".
+  // (home, pricing) would otherwise all be titled just "Cresc". `seoTitle`
+  // lets a page with a short sidebar label carry a fuller <title>, and a
+  // title that already names the brand skips the " - Cresc" suffix.
   const customTitle =
-    pageType === 'custom' && typeof frontmatter.title === 'string' ? frontmatter.title : undefined;
+    typeof frontmatter.seoTitle === 'string'
+      ? frontmatter.seoTitle
+      : pageType === 'custom' && typeof frontmatter.title === 'string'
+        ? frontmatter.title
+        : page.title?.includes(site.title)
+          ? page.title
+          : undefined;
   const title =
     customTitle ?? (page.title ? `${page.title} - ${site.title}` : site.title);
   const ogTitle =
@@ -57,7 +65,17 @@ function SeoHead() {
   addMeta('name', 'twitter:title', ogTitle);
   if (description) addMeta('name', 'twitter:description', description);
 
-  const script = isDoc
+  // Landing pages (comparisons, guides) sit one level below home.
+  const breadcrumb = (trail: Array<[string, string]>) => ({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: trail.map(([name, item], i) => ({ '@type': 'ListItem', position: i + 1, name, item })),
+  });
+  const isLanding = !isDoc && routePath !== '/' && pageType !== '404';
+
+  const script = isLanding
+    ? [{ type: 'application/ld+json', innerHTML: JSON.stringify(breadcrumb([['Cresc', `${SITE_URL}/`], [page.title, url]])) }]
+    : isDoc
     ? [
         {
           type: 'application/ld+json',
@@ -73,15 +91,11 @@ function SeoHead() {
               ...(page.lastModified ? { dateModified: page.lastModified } : {}),
               publisher: { '@type': 'Organization', name: 'Cresc', url: `${SITE_URL}/` },
             },
-            {
-              '@context': 'https://schema.org',
-              '@type': 'BreadcrumbList',
-              itemListElement: [
-                { '@type': 'ListItem', position: 1, name: 'Cresc', item: `${SITE_URL}/` },
-                { '@type': 'ListItem', position: 2, name: 'Documentation', item: `${SITE_URL}/docs/intro` },
-                { '@type': 'ListItem', position: 3, name: page.title, item: url },
-              ],
-            },
+            breadcrumb([
+              ['Cresc', `${SITE_URL}/`],
+              ['Documentation', `${SITE_URL}/docs/intro`],
+              [page.title, url],
+            ]),
           ]),
         },
       ]

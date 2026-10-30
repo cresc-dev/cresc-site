@@ -1,0 +1,93 @@
+---
+title: Revopush vs Cresc for React Native OTA updates
+seoTitle: "Revopush vs Cresc: CodePush Replacement Pricing & Features"
+description: "Compare Revopush, the hosted CodePush-compatible service, with Cresc on pricing model, Hermes diff size, React Native versions, HarmonyOS and migration effort."
+pageType: doc-wide
+sidebar: false
+footer: false
+head:
+  - - meta
+    - name: keywords
+      content: revopush vs cresc, revopush alternative, revopush pricing, codepush compatible service, app center codepush replacement
+---
+
+import Footer from "../components/Footer";
+
+# Revopush vs Cresc for React Native OTA updates
+
+[Revopush](https://revopush.org) and Cresc are both hosted services that teams move to after App Center CodePush was retired. The main difference is the starting point: Revopush keeps the CodePush API by shipping a fork of `react-native-code-push`, while Cresc has its own SDK built for Hermes diffs, HarmonyOS and release monitoring, with a [direct API mapping](/codepush-api-migration) from CodePush.
+
+*Facts about Revopush are taken from its official pricing page and documentation as of October 2026. Tell us at hi@cresc.dev if anything here is out of date.*
+
+## Short answer
+
+- Choose **Revopush** if keeping `codePush.sync()` and your existing CodePush code unchanged matters most, and you are on React Native 0.76 or later.
+- Choose **Cresc** if you want flat pricing without MAU or bandwidth overage, smaller Hermes patches, HarmonyOS support, or you are on a React Native version older than 0.76.
+
+## Comparison table
+
+| Topic | Revopush | Cresc |
+| --- | --- | --- |
+| Hosting model | Hosted; enterprise deployments on your chosen cloud | Hosted with global CDN included |
+| Client SDK | Fork of `react-native-code-push` (MIT) | `react-native-update` (MIT) |
+| CodePush JS API | Kept as is | New API with a one-to-one [migration guide](/codepush-api-migration) |
+| Billing unit | Monthly active users plus egress | Daily update checks; CDN included |
+| Paid tiers | $25 (50K MAU, 100 GB), $100 (300K MAU, 1 TB), $250 (500K MAU, 2 TB), $500 (1M MAU, 5 TB) | $19 (10K checks/day), $39 (100K/day), $99 (1M/day), $399 (10M/day) |
+| Overage | $1 per extra 1,000 MAU, $0.03 per extra GB | None; checks over the daily quota return no update until midnight |
+| Diff updates | Byte-level bundle diff (Revopush 2.0, RN 0.76+), needs a base release per store binary | Hermes bytecode-aware diff against every bound native package: 3.4 KB for a one-line fix ([benchmark](https://github.com/sunnylqm/hbc-diff-benchmark)) |
+| React Native versions | 0.76 and later | Legacy and New Architecture, including RN 0.82+ |
+| Platforms | iOS, Android | iOS, Android, **HarmonyOS**, tvOS |
+| Expo | SDK 52+ via config plugin and prebuild | SDK 50+ via prebuild; bundle URL configured automatically |
+| Automatic rollback | CodePush model: rolls back if `notifyAppReady()` is not called | Rolls back an update that crashes on launch; success is marked automatically by default (`autoMarkSuccess`) |
+| JS error reporting | Sentry integration | Built in, with source-mapped stack traces |
+| CI | CLI, GitHub Action, Bitrise, CircleCI | CLI with [API keys](/docs/api-token) for any CI |
+
+## Pricing at the same scale
+
+The two services bill different things, so compare against your own numbers:
+
+- **Revopush** counts monthly active users who receive an update and the bytes they download. Frequent releases to a large audience raise both meters.
+- **Cresc** counts how many times apps check for an update per day, across all your apps. Downloads are not metered, and Hermes-aware diffs keep them small anyway.
+
+As a rough guide: an app with 300,000 monthly active users that each open the app about three times a day makes around 900,000 checks a day. That fits Cresc Pro at $99 a month. On Revopush the same audience is the $100 Growing tier, as long as egress stays under 1 TB. Your ratio of opens to users is the number to check. Checking only on cold start (`checkStrategy: 'onAppStart'`) instead of also on resume keeps the count down if you want to stay on a smaller tier.
+
+## When Revopush is the better fit
+
+- You want the smallest possible code change from CodePush: same JS API, same CLI concepts.
+- You are already on React Native 0.76 or later and do not need HarmonyOS.
+- You need CI integrations for Bitrise or CircleCI out of the box.
+
+## When Cresc is the better fit
+
+- You want a predictable bill that does not grow with bandwidth or active users.
+- You ship Hermes builds and want the smallest patches for them.
+- You ship to HarmonyOS NEXT or Apple TV as well as iOS and Android.
+- You are on React Native older than 0.76 and can't upgrade yet.
+
+## FAQ
+
+### Is Revopush compatible with CodePush?
+
+Yes. Revopush ships a fork of `react-native-code-push` that keeps the CodePush JavaScript API and workflow, and provides an App Center migration guide.
+
+### Do I have to rewrite my CodePush code to use Cresc?
+
+You replace the SDK and change a few calls. `codePush.sync()` becomes the `useUpdate` hook or an update strategy, and `appcenter codepush release-react` becomes `cresc bundle`. The [API migration guide](/codepush-api-migration) maps every CodePush API, option and CLI command to its Cresc equivalent.
+
+### Which is cheaper, Revopush or Cresc?
+
+It depends on how often users open your app compared with how many users you have, and how much you release. Revopush bills monthly active users and egress with overage; Cresc bills daily update checks with CDN delivery included and no overage. Estimate your daily checks as monthly active users multiplied by daily opens.
+
+### Does Revopush support HarmonyOS?
+
+Its documentation covers iOS and Android only. Cresc supports iOS, Android and HarmonyOS NEXT through RNOH.
+
+## Related
+
+- [App Center and CodePush retirement guide](/app-center-codepush-retirement)
+- [react-native-code-push to Cresc API migration](/codepush-api-migration)
+- [hot-updater vs Cresc](/hot-updater-vs-cresc)
+- [Stallion vs Cresc](/stallion-vs-cresc)
+- [Pricing](/pricing)
+
+<Footer />

@@ -1,6 +1,7 @@
 ---
 order: 12
 title: Brownfield Integration
+seoTitle: "OTA Updates for Brownfield React Native Apps - Cresc"
 type: Advanced Usage
 description: Integrate Cresc into Android apps that consume React Native through @callstack/react-native-brownfield AARs.
 ---
@@ -22,7 +23,7 @@ The host can also configure and trigger OTA updates without a JS bridge call. Fo
 :::
 
 <Steps>
-### Install the dependency
+## Install the dependency
 
 Inside the React Native project root:
 
@@ -43,7 +44,7 @@ dependencies {
 If `PackageList(application).packages` already includes `UpdatePackage()`, do not add it a second time.
 :::
 
-### Register UpdatePackage in the AAR module
+## Register UpdatePackage in the AAR module
 
 The JavaScript API needs the Android native module. Confirm `UpdatePackage` is present where your AAR module creates the package list:
 
@@ -57,7 +58,7 @@ val packages = PackageList(application).packages.apply {
 }
 ```
 
-### Configure ReactHost for the New Architecture
+## Configure ReactHost for the New Architecture
 
 For RN 0.82+, or any brownfield module that initializes React Native with `ReactHost` / `getDefaultReactHost`, pass Cresc's bundle path into `jsBundleFilePath`:
 
@@ -111,7 +112,7 @@ object ReactNativeHostManager {
 
 `assets://index.android.bundle` is the fallback embedded bundle used when no OTA update has been applied. Match it to the actual bundle name packaged into your AAR.
 
-### Expose ReactHost from the host Application
+## Expose ReactHost from the host Application
 
 In the New Architecture, Cresc needs to find the active `ReactHost` when `switchVersion()` or `restartApp()` reloads the RN runtime after an update.
 
@@ -140,7 +141,7 @@ Cresc finds this method reflectively. The host `Application` does not need to im
 Passing `jsBundleFilePath` is enough for cold starts. Exposing `getReactHost()` is what makes `switchVersion()` / `restartApp()` reliable for immediate runtime reloads in New Architecture brownfield apps.
 :::
 
-### Legacy architecture or custom ReactInstanceManager
+## Legacy architecture or custom ReactInstanceManager
 
 If your brownfield integration still creates `ReactInstanceManager` manually, wire the bundle path there:
 
@@ -163,7 +164,7 @@ UpdateContext.setCustomInstanceManager(reactInstanceManager)
 
 For New Architecture apps, prefer the `ReactHost` setup above.
 
-### Wrap the JavaScript root
+## Wrap the JavaScript root
 
 The JavaScript side is the same as a regular React Native app:
 
@@ -188,7 +189,7 @@ export default function Root() {
 }
 ```
 
-### Build and publish
+## Build and publish
 
 1. Rebuild the React Native AAR and make sure the host app consumes the new artifact.
 2. Build the final host APK / AAB.

@@ -1,19 +1,20 @@
 ---
 order: 13
 title: Best Practices
+seoTitle: "React Native OTA Update Best Practices - Cresc"
 description: "Best practices for Cresc React Native OTA updates: shrink ipa/apk/ppk sizes, handle multi-channel APKs and AAB, test and roll back hot updates, and use meta info."
 type: Guide
 ---
 
-#### Optimizing Native and Hot Update Package Size
+## Optimizing Native and Hot Update Package Size
 
-##### iOS Native Package Optimization (ipa)
+### iOS Native Package Optimization (ipa)
 
 For the same archive (where version number, build time, and bundled js are fixed and unaffected by the export method), you can export the ipa multiple times with different options and choose the smallest one to upload to the Cresc server as your update baseline.
 
 ![bitcode](./assets/exportipa.png)
 
-##### Android Native Package Optimization (apk)
+### Android Native Package Optimization (apk)
 
 APK optimization primarily focuses on two areas:
 
@@ -33,7 +34,7 @@ splits {
 
 This will output multiple APK files in the build directory. For distribution and uploading to the hot update service, you only need to use the `app-arm64-v8a-release.apk` file, which significantly reduces the APK size.
 
-##### Hot Update Package Optimization (ppk)
+### Hot Update Package Optimization (ppk)
 
 The primary content of a hot update package is the JS bundle and its referenced static assets (mostly images).
 
@@ -43,13 +44,13 @@ The primary content of a hot update package is the JS bundle and its referenced 
   - If transparent pixels aren't needed, consider converting PNG formats to JPG.
   - Consider image formats with higher compression ratios, such as WEBP (requires third-party native plugins like [react-native-webp-format](https://github.com/Aleksefo/react-native-webp-format#readme)) or HEIF (supported natively on iOS 11 and Android 10+). Here is an image format comparison for reference: <https://compare.rokka.io/_compare/#heif=40&jpeg=80&webp=80&av1=40&width=800>.
 
-#### Handling Multiple Channel APKs for Hot Updates
+## Handling Multiple Channel APKs for Hot Updates
 
 1. If the channel APKs have differences in their `JS code or initial assets` (no matter how slight, which results in different jsbundles), you must build separate APKs, upload, and bind them individually. You can write scripts to automate bulk operations using the CLI.
 2. If the `JS code and initial assets` across channel APKs are perfectly identical, consider using [Flavor builds](https://developer.android.com/studio/build/build-variants), or other dynamic channel generation tools (like [Tencent's VasDolly](https://github.com/Tencent/VasDolly) or [Meituan's walle](https://github.com/Meituan-Dianping/walle)). In this approach, all channel APKs are generated from a single base APK (thus sharing the same build timestamp and jsbundle). This means you only need to upload one base APK, and hot updates applied to it will take effect across all channel APKs.
 3. Avoid distributing multiple native builds with the same version string but different build timestamps. Cresc can still deliver updates in that situation, but clients may start from different embedded bundles, which reduces diff reuse and can force larger full-bundle downloads or extra diff generation. Prefer one shared base APK for each version string, or publish a higher native version and upload that baseline before distribution.
 
-#### Supporting the AAB Format
+## Supporting the AAB Format
 
 Update the `react-native-update-cli` to v2.6.0 or higher. You can then use the `cresc parseAab` and `cresc uploadAab` commands for `.aab` format support.
 
@@ -69,7 +70,7 @@ $ npm run package:android:release
 
 This produces `android/app/build/outputs/apk/release/app-release.apk` and `android/app/build/outputs/bundle/release/app-release.aab` from the same release build, keeping their build timestamps aligned. Distribute the format required by each channel: AAB for Google Play, APK for direct installs or third-party markets. If your project uses flavors, switch the npm script task names to the actual variant tasks, such as `assembleProdRelease` and `bundleProdRelease`.
 
-#### Testing and Rollbacks
+## Testing and Rollbacks
 
 Starting from version v10.11.2, you can use two quick QR code scanning methods to test hot updates without needing to bind them beforehand:
 
@@ -113,7 +114,7 @@ const crescClient = new Cresc({
 
 In the worst-case scenario where a production crash happens and requires a rollback, immediately set the native package or the whole app's hot update status to 'Paused', then re-bind it to a previously healthy version. Alternatively, use your VCS to revert code to a healthy state and generate and push a new hot update package.
 
-#### Using Meta Info
+## Using Meta Info
 
 When publishing a hot update version, or via the web console, you can edit the version's meta info. This is a customizable payload string obtained during the update check. You can format it however you like (we strongly recommend [JSON format](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/JSON)) to store additional payload data.
 

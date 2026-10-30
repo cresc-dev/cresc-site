@@ -1,21 +1,22 @@
 ---
 order: 12
 title: CLI Tools
+seoTitle: "React Native OTA CLI Reference - Cresc"
 description: "Cresc CLI reference (react-native-update-cli): bundle, publish and upload native packages, manage apps and versions, and automate React Native OTA releases."
 type: Guide
 ---
 
 Migrating scripts from the App Center CLI? See the [App Center to Cresc command mapping](/codepush-api-migration#5-cli-mapping).
 
-### Installation
+## Installation
 
 ```bash
 $ npm install -g react-native-update-cli
 ```
 
-### Commands
+## Commands
 
-#### cresc bundle
+### cresc bundle
 
 Generates a hot update resource package (ppk). Automatically detects if frameworks like Expo or Taro are used and runs their packagers respectively. If detection is inaccurate or errors occur, try using `--rncli` to specify the official React Native CLI.
 
@@ -52,29 +53,29 @@ cresc bundle --platform android --name "1.0.0" --description "Hot update version
 
 ---
 
-#### cresc cache [clean]
+### cresc cache [clean]
 
 Shows the local bundle cache (Hermes delta-mode bases and uploaded bundles, named by sha256); `cresc cache clean` empties it.
 
-#### cresc parseIpa [ipaFile]
+### cresc parseIpa [ipaFile]
 
 Parses an `.ipa` file and outputs associated data like version codes and build timestamps.
 
 ---
 
-#### cresc parseApk [apkFile]
+### cresc parseApk [apkFile]
 
 Parses an `.apk` file and outputs associated data like version codes and build timestamps.
 
 ---
 
-#### cresc parseAab [aabFile]
+### cresc parseAab [aabFile]
 
 Parses an `.aab` file and outputs associated data like version codes and build timestamps.
 
 ---
 
-#### cresc diff [origin][next]
+### cresc diff [origin][next]
 
 Provide two `.ppk` files to generate a delta differential hot update package from the origin to next versions.
 
@@ -82,7 +83,7 @@ Provide two `.ppk` files to generate a delta differential hot update package fro
 
 ---
 
-#### cresc diffFromApk [apkFile][next]
+### cresc diffFromApk [apkFile][next]
 
 Provide an `.apk` file and a `.ppk` file to generate a diff update package from the `.apk` baseline to the next version.
 
@@ -92,7 +93,7 @@ No need to run this manually if you use the managed platform.
 
 ---
 
-#### cresc diffFromIpa [ipaFile][next]
+### cresc diffFromIpa [ipaFile][next]
 
 Provide an `.ipa` file and a `.ppk` file to generate a diff update package.
 
@@ -102,25 +103,25 @@ No need to run this manually if you use the managed platform.
 
 ---
 
-#### cresc login [email][pwd]
+### cresc login [email][pwd]
 
 Logs into the hot update platform. You must authenticate to execute most subsequent commands.
 
 ---
 
-#### cresc logout
+### cresc logout
 
 Logs out and clears local session cache.
 
 ---
 
-#### cresc me
+### cresc me
 
 Checks if you are currently logged in, and displays account details.
 
 ---
 
-#### cresc createApp
+### cresc createApp
 
 Creates a new remote app and instantly binds it to the current project directory. This action can also be completed via the web dashboard.
 
@@ -130,7 +131,7 @@ Creates a new remote app and instantly binds it to the current project directory
 
 ---
 
-#### cresc deleteApp [appId]
+### cresc deleteApp [appId]
 
 Deletes an existing app entirely. All related native packages and hot versions will be permanently wiped. This action can also be completed via the web dashboard.
 
@@ -138,7 +139,7 @@ Deletes an existing app entirely. All related native packages and hot versions w
 
 ---
 
-#### cresc apps
+### cresc apps
 
 List all established apps in your account. This action can also be completed via the web dashboard.
 
@@ -146,7 +147,7 @@ List all established apps in your account. This action can also be completed via
 
 ---
 
-#### cresc selectApp [appId]
+### cresc selectApp [appId]
 
 Locally binds an existing app configuration to the current project folder.
 
@@ -154,7 +155,7 @@ Locally binds an existing app configuration to the current project folder.
 
 ---
 
-#### cresc uploadIpa [ipaFile]
+### cresc uploadIpa [ipaFile]
 
 Uploads an `.ipa` to the managed platform. (Requires CLI 1.24.0+)
 
@@ -164,7 +165,7 @@ Uploads an `.ipa` to the managed platform. (Requires CLI 1.24.0+)
 
 ---
 
-#### cresc uploadApk [apkFile]
+### cresc uploadApk [apkFile]
 
 Uploads an `.apk` to the managed platform. (Requires CLI 1.24.0+)
 
@@ -174,7 +175,7 @@ Uploads an `.apk` to the managed platform. (Requires CLI 1.24.0+)
 
 ---
 
-#### cresc uploadAab [aabFile]
+### cresc uploadAab [aabFile]
 
 Uploads an `.aab` to the managed platform. (Requires CLI 2.6.0+)
 
@@ -184,13 +185,13 @@ Uploads an `.aab` to the managed platform. (Requires CLI 2.6.0+)
 
 ---
 
-#### cresc extractApk [aabFile]
+### cresc extractApk [aabFile]
 
 Extracts an `.apk` file from an `.aab` build envelope. (Requires CLI 2.6.0+)
 
 ---
 
-#### cresc packages
+### cresc packages
 
 View all natively uploaded packages. This action can also be completed via the web dashboard.
 
@@ -198,7 +199,7 @@ View all natively uploaded packages. This action can also be completed via the w
 
 ---
 
-#### cresc deletePackage
+### cresc deletePackage
 
 Delete an uploaded native package baseline.
 
@@ -207,7 +208,7 @@ Delete an uploaded native package baseline.
 
 ---
 
-#### cresc publish [ppkFile]
+### cresc publish [ppkFile]
 
 Uploads and publishes a new hot update package (`.ppk` file).
 
@@ -232,7 +233,7 @@ cresc publish .cresc/output/android.1750423283653.ppk --platform android --name 
 
 ---
 
-#### cresc versions
+### cresc versions
 
 Paginates and lists available hot update versions. This action can also be completed via the web dashboard.
 
@@ -240,7 +241,7 @@ Paginates and lists available hot update versions. This action can also be compl
 
 ---
 
-#### cresc deleteVersion
+### cresc deleteVersion
 
 Delete a specific published hot update version.
 
@@ -249,7 +250,7 @@ Delete a specific published hot update version.
 
 ---
 
-#### cresc update
+### cresc update
 
 Binds and applies an active hot update version to a native package baseline. This action can also be completed via the web dashboard. You must supply one of the package scope args: `packageId`, `packageVersion`, `minPackageVersion`, `maxPackageVersion`, or `packageVersionRange`.
 

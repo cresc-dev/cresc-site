@@ -1,6 +1,7 @@
 ---
 order: 11
 title: API Reference
+seoTitle: "react-native-update JavaScript API Reference - Cresc"
 description: "Cresc JavaScript API reference for react-native-update: client options, checkUpdate, downloadUpdate, switchVersion, useUpdate hooks and update lifecycle events."
 type: Guide
 ---
@@ -9,9 +10,9 @@ Porting code from `react-native-code-push`? The [CodePush API migration guide](/
 
 
 
-### JavaScript Methods
+## JavaScript Methods
 
-#### new Cresc(options: CrescOptions)
+### new Cresc(options: CrescOptions)
 
 Creates a Cresc OTA service instance, with the following constructor parameters:
 
@@ -186,7 +187,7 @@ interface EventData {
 }
 ```
 
-#### Version health telemetry
+### Version health telemetry
 
 Starting from v10.47.0, the SDK automatically reports a small set of lifecycle events to the update server at key points of the update flow. They power the per-version health view in the admin panel (download failure rate, patch failure rate, rollback rate, etc.), so you can spot a bad release right after publishing:
 
@@ -208,7 +209,7 @@ const crescClient = new Cresc({
 
 Note that with telemetry disabled, the admin panel cannot compute version health for these clients, nor warn you when a release is failing at scale.
 
-#### JS error reporting
+### JS error reporting
 
 Since v10.55.0 the SDK reports JavaScript exceptions raised inside an OTA version to the update service, and the console restores the stack to your original source with the source map archived at publish time. Uncaught exceptions are reported automatically (the handler is appended on top of React Native's existing global `ErrorUtils` handler, so existing Sentry-style integrations are untouched), and you can report manually from a `catch`:
 
@@ -220,13 +221,13 @@ crescClient.captureException(error, {
 
 It is part of every plan at no extra cost. To opt out, set `disableErrorReporting: true` at initialization. The full story — console UI, source map requirements and manual reporting — is in [JS Error Monitoring](errors).
 
-#### Native configuration and manual checks
+### Native configuration and manual checks
 
 Since **v10.59.0**, Android, iOS, and HarmonyOS hosts can call native `configure` before JavaScript starts, then `prepareBundle` after the normal launch bundle resolution. These APIs prepare updates without displaying dialogs or immediately reloading React Native. Rebuild and distribute the native application when upgrading; a JS-only OTA update cannot add native methods.
 
 See [Native Configuration and Updates](/docs/native-api) for platform examples, result handling, and `nativeConfigSource` ownership rules. **Cresc native configurations must explicitly provide Cresc endpoints**; omitting `endpoints` selects the shared SDK's Pushy preset. The guide includes both Cresc service addresses and the matching discovery URL.
 
-#### Native cold-start check
+### Native cold-start check
 
 Since v10.52.1, the client runs an independent background update check from **native code** a few seconds after every cold start, with no JS involved. Its purpose is brick rescue: if a hot update kills your JS, the device can never run the JS-side check again — this native channel is the only one left that can pull the fix back down (activated via the console's [force boot](publish#force-boot-brick-rescue) flag).
 
@@ -251,7 +252,7 @@ With native-owned configuration, instead pass `disabled: true` with your complet
 
 Disabling native checking removes this force-boot rescue route. A broken JS update may then require a native app upgrade or reinstall to recover.
 
-#### beforeReload Example: Clean Up Native SDKs Before Reload
+### beforeReload Example: Clean Up Native SDKs Before Reload
 
 `beforeReload` runs before `switchVersion()` and `restartApp()` actually reload the app. Returning `false` cancels the reload; thrown errors or rejected promises also stop the reload. `switchVersionLater()` does not destroy the current RN instance immediately, so it does not trigger this hook.
 
@@ -280,7 +281,7 @@ const crescClient = new Cresc({
 });
 ```
 
-#### useUpdate()
+### useUpdate()
 
 Utility functions for OTA updates. This method can also be imported using the alias `usePushy`.
 
@@ -395,7 +396,7 @@ interface UpdateContext {
 
 ---
 
-#### async function checkUpdate()
+### async function checkUpdate()
 
 Triggers an update check, returns `updateInfo` (Note: Before v10.26.0, `checkUpdate` had no return value. We still recommend prioritizing `updateInfo` from `useUpdate()`). There are three return scenarios:
 
@@ -426,13 +427,13 @@ Triggers an update check, returns `updateInfo` (Note: Before v10.26.0, `checkUpd
 
 ---
 
-#### async function downloadUpdate()
+### async function downloadUpdate()
 
 Downloads the hot update package. Only proceeds if `update:true`. Updates `progress` state. In v10.16.0+, returns `boolean` indicating success.
 
 ---
 
-#### async function downloadAndInstallApk(url)
+### async function downloadAndInstallApk(url)
 
 Downloads an APK and starts installation through Android's `PackageInstaller`. `url` must point directly to the APK file. This feature supports Android 5.0 (API 21) and later.
 
@@ -454,13 +455,13 @@ On Android 8.0 (API 26) and later, the user must also allow the current app to i
 
 ---
 
-#### function markSuccess()
+### function markSuccess()
 
 **Generally, do not call this manually**. Marks the update as successfully applied (otherwise, the next boot expects a crash and rolls back).
 
 ---
 
-#### currentVersionInfo
+### currentVersionInfo
 
 Information about the currently active hot update (empty object if no update was applied). Requires v10.31.2+.
 
@@ -484,7 +485,7 @@ Example value:
 
 ---
 
-#### function captureException(error, context?)
+### function captureException(error, context?)
 
 Reports a JavaScript exception manually. Requires v10.55.0+. `context` accepts `fatal` (whether the error is fatal, default false), `componentStack` (a React component stack) and `extra` (custom context: strings, numbers, booleans and null only, up to 32 fields).
 
@@ -500,7 +501,7 @@ try {
 
 ---
 
-#### async function getCurrentVersionInfo()
+### async function getCurrentVersionInfo()
 
 Gets information about the currently active hot update (returns an empty object if no update was applied). Use `currentVersionInfo` instead after v10.31.2.
 
@@ -516,7 +517,7 @@ Example return:
 
 ---
 
-#### function restartApp()
+### function restartApp()
 
 Immediately restarts the application. Available in v10.28.2+.
 
@@ -524,7 +525,7 @@ If `beforeReload` is configured, Cresc waits for it before restarting. Returning
 
 ---
 
-#### async function resetToPackagedBundle(options?)
+### async function resetToPackagedBundle(options?)
 
 Resets the app to the bundle packaged in the binary. Returns a `boolean` indicating whether the reset succeeded. Available in v10.48.0+.
 
@@ -553,7 +554,7 @@ Always check the return value. This method requires native module support (v10.4
 
 ---
 
-#### function switchVersion()
+### function switchVersion()
 
 Immediately restarts the app and loads the newly downloaded version.
 
@@ -563,7 +564,7 @@ If `beforeReload` is configured, Cresc passes `{ type: "switchVersion", hash }` 
 
 ---
 
-#### function switchVersionLater()
+### function switchVersionLater()
 
 Loads the newly downloaded version on the next natural app restart.
 
@@ -573,7 +574,7 @@ This method does not destroy the current RN instance immediately, so it does not
 
 ---
 
-#### function parseTestQrCode(qrCode: string)
+### function parseTestQrCode(qrCode: string)
 
 Parses test QR codes, typically used by QA to test OTA packages. If your app already has a scanning feature, scan Cresc QRs to preview arbitrary update versions.
 Note: If using custom update strategies, rely exclusively on `updateInfo` from `useUpdate()` because the QR code scan bypasses checkUpdate's return value.
@@ -601,9 +602,9 @@ Example:
 
 ---
 
-### Android Methods
+## Android Methods
 
-#### UpdateContext.setCustomInstanceManager(ReactInstanceManager instanceManager)
+### UpdateContext.setCustomInstanceManager(ReactInstanceManager instanceManager)
 
 If you are integrating into an existing Android host app and still create `ReactInstanceManager` manually, pass that instance here. Available since `v5.5.8`.
 

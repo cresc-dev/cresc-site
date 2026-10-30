@@ -62,3 +62,18 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+
+  indexnow:
+    # Tell Bing, Yandex and other IndexNow engines the site changed, so new
+    # and edited pages are recrawled without waiting. The key file is served
+    # from site/pages/public/fc9547e7d1f4cde38e3185a40b292853.txt.
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Submit sitemap URLs to IndexNow
+        run: |
+          urls=$(curl -fsSL "https://cresc.dev/sitemap.xml?v=$GITHUB_SHA" | grep -o '<loc>[^<]*</loc>' | sed -e 's/<loc>//' -e 's/<\/loc>//' | jq -R . | jq -s -c .)
+          jq -n --argjson urls "$urls" '{host: "cresc.dev", key: "fc9547e7d1f4cde38e3185a40b292853", keyLocation: "https://cresc.dev/fc9547e7d1f4cde38e3185a40b292853.txt", urlList: $urls}' \
+            | curl -sS -o /dev/null -w 'IndexNow HTTP %{http_code}\n' -X POST https://api.indexnow.org/indexnow \
+                -H 'Content-Type: application/json; charset=utf-8' --data-binary @-

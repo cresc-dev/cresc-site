@@ -1,0 +1,127 @@
+---
+title: OTA updates for the React Native New Architecture
+seoTitle: "React Native New Architecture OTA Updates (0.82+, Bridgeless)"
+description: "React Native 0.82+ is New Architecture only and CodePush doesn't support it. How OTA updates work with TurboModules and bridgeless mode, with Cresc setup."
+pageType: doc-wide
+sidebar: false
+footer: false
+head:
+  - - meta
+    - name: keywords
+      content: react native new architecture ota, codepush new architecture, react native 0.82 ota update, bridgeless hot update, turbomodule codepush alternative, react native 0.88 ota
+---
+
+import Footer from "../components/Footer";
+
+# OTA updates for the React Native New Architecture
+
+React Native 0.82 is the first release that runs **only** on the New Architecture: setting `newArchEnabled` to `false` has no effect any more. Every OTA update library you depend on now has to work with TurboModules and bridgeless mode.
+
+That rules out `react-native-code-push`. Its archived README states that CodePush won't support the New Architecture, so apps that still use it are stuck on React Native 0.81 or earlier. This guide covers what changes for OTA updates on the New Architecture and how to set them up with Cresc.
+
+## What the New Architecture changes for OTA updates
+
+An OTA library does two things natively: it tells React Native which JS bundle to load at startup, and it exposes a native module that JS calls to check, download and apply updates. The New Architecture touches both.
+
+- **Native modules become TurboModules.** Modules are described by a typed spec and generated with codegen, then loaded through `TurboModuleRegistry` instead of `NativeModules`. A library without a TurboModule spec only works through interop layers, if at all.
+- **Bridgeless mode removes the bridge.** There is no `RCTBridge` to hand a bundle URL to and no bridge to reload. Libraries that read or reset the bundle through the bridge break.
+- **The bundle URL moved.** On Android, React Native 0.82+ templates create a `ReactHost` with `getDefaultReactHost(...)` instead of overriding `getJSBundleFile()` on a `ReactNativeHost`. On iOS, React Native 0.88 templates moved the entry point and `bundleURL()` from `AppDelegate` to `SceneDelegate`.
+- **Hermes is the default engine.** Bundles ship as Hermes bytecode, and plain binary diffs of bytecode are much larger than diffs of JavaScript text.
+
+## How Cresc supports it
+
+The Cresc SDK, `react-native-update`, has supported the New Architecture since v9.0.0 (2023) and builds for both architectures from the same code:
+
+- **A codegen TurboModule spec** (`codegenConfig` named `RCTPushySpec`). Android uses a `TurboReactPackage` and iOS implements `getTurboModule:` when the New Architecture is on.
+- **Bridgeless detection at runtime.** The JS side picks the TurboModule when `__turboModuleProxy` or `RN$Bridgeless` is present and falls back to `NativeModules` on the legacy architecture. There is nothing to configure.
+- **Bundle URL helpers for each template**: `UpdateContext.getBundleUrl(context)` on Android and `RCTPushy.bundleURL()` on iOS, plus native host APIs (`prepareBundle`) for apps that create the React host themselves.
+- **Hermes-aware diffs.** The CLI transforms Hermes bytecode before diffing, which removes the offset shifts that inflate binary patches. In an open [benchmark](https://github.com/sunnylqm/hbc-diff-benchmark) on React Native 0.86, a one-line change shipped as 3.4 KB, against 93.7 KB with plain bsdiff and 1.5 MB as a full bundle.
+
+One known limitation: on Android, React Native 0.73.0 to 0.76.0 has an upstream bug that breaks the New Architecture for this SDK. Versions below 0.73, and 0.76.1 and later, work.
+
+## Setup on the New Architecture
+
+The full steps, including Expo and older templates, are in [Installation & Config](/docs/getting-started). The two native changes are:
+
+### Android (React Native 0.82 and later)
+
+Pass Cresc's bundle path to `getDefaultReactHost` in `MainApplication.kt`:
+
+```kotlin
+import cn.reactnative.modules.update.UpdateContext
+
+class MainApplication : Application(), ReactApplication {
+
+  override val reactHost: ReactHost by lazy {
+    getDefaultReactHost(
+      context = applicationContext,
+      packageList = PackageList(this).packages,
+      jsBundleFilePath = UpdateContext.getBundleUrl(this),
+    )
+  }
+}
+```
+
+On React Native 0.81 and earlier, return `UpdateContext.getBundleUrl(...)` from `getJSBundleFile()` instead.
+
+### iOS (React Native 0.88 and later)
+
+Return Cresc's bundle URL from `bundleURL()` in `SceneDelegate.swift`, keeping Metro for debug builds:
+
+```swift
+import react_native_update
+
+class SceneDelegate: RCTDefaultReactNativeFactoryDelegate, UIWindowSceneDelegate {
+  override func bundleURL() -> URL? {
+    #if DEBUG
+    RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
+    #else
+    RCTPushy.bundleURL()
+    #endif
+  }
+}
+```
+
+On React Native 0.87 and earlier the same method lives in `AppDelegate`. When you follow the Upgrade Helper to 0.88 and move the entry point to `SceneDelegate`, move `RCTPushy.bundleURL()` with it. Otherwise release builds keep loading the embedded bundle and updates never apply.
+
+### Expo
+
+With Expo SDK 50 and later, run `npx expo prebuild` and the bundle URL is configured automatically on both platforms. Don't install `expo-updates` alongside Cresc.
+
+### Brownfield and custom hosts
+
+If React Native is embedded in a native app, packaged as an AAR, or the host creates its own `ReactHost`, see [Brownfield Integration](/docs/brownfield) and the native `prepareBundle` APIs in [Native Configuration and Updates](/docs/native-api).
+
+## Upgrading from CodePush to React Native 0.82+
+
+1. Replace `react-native-code-push` with `react-native-update` while still on your current React Native version, and ship one store release with it. The [API migration guide](/codepush-api-migration) maps every CodePush call.
+2. Upgrade React Native. With CodePush gone, nothing blocks the New Architecture.
+3. After any native upgrade, upload the new native package to Cresc before publishing OTA updates against it ([Publishing](/docs/publish)).
+
+## FAQ
+
+### Does CodePush work with the React Native New Architecture?
+
+No. The archived `react-native-code-push` README states it won't support the New Architecture, and React Native 0.82 and later no longer allow opting out. Apps on CodePush can't upgrade past React Native 0.81 without replacing it.
+
+### Does Cresc support bridgeless mode?
+
+Yes. `react-native-update` detects bridgeless mode at runtime and uses its TurboModule; the same package still works on the legacy architecture.
+
+### Which React Native versions does Cresc support?
+
+Both architectures, from older legacy-architecture apps through current releases including React Native 0.88. On Android, the New Architecture on React Native 0.73.0 to 0.76.0 is affected by an upstream bug; use 0.76.1 or later.
+
+### Do OTA updates work with Hermes bytecode?
+
+Yes. Cresc publishes Hermes bytecode bundles and diffs them with a Hermes-aware transform, so small changes produce patches of a few KB.
+
+## Related
+
+- [App Center and CodePush retirement guide](/app-center-codepush-retirement)
+- [Installation & Config](/docs/getting-started)
+- [Brownfield Integration](/docs/brownfield)
+- [React Native OTA updates with Cresc](/react-native-ota-updates)
+- [HarmonyOS](/docs/harmony)
+
+<Footer />

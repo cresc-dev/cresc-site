@@ -1,6 +1,7 @@
 ---
 order: 1
 title: Code Integration
+seoTitle: "Integrate OTA Updates into a React Native App - Cresc"
 type: Quick Start
 description: Integrate Cresc into a React Native or Expo app, choose update strategies, and build a custom OTA update UI with useUpdate.
 ---
@@ -16,7 +17,7 @@ Prefer [Install & Use Skills](/docs/skills) first so AI can wire `UpdateProvider
 :::
 
 <Steps>
-### Retrieve your `appKey`
+## Retrieve your `appKey`
 
 Each platform uses its own `appKey`. The value is stored in `update.json`, which is created by `cresc createApp` or `cresc selectApp`.
 
@@ -30,7 +31,7 @@ const { appKey } = _updateConfig[Platform.OS];
 
 You can also find the `appKey` in the Cresc dashboard.
 
-### Initialize the client
+## Initialize the client
 
 ```js
 import { UpdateProvider, Cresc } from "react-native-update";
@@ -54,7 +55,7 @@ export default function Root() {
 
 After this, the default OTA flow already works. Cresc can check for updates and show the built-in alert flow automatically.
 
-### Choose your check strategy
+## Choose your check strategy
 
 `checkStrategy` controls **when** Cresc checks for updates:
 
@@ -70,7 +71,7 @@ const crescClient = new Cresc({
 });
 ```
 
-### Choose your update strategy
+## Choose your update strategy
 
 `updateStrategy` controls **how** Cresc handles an available update:
 
@@ -87,7 +88,7 @@ const crescClient = new Cresc({
 });
 ```
 
-### Build a custom update UI
+## Build a custom update UI
 
 If you want full control over the UI, disable the built-in update strategy and use `useUpdate()`:
 
@@ -183,7 +184,7 @@ function App() {
 }
 ```
 
-### Understand the `updateInfo` states
+## Understand the `updateInfo` states
 
 After `checkUpdate()`, Cresc exposes state through `useUpdate()`:
 
@@ -193,7 +194,7 @@ After `checkUpdate()`, Cresc exposes state through `useUpdate()`:
 
 When `updateInfo.update` is true, call `downloadUpdate()` and wait for it to resolve before assuming the patch is ready. The `progress` fields are useful for UI, but the promise result is the reliable completion signal.
 
-### Forward OTA analytics into your own tools
+## Forward OTA analytics into your own tools
 
 Use the `logger` option if you want to pipe update events into your analytics system:
 
@@ -210,7 +211,7 @@ const crescClient = new Cresc({
 });
 ```
 
-### Continue
+## Continue
 
 - [API reference](api)
 - [Best practices](bestpractice)

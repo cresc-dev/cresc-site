@@ -30,7 +30,7 @@ export default defineConfig({
       placement: 'outline',
     },
     nav: [
-      { text: 'Home', link: '/' },
+      { text: 'Home', link: '/', activeMatch: '^/$' },
       { text: 'CodePush & Expo Alternative', link: '/codepush-alternative' },
       { text: 'Documentation', link: '/docs/intro', activeMatch: '^/docs/' },
       { text: 'Pricing', link: '/pricing' },
@@ -47,6 +47,7 @@ export default defineConfig({
             { text: 'AI Skills', link: '/docs/skills' },
             { text: 'Installation', link: '/docs/getting-started' },
             { text: 'Integration', link: '/docs/integration' },
+            { text: 'HarmonyOS', link: '/docs/harmony' },
             { text: 'Publishing', link: '/docs/publish' },
           ],
         },
@@ -68,6 +69,7 @@ export default defineConfig({
           text: 'Others',
           items: [
             { text: 'FAQ', link: '/docs/faq' },
+            { text: 'Changelog', link: '/docs/changelog' },
           ],
         }
       ],

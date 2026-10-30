@@ -1,0 +1,92 @@
+---
+title: hot-updater vs Cresc for React Native OTA updates
+seoTitle: "hot-updater vs Cresc: Open-Source vs Managed React Native OTA"
+description: "Compare hot-updater, the open-source self-hosted React Native OTA tool, with Cresc's hosted service on infrastructure, diff size, rollback, platforms and cost."
+pageType: doc-wide
+sidebar: false
+footer: false
+head:
+  - - meta
+    - name: keywords
+      content: hot-updater vs cresc, hot-updater alternative, self-hosted react native ota, react native ota open source, codepush self-hosted alternative
+---
+
+import Footer from "../components/Footer";
+
+# hot-updater vs Cresc for React Native OTA updates
+
+[hot-updater](https://hot-updater.dev) and Cresc both replace CodePush for React Native apps. They make one big tradeoff in opposite directions: hot-updater gives you the code and you run the infrastructure in your own cloud account; Cresc runs the infrastructure for you and you pay a flat monthly tier.
+
+*Facts about hot-updater are taken from its official docs and GitHub repository as of October 2026. Tell us at hi@cresc.dev if anything here is out of date.*
+
+## Short answer
+
+- Choose **hot-updater** if you must keep every byte on infrastructure you control, already run Cloudflare, Supabase, Firebase, AWS or similar, and have someone to own that stack.
+- Choose **Cresc** if you would rather not operate an OTA backend, want the smallest possible patches for Hermes apps, or need HarmonyOS as well as iOS and Android.
+
+## Comparison table
+
+| Topic | hot-updater | Cresc |
+| --- | --- | --- |
+| Hosting model | Self-hosted only: the CLI provisions storage, database and edge functions in your cloud account | Hosted service with global CDN included; self-hosted deployment available on a custom-priced plan |
+| License | MIT (server and console add an attribution clause when offered as a service to others) | SDK MIT, CLI BSD-3-Clause; backend licensed for self-hosting on request |
+| Price | Free software; you pay your cloud provider for storage, compute and egress | Free plan, then flat tiers from $19/mo; no overage bills |
+| Diff updates | bsdiff for changed Hermes bundles (on by default); other changed files download in full | Hermes bytecode-aware diff: 3.4 KB for a one-line fix where plain bsdiff needs 93.7 KB ([benchmark](https://github.com/sunnylqm/hbc-diff-benchmark)) |
+| Automatic rollback | Yes, for crashes before the first render | Yes, an update that crashes on launch rolls back automatically |
+| Gradual rollout | Yes (percentages, cohorts, channels) | Yes (percentage rollout, force boot) |
+| Platforms | iOS, Android | iOS, Android, **HarmonyOS**, tvOS |
+| Expo | Yes, via prebuild (not Expo Go) | Yes, via prebuild; bundle URL configured automatically (Expo SDK 50+) |
+| CodePush API compatible | No, its own API | No, its own API, with a [one-to-one mapping guide](/codepush-api-migration) |
+| JS error reporting | Not built in | Built in, with source-mapped stack traces |
+| Who is on call | You | Cresc |
+
+## Where the real cost difference is
+
+hot-updater has no license fee, but "free" means the bill moves to your cloud account and your team's time:
+
+- **Infrastructure**: object storage for every bundle, a database for release metadata, an edge function or server for update checks, and CDN egress for downloads. Costs scale with users and release frequency.
+- **Operations**: upgrades of the server package, database migrations, monitoring and incident response when update checks fail at 2 a.m.
+- **Download size**: bandwidth is the line item that grows fastest. Cresc's Hermes-aware diff ships a one-line fix in 3.4 KB, 28 times smaller than a classic bsdiff patch of the same bytecode, so the same release costs far less to deliver.
+
+Cresc's Pro plan is $99 a month for 1,000,000 update checks per day, with CDN delivery included. If you exceed your daily check quota, checks return no update until the quota resets at midnight. You never get an overage invoice, but size your plan for peak days. See [pricing](/pricing).
+
+## When hot-updater is the better fit
+
+- You want to self-host with no license fee and own the server code yourself.
+- You already operate the provider stack it targets and have spare capacity to own one more service.
+- You want to modify the server itself.
+
+## When Cresc is the better fit
+
+- You want OTA updates without adding a backend to your on-call rotation, or a vendor-supported self-hosted deployment instead of building one.
+- Your app uses Hermes and you want the smallest patches available for it.
+- You ship to HarmonyOS NEXT through RNOH, or to Apple TV with react-native-tvos.
+- You want release health, JS error reporting and rollback in one dashboard.
+
+## FAQ
+
+### Is hot-updater a hosted service?
+
+No. hot-updater is open-source software you deploy yourself. Its CLI sets up storage, a database and update-check functions on providers such as Cloudflare, Supabase, Firebase, Vercel, Azure or AWS, or on your own server.
+
+### Do hot-updater and Cresc both send diffs instead of full bundles?
+
+Yes, both diff. hot-updater uses bsdiff for changed Hermes bundles. Cresc applies a Hermes bytecode structure-aware transform before diffing, which removes the offset shifts that make plain bsdiff patches large: in an open benchmark a one-line change was 3.4 KB with Cresc and 93.7 KB with bsdiff.
+
+### Can I self-host Cresc?
+
+Yes. Self-hosted deployment is offered on a separately negotiated plan for teams with compliance or data-residency requirements; contact hi@cresc.dev. The standard plans are hosted with CDN delivery included, and the client SDK (MIT) and CLI (BSD-3-Clause) are open source either way.
+
+### Does Cresc support HarmonyOS?
+
+Yes. Cresc supports HarmonyOS NEXT apps built with RNOH, with the same CLI, dashboard and rollback behavior as iOS and Android. See [HarmonyOS](/docs/harmony).
+
+## Related
+
+- [Cresc as a CodePush alternative](/codepush-alternative)
+- [Revopush vs Cresc](/revopush-vs-cresc)
+- [Stallion vs Cresc](/stallion-vs-cresc)
+- [Expo Updates vs Cresc](/expo-updates-vs-cresc)
+- [Pricing](/pricing)
+
+<Footer />

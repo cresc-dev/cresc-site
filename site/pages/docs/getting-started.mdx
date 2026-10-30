@@ -1,6 +1,7 @@
 ---
 order: 0
 title: Installation & Config
+seoTitle: "Install react-native-update for iOS & Android - Cresc"
 description: "Install react-native-update and configure iOS, Android and HarmonyOS native projects to start shipping React Native OTA updates with Cresc."
 type: Quick Start
 ---
@@ -14,12 +15,14 @@ We assume you already have everything set up for React Native development, inclu
 
 If the app currently uses `react-native-code-push`, remove it and follow the steps below; the [CodePush API migration guide](/codepush-api-migration#1-swap-the-native-bundle-url) shows the before-and-after native code.
 
+This page covers iOS and Android. For HarmonyOS NEXT apps built with RNOH, the native setup is in the [HarmonyOS guide](/docs/harmony).
+
 :::tip Recommended: use the Skill before manual setup
 If your AI coding tool supports Skills, start with [Install & Use Skills](/docs/skills) and let AI handle most of the installation, native checks, and wrapper changes for your current project. This page stays as the manual fallback for brownfield apps, custom workspaces, or teams reviewing every generated change.
 :::
 
 <Steps>
-### Installation
+## Installation
 
 Run the following commands in your project's root directory (if you use other package managers like yarn, substitute accordingly):
 
@@ -72,7 +75,7 @@ Please do not mix package managers like `npm/yarn/pnpm` and their associated `lo
 Remember, any modifications under the `ios` or `android` directories require recompilation (using `npx react-native run-ios/android` or compiling inside Xcode/Android Studio) to take effect.
 :::
 
-### Manual Link
+## Manual Link
 
 If RN version >= 0.60, you don't need this manual linking step.
 
@@ -80,7 +83,7 @@ If RN version >= 0.60, you don't need this manual linking step.
 Note: If you have a brownfield native-RN project, or monorepo, or any custom scenario, the auto-linking function might fail because custom configurations might be incomplete or not fit the standard RN directory structure. Even if RN version >= 0.60, you might still need manual link operation.
 :::
 
-#### iOS
+### iOS
 
 <details>
 <summary>RN &lt; 0.60 and using CocoaPods (Recommended)</summary>
@@ -116,7 +119,7 @@ date +%s > "$DEST/pushy_build_time.txt"
 
 </details>
 
-#### Android
+### Android
 
 <details>
 <summary>RN &lt; 0.60 or other scenarios preventing auto-link</summary>
@@ -141,12 +144,12 @@ date +%s > "$DEST/pushy_build_time.txt"
 
 </details>
 
-### Configuring the Bundle URL
+## Configuring the Bundle URL
 
-If you use `expo` 48+ and `react-native-update` >= 10.28.2, the bundle URL configures automatically. Skip straight to the [next step](#adding-a-deep-link-for-testing).
-If you don't use `expo`, or use an expo version under 48, manually follow the steps down below.
+If you use `expo` 50+ and `react-native-update` >= 10.28.2, the bundle URL configures automatically. Skip straight to the [next step](#adding-a-deep-link-for-testing).
+If you don't use `expo`, or use an expo version under 50, manually follow the steps down below.
 
-#### iOS
+### iOS
 
 Add the following to the file that provides `bundleURL`. Starting with RN 0.88, the iOS template for new projects uses the UIScene life cycle (required for apps built with the iOS 27 SDK), so the React Native entry point and the `bundleURL` method moved from `AppDelegate.swift` to `SceneDelegate.swift`. Older versions keep it in `AppDelegate.mm` / `AppDelegate.m` / `AppDelegate.swift` (different RN versions have different file suffixes). Whichever file it lives in, it is the same `bundleURL` method you change.
 
@@ -252,7 +255,7 @@ class AppDelegate: RCTAppDelegate {
 </Tab>
 </Tabs>
 
-#### Android
+### Android
 
 Add the following piece of code inside `MainApplication` (if you package React Native as an AAR with `@callstack/react-native-brownfield`, or the host app does not use `ReactApplication` / `ReactActivity`, see [Brownfield Integration](/docs/brownfield)):
 
@@ -349,7 +352,7 @@ public class MainApplication extends Application implements ReactApplication {
 Remember, any modifications under the `ios` or `android` directories require recompilation (using `npx react-native run-ios/android` or compiling inside Xcode/Android Studio) to take effect.
 :::
 
-### Overriding Android's onCreate
+## Overriding Android's onCreate
 
 If your app uses `react-native-screens` through `react-navigation`, Android can show a blank screen after an OTA-triggered restart unless `RNScreensFragmentFactory` is registered in `MainActivity`.
 
@@ -403,7 +406,7 @@ public class MainActivity extends ReactActivity {
 </Tab>
 </Tabs>
 
-### Adding A Deep Link For Testing
+## Adding A Deep Link For Testing
 
 Deep links make OTA testing much easier because you can open a specific update payload directly from a QR code or test page.
 
@@ -428,12 +431,12 @@ In `android/app/src/main/AndroidManifest.xml`:
         <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
 
-      <!-- ↓↓↓ Include nested schemas underneath separating entirely separated intent properties entirely smoothly safely cleanly -->
+      <!-- ↓↓↓ Add a separate intent-filter for the deep link -->
       <intent-filter>
         <action android:name="android.intent.action.VIEW" />
         <category android:name="android.intent.category.DEFAULT" />
         <category android:name="android.intent.category.BROWSABLE" />
-        <!-- Set distinct URI custom protocols resolving globally securely directly safely dynamically cleanly completely completely implicitly cleanly seamlessly dynamically appropriately safely globally reliably successfully explicitly flexibly automatically completely -->
+        <!-- Use a custom scheme unique to your app -->
         <data android:scheme="unique_custom_uri_protocol_do_not_conflict_with_others" />
       </intent-filter>
       <!-- ↑↑↑ -->
@@ -466,7 +469,7 @@ If you implement a custom update UI, read the update state from `useUpdate()` in
 :::
 
 
-### Disabling Android Image Crunch Operations
+## Disabling Android Image Crunch Operations
 
 Android can automatically reprocess PNG assets during release builds. That makes binary diffs less predictable and can unnecessarily increase package size. Disable `crunchPngs` in the release build type:
 
@@ -489,7 +492,7 @@ android {
 ```
 
 
-### Login & Creating Applications
+## Login & Creating Applications
 
 Create an account and sign in at [admin.cresc.dev](https://admin.cresc.dev), then use the CLI to authenticate locally:
 

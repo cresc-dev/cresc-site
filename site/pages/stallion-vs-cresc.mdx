@@ -1,0 +1,95 @@
+---
+title: Stallion vs Cresc for React Native OTA updates
+seoTitle: "Stallion vs Cresc: React Native OTA Update Pricing & Features"
+description: "Compare Stallion and Cresc for React Native OTA updates on pricing, differential patches, rollback, Expo and New Architecture support, and HarmonyOS."
+pageType: doc-wide
+sidebar: false
+footer: false
+head:
+  - - meta
+    - name: keywords
+      content: stallion vs cresc, stallion alternative, stalliontech pricing, react-native-stallion alternative, react native ota comparison
+---
+
+import Footer from "../components/Footer";
+
+# Stallion vs Cresc for React Native OTA updates
+
+[Stallion](https://stalliontech.io) and Cresc are both hosted React Native OTA services with differential patches, automatic rollback and a dashboard. They differ in how they bill, which platforms they cover, and how small their patches get for Hermes apps.
+
+*Facts about Stallion are taken from its official pricing page, documentation and SDK repository as of October 2026. Tell us at hi@cresc.dev if anything here is out of date.*
+
+## Short answer
+
+- Choose **Stallion** if you prefer a single Pro plan sized by monthly active users.
+- Choose **Cresc** if you want more granular tiers, the smallest Hermes patches, HarmonyOS support, or support for React Native versions older than 0.76.
+
+## Comparison table
+
+| Topic | Stallion | Cresc |
+| --- | --- | --- |
+| Hosting model | Hosted; paid on-premise tier | Hosted with global CDN included; self-hosted deployment on a custom-priced plan |
+| Client SDK | `react-native-stallion` (MIT) | `react-native-update` (MIT) |
+| Billing unit | Monthly active users plus download and upload bandwidth | Daily update checks; CDN included |
+| Free tier | 10,000 MAU, 50 GB download per month, no overage | 1,000 checks/day, 3 apps |
+| Paid tiers | Pro $64/mo ($51/mo yearly): 100K MAU, 2 TB; Enterprise and On-Premise custom | $19, $39, $99 (1M checks/day), $399, $1,699 |
+| Overage | Allowed on Pro; rate not published | None; checks over the daily quota return no update until midnight |
+| Diff updates | Binary differential patches between Stallion bundles; the bundle shipped in the store binary is not patched, and the first request for a new base gets a full bundle | Hermes bytecode-aware diff against every bound native package, including the bundle in the store binary: 3.4 KB for a one-line fix ([benchmark](https://github.com/sunnylqm/hbc-diff-benchmark)) |
+| Automatic rollback | Yes, with crash-loop protection | Yes, an update that crashes on launch rolls back automatically |
+| New Architecture | RN 0.76 and later | Legacy and New Architecture |
+| Platforms | iOS, Android | iOS, Android, **HarmonyOS**, tvOS |
+| Expo | SDK 52+ via plugin | SDK 50+ via prebuild; bundle URL configured automatically |
+| CodePush migration | Replace SDK, native entry points and root wrapper | Replace SDK, native bundle URL and update call; [API mapping guide](/codepush-api-migration) |
+| JS error reporting | Not listed | Built in, with source-mapped stack traces |
+| Default rollout | New bundles start at 0% and are raised manually | Bind to native packages, optionally with a percentage rollout |
+
+## Patch size and the first update after a store release
+
+The update that matters most is often the first one after a store release: a hotfix for something that slipped through review. Stallion does not patch the bundle shipped inside the store binary, so that first update downloads in full. Cresc diffs every OTA version against the bundle in each native package you uploaded and bound, so a one-line hotfix on top of a fresh store build still ships as a few KB.
+
+For later updates both services diff. Cresc additionally transforms Hermes bytecode before diffing, which removes the offset shifts that make plain binary patches of bytecode large. In the open [hbc-diff-benchmark](https://github.com/sunnylqm/hbc-diff-benchmark), a one-line change was 3.4 KB with Cresc and 93.7 KB with classic bsdiff.
+
+## Pricing at the same scale
+
+Stallion meters monthly active users and bandwidth; Cresc meters daily update checks and includes CDN delivery. An app with 100,000 monthly active users opening it about three times a day makes around 300,000 checks a day, which fits Cresc Pro at $99 a month with room to grow to 1,000,000. On Stallion the same audience fits Pro at $64 a month as long as downloads stay under 2 TB. Smaller apps can be cheaper on Cresc's $19 and $39 tiers, which Stallion has no equivalent for. Run the numbers on your own users and open rate.
+
+## When Stallion is the better fit
+
+- Your audience fits Stallion Pro and you prefer MAU-based billing.
+
+## When Cresc is the better fit
+
+- You want the first hotfix after a store release to be a small patch too.
+- You ship Hermes builds and want the smallest patches available.
+- You ship to HarmonyOS NEXT or Apple TV as well as iOS and Android.
+- You are on React Native older than 0.76.
+- Both offer self-hosted deployment on custom pricing; ask hi@cresc.dev for Cresc's.
+- You want JS error reporting and release health in the same dashboard as your OTA releases.
+
+## FAQ
+
+### Does Stallion support differential updates?
+
+Yes. Stallion generates binary patches between Stallion bundle versions on demand. The bundle inside the store binary is not patched, and the first device to request a new base receives a full bundle while the patch is generated.
+
+### Does Cresc patch the bundle that shipped in the app store build?
+
+Yes. You upload each native build to Cresc, and every OTA version you bind to it is diffed against the bundle inside that exact build. The first hotfix after a store release is a patch, not a full download.
+
+### Which is cheaper, Stallion or Cresc?
+
+It depends on your user count, how often users open the app, and how much you release. Stallion Pro is $64 a month for 100,000 monthly active users and 2 TB of downloads. Cresc Pro is $99 a month for 1,000,000 update checks a day with CDN delivery included, and Cresc has $19 and $39 tiers for smaller apps.
+
+### Does Stallion support HarmonyOS?
+
+Its documentation covers iOS and Android. Cresc supports iOS, Android and HarmonyOS NEXT through RNOH.
+
+## Related
+
+- [Cresc as a CodePush alternative](/codepush-alternative)
+- [Revopush vs Cresc](/revopush-vs-cresc)
+- [hot-updater vs Cresc](/hot-updater-vs-cresc)
+- [Expo Updates vs Cresc](/expo-updates-vs-cresc)
+- [Pricing](/pricing)
+
+<Footer />

@@ -1,0 +1,90 @@
+---
+title: App Center and CodePush are retired. What React Native teams should do now
+seoTitle: "App Center Retired: React Native CodePush Migration Guide (2026)"
+description: "App Center and CodePush were retired in March 2025, and react-native-code-push doesn't support the New Architecture. Your options and a migration plan."
+pageType: doc-wide
+sidebar: false
+footer: false
+head:
+  - - meta
+    - name: keywords
+      content: app center retirement, codepush retired, codepush new architecture, react-native-code-push alternative, code-push-server, codepush replacement 2026
+---
+
+import Footer from "../components/Footer";
+
+# App Center and CodePush are retired. What React Native teams should do now
+
+Visual Studio App Center was retired on **March 31, 2025**. CodePush went with it. Only App Center's Analytics and Diagnostics features continued past that date. If your React Native app still calls `codePush.sync()`, it is either talking to a service that no longer exists or to a server you now have to run yourself.
+
+There is a second, quieter deadline. React Native 0.82 runs **only** on the New Architecture: setting `newArchEnabled` to `false` no longer has any effect. The archived `react-native-code-push` README says it plainly: CodePush won't support the New Architecture. So even teams that self-host a CodePush server are stuck on React Native 0.81 or earlier until they replace the client SDK.
+
+## What actually happened
+
+| Item | Status |
+| --- | --- |
+| App Center (build, test, distribute, CodePush) | Retired March 31, 2025 |
+| App Center Analytics and Diagnostics | Continued past the retirement date |
+| [`microsoft/react-native-code-push`](https://github.com/microsoft/react-native-code-push) | Archived, read-only. Last release on npm is 9.0.1 |
+| [`microsoft/code-push-server`](https://github.com/microsoft/code-push-server) | Released under MIT so teams can self-host, then archived. No support, no issues or contributions accepted |
+| New Architecture support in `react-native-code-push` | None. React Native 0.82+ cannot opt out of the New Architecture |
+
+## Your options
+
+### 1. Self-host the standalone code-push-server
+
+Microsoft open-sourced a standalone CodePush server that works with the existing client SDK. It keeps your current code, but you take on running the API, storage, CDN and database yourself. It is archived with no support. It also does nothing about the client SDK: you stay on the legacy architecture and therefore on React Native 0.81 or older.
+
+**Fits:** apps that are frozen on an old React Native version and only need emergency fixes.
+
+### 2. Move to a CodePush-compatible hosted service
+
+Some vendors run a server that speaks the CodePush protocol, so you only change the server URL. This is the fastest switch, but check whether the vendor ships its own client SDK with New Architecture support. If it still relies on the archived `react-native-code-push` module, you inherit the same React Native 0.82 dead end.
+
+### 3. Move to Expo EAS Update
+
+A strong choice if you are already on Expo and your monthly active users fit the plan. EAS Update is billed per updated MAU plus bandwidth overage, so cost grows with your user base. Bare React Native apps need the `expo` package and Expo's Metro config first, and EAS Update is New Architecture only from Expo SDK 55. See [Expo pricing vs Cresc](/expo-pricing-vs-cresc).
+
+### 4. Move to an OTA service with its own maintained SDK
+
+This is where Cresc fits. The [`react-native-update`](https://github.com/reactnativecn/react-native-update) SDK is MIT-licensed and actively maintained, supports the New Architecture as well as the legacy one, and runs on iOS, Android and HarmonyOS. Updates ship as Hermes-bytecode-aware binary diffs against the bundle in every native package you bound (a one-line fix is a few KB, not the whole bundle), crashes after an update roll back automatically, and the hosted plans include CDN delivery with no bandwidth overage.
+
+## A migration plan from CodePush to Cresc
+
+1. **Inventory your CodePush usage.** Search for `codePush(`, `codePush.sync`, `checkForUpdate`, `notifyAppReady`, `InstallMode` and your deployment keys. The [API migration guide](/codepush-api-migration) maps every one of them to its Cresc equivalent.
+2. **Create apps in Cresc.** One app per platform, the same way you had one CodePush app per platform. Your Staging and Production deployments map to Cresc versions bound to native packages, with gradual rollout.
+3. **Swap the SDK.** Remove `react-native-code-push`, then follow [Installation & Config](/docs/getting-started) to add `react-native-update` and point iOS and Android at its bundle URL.
+4. **Port the update UI.** Replace `codePush.sync()` with the [`useUpdate` hook](/docs/integration), or keep a silent update strategy.
+5. **Wire up CI.** Replace `appcenter codepush release-react` with the [Cresc CLI](/docs/cli) and an [API key](/docs/api-token).
+6. **Ship one native release with both safety nets.** The first store build with Cresc is the baseline every later OTA patch is diffed against. Keep it small and well-tested.
+7. **Upgrade React Native when you are ready.** With CodePush gone from the dependency tree, nothing holds you below React Native 0.82 any more.
+
+The full step list, including Expo projects, is in the [migration checklist](/codepush-migration-checklist).
+
+## FAQ
+
+### Does CodePush still work after App Center was retired?
+
+Not against App Center: the hosted service shut down on March 31, 2025. The client SDK only keeps working if you point it at a server you run yourself, such as Microsoft's archived standalone code-push-server.
+
+### Does react-native-code-push support the New Architecture?
+
+No. Its archived README states that it won't support the New Architecture, and React Native 0.82 no longer lets apps opt out of it. Upgrading to 0.82 or later means replacing the CodePush client SDK.
+
+### Can I keep using my existing CodePush releases after migrating?
+
+Your store build changes when you swap SDKs, so OTA history does not carry over. Your first native release with Cresc becomes the new baseline, and you publish patches on top of it from then on.
+
+### How long does a migration to Cresc take?
+
+For most apps the code change is small: one dependency swap, the native bundle URL hook, and replacing `codePush.sync()`. The [API migration guide](/codepush-api-migration) shows before-and-after code for each call.
+
+## Related
+
+- [react-native-code-push to Cresc API migration](/codepush-api-migration)
+- [CodePush & Expo Updates migration checklist](/codepush-migration-checklist)
+- [Cresc as a CodePush alternative](/codepush-alternative)
+- [React Native New Architecture OTA updates](/react-native-new-architecture-ota)
+- [Pricing](/pricing)
+
+<Footer />
