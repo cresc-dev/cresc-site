@@ -48,6 +48,10 @@ function Footer() {
       title: "Links",
       links: [
         { text: "React Native OTA Guide", href: "/react-native-ota-updates" },
+        { text: "Publish Hot Updates", href: "/docs/publish" },
+        { text: "CLI Reference", href: "/docs/cli" },
+        { text: "Release Analytics", href: "/docs/analytics" },
+        { text: "Brownfield Integration", href: "/docs/brownfield" },
         { text: "New Architecture OTA Guide", href: "/react-native-new-architecture-ota" },
         { text: "HarmonyOS OTA Guide", href: "/docs/harmony" },
         { text: "Changelog", href: "/docs/changelog" },

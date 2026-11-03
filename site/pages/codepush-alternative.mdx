@@ -36,7 +36,7 @@ If your React Native team is moving away from discontinued CodePush or seeking a
 
 - **CodePush reached end-of-life** and is no longer maintained. Teams need a future-proof, actively developed home for React Native hot updates.
 - **Expo Updates (EAS Update) is costly at scale**: Metered billing ($0.005 per additional update MAU and $0.10/GiB edge bandwidth) creates unpredictable, runaway monthly invoices for high-traffic apps.
-- **Full-bundle delivery wastes bandwidth**: Re-downloading whole multi-megabyte JavaScript bundles on every bugfix wastes end-user data and cellular battery compared to differential patches.
+- **Full-bundle downloads waste bandwidth**: Re-downloading a whole multi-megabyte JavaScript bundle for a small bugfix wastes end-user data and battery, so patch size matters when you compare OTA tools.
 - **Teams still need rapid release cycles**: Shipping critical bug fixes and improvements in seconds without waiting for app store review delays remains essential.
 - **Release engineers demand predictability**: Engineering teams need transparent flat pricing, CI-friendly publishing, automated rollback protection, and full release auditability.
 
@@ -100,7 +100,7 @@ Yes. For CodePush users, Cresc provides the exact same operational mental model:
 ### How much cheaper is Cresc compared to Expo Updates?
 
 For most active apps, Cresc delivers **70% to 90% cost savings**:
-- Expo charges $199/month for its Production plan, which only includes 50,000 update MAUs and 1 TiB bandwidth. Every additional updated user costs $0.005, and each extra GiB of bandwidth costs $0.10. An app serving 150,000 users with two 5 MB updates a month can easily face monthly bills of **$700+**.
+- Expo charges $199/month for its Production plan, which only includes 50,000 update MAUs and 1 TiB bandwidth. Every additional updated user costs $0.005, and each extra GiB of bandwidth costs $0.10. An app with 150,000 updated users a month pays **about $699** ($199 + 100,000 × $0.005) before any bandwidth overage.
 - With Cresc, the **Pro tier is just $99/month** (less than half Expo's base fee) and covers **1,000,000 daily queries** with global CDN bandwidth included and zero overage fees. Furthermore, Cresc's HDiff delta compression shrinks downloads to tens of kilobytes, drastically reducing data transfer.
 
 ### What still requires a native release?

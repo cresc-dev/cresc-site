@@ -38,6 +38,19 @@ flowchart TD
 2. Iterate on your business logic over the baseline (add/remove JS code, static assets). Run `cresc bundle` to generate and publish a hot update without recompiling the native app. We recommend using git tags for hot update versioning (e.g., `v1.0.1`).
 3. If there are native changes during iteration, you must publish and upload a new native baseline version (repeat step 1, but set a different native version number). You can maintain just one native baseline or multiple versions concurrently.
 
+## Publish commands at a glance
+
+| Goal | Command |
+| --- | --- |
+| Upload an iOS baseline | `cresc uploadIpa <file.ipa>` |
+| Upload an Android baseline | `cresc uploadApk <file.apk>` or `cresc uploadAab <file.aab>` |
+| Build and publish a hot update | `cresc bundle --platform <ios\|android>` |
+| Publish an existing `.ppk` | `cresc publish <file.ppk> --platform <ios\|android>` |
+| Bind a version to native packages | `cresc update --platform <ios\|android> --versionId <id> --packageVersionRange ">=1.0.0 <2.0.0"` |
+| Roll out to 10% of devices | Add `--rollout 10` to `cresc update` |
+
+See the [CLI reference](/docs/cli) for every option, or [API keys](/docs/api-token) to run these commands in CI/CD.
+
 ## Publishing Native Baseline Version
 
 ### iOS
@@ -225,3 +238,25 @@ Force boot overrides the user-side update strategy. Reserve it for emergencies l
 - **Native check only**: the interactive JS update flow ignores this flag
 - **Safety guards still apply**: the device-local rollback guard takes precedence over force boot, and first-launch crash protection still rolls back automatically if the activated version crashes
 - **The flag lives on the binding**: republishing (rebinding) replaces the binding and clears the flag; you can also choose "Cancel force boot" from the package menu
+
+## FAQ
+
+### Why don't users receive a published hot update?
+
+A published version reaches no one until it is bound to a native package. Bind it when the CLI prompts you, with `cresc update`, or from the web dashboard. The package you distribute must also be strictly identical to the one you uploaded as the baseline.
+
+### When do I need a native release instead of a hot update?
+
+JavaScript code, JavaScript components, and JavaScript assets can ship as a hot update. Changes to native code, native settings, or native assets need a new native build, which you upload as a new baseline.
+
+### How do I roll out a React Native hot update gradually?
+
+Set a rollout percentage from 1 to 100 in the dashboard or with `cresc update --rollout`. Each device's bucket comes from a stable hash of its UUID, so repeated checks do not move it in or out of the rollout. Setting the percentage to 100 promotes the version to a full release. This requires `react-native-update` 10.32.0 or later.
+
+### What happens if a hot update crashes the app?
+
+First-launch crash protection rolls back automatically if the activated version crashes. If an update has killed your JavaScript entirely, publish a verified fix with force boot, which uses the native cold-start check available from `react-native-update` 10.52.1.
+
+### Can I publish hot updates from CI/CD?
+
+Yes. Create an [API key](/docs/api-token), expose it as `CRESC_API_TOKEN`, and pass `--name` plus a binding option such as `--packageVersionRange` to `cresc bundle`. CI runs without prompts, so a version with no binding option is published but reaches no users.

@@ -299,9 +299,9 @@ const comparisonRows = [
   },
   {
     scenario: "Real-world 100K users",
-    badge: "Save 80%+ monthly",
-    expo: "Expo Production ($199) + 50K extra users ($250) + bandwidth overage (~$50+) = ~$500+/mo.",
-    cresc: "Pro is $99/mo flat (or Premium at $39/mo if checks fit), delivering up to 80%+ savings with zero surprise invoices.",
+    badge: "Save about 78% monthly",
+    expo: "Expo Production ($199) + 50K extra users ($250) = $449/mo, plus $0.10/GiB once bandwidth passes the allowance.",
+    cresc: "Pro is $99/mo flat (or Premium at $39/mo if checks fit), about 78% lower or more, with zero surprise invoices.",
   },
   {
     scenario: "Bandwidth & Payload",

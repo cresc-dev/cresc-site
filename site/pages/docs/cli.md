@@ -6,6 +6,8 @@ description: "Cresc CLI reference (react-native-update-cli): bundle, publish and
 type: Guide
 ---
 
+The Cresc CLI, published on npm as `react-native-update-cli`, provides the `cresc` command. Use it to create apps, upload native baselines, bundle and publish React Native OTA updates, and control who receives them, from a terminal or a CI/CD pipeline.
+
 Migrating scripts from the App Center CLI? See the [App Center to Cresc command mapping](/codepush-api-migration#5-cli-mapping).
 
 ## Installation
@@ -13,6 +15,26 @@ Migrating scripts from the App Center CLI? See the [App Center to Cresc command 
 ```bash
 $ npm install -g react-native-update-cli
 ```
+
+## Typical release workflow
+
+```bash
+# One-time setup
+cresc login
+cresc createApp --platform android
+
+# After each native build
+cresc uploadApk android/app/build/outputs/apk/release/app-release.apk
+
+# Ship a hot update to 10% of devices on matching native versions
+cresc bundle --platform android \
+  --name "1.0.1" \
+  --description "Fix checkout crash" \
+  --packageVersionRange ">=1.0.0 <2.0.0" \
+  --rollout 10
+```
+
+For the full walkthrough, see [Publishing Hot Updates](/docs/publish).
 
 ## Commands
 
@@ -280,3 +302,17 @@ Successfully bound update 211343 to native baseline 2.0 (id: 68219)
 Successfully bound update 211343 to native baseline 1.0 (id: 68158)
 Operation complete, 5 active native packages bound.
 ```
+
+## FAQ
+
+### What is the difference between cresc bundle and cresc publish?
+
+`cresc bundle` builds a `.ppk` hot update package and can publish it in the same run. `cresc publish` uploads a `.ppk` you already built.
+
+### How do I use the Cresc CLI in CI/CD?
+
+Create an [API key](/docs/api-token), set it as the `CRESC_API_TOKEN` environment variable, and pass `--name` plus a binding option to `cresc bundle`. Without a binding option, the version is published but reaches no users.
+
+### How do I preview which native packages an update will bind to?
+
+Add `--dryRun` to `cresc update`. It lists the matching native packages without changing any bindings. This requires CLI v1.45.4 or later.

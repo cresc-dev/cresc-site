@@ -4,6 +4,7 @@ const organization = {
   "@type": "Organization",
   "@id": "https://cresc.dev/#organization",
   name: "Cresc",
+  alternateName: "Cresc React Native OTA",
   url: "https://cresc.dev/",
   logo: {
     "@type": "ImageObject",
@@ -12,7 +13,13 @@ const organization = {
     height: 512,
   },
   email: "hi@cresc.dev",
-  sameAs: ["https://github.com/reactnativecn/react-native-update"],
+  sameAs: [
+    "https://github.com/cresc-dev",
+    "https://github.com/reactnativecn/react-native-update",
+    "https://github.com/reactnativecn/react-native-update-cli",
+    "https://www.npmjs.com/package/react-native-update",
+    "https://www.npmjs.com/package/react-native-update-cli",
+  ],
 };
 
 export const homeSchema = {
@@ -23,6 +30,7 @@ export const homeSchema = {
       "@type": "WebSite",
       "@id": "https://cresc.dev/#website",
       name: "Cresc",
+      alternateName: "Cresc React Native OTA",
       url: "https://cresc.dev/",
       publisher: { "@id": "https://cresc.dev/#organization" },
     },
@@ -143,29 +151,6 @@ export const reactNativeOtaSchema = {
       acceptedAnswer: {
         "@type": "Answer",
         text: "Native code, native dependency changes, and any modification that requires recompilation still needs a new build distributed through the store or other native release channels.",
-      },
-    },
-  ],
-};
-
-export const expoPricingSchema = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: [
-    {
-      "@type": "Question",
-      name: "How does Cresc compare with Expo at the entry tier?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Expo Starter and Cresc Standard both list a 19 USD monthly base price in the April 17, 2026 comparison, but they use different meters. Expo EAS Update measures update MAUs and bandwidth, while Cresc uses fixed monthly tiers based on daily update checks.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "How should Cresc and Expo be compared at scale?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Cresc uses fixed monthly tiers with included CDN delivery, while Expo EAS Update uses plan pricing plus usage-based billing for update MAUs and edge bandwidth beyond plan limits. Cresc plans only upgrade upward; when a customer upgrades, unused value from the current plan is converted into extra days on the new plan. The practical comparison is the monthly scenario, included ceiling, and whether extra traffic creates an automatic overage bill.",
       },
     },
   ],

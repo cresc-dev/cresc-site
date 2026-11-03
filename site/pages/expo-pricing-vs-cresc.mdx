@@ -1,6 +1,7 @@
 ---
 title: Expo pricing vs Cresc for React Native OTA
-description: Compare Expo EAS Update pricing and Cresc pricing for React Native OTA workflows, including Starter, Production, Enterprise, and usage-based overages.
+seoTitle: "Expo & EAS Update Pricing 2026: Plans, Overages vs Cresc"
+description: "Expo and EAS Update pricing for 2026: Free, Starter, Production and Enterprise plans, MAU and bandwidth overage rates, worked monthly costs, and how Cresc compares."
 pageType: doc-wide
 sidebar: false
 footer: false
@@ -13,121 +14,121 @@ head:
       content: https://cresc.dev/expo-pricing-vs-cresc
   - - meta
     - property: og:title
-      content: Expo pricing vs Cresc for React Native OTA
+      content: "Expo & EAS Update Pricing 2026: Plans, Overages vs Cresc"
   - - meta
     - property: og:description
-      content: Compare Expo EAS Update pricing and Cresc pricing for React Native OTA workflows, including Starter, Production, Enterprise, and usage-based overages.
+      content: "Expo and EAS Update pricing for 2026: Free, Starter, Production and Enterprise plans, MAU and bandwidth overage rates, worked monthly costs, and how Cresc compares."
   - - meta
     - name: keywords
-      content: expo pricing vs cresc, expo update pricing, react native ota pricing, eas update pricing alternative
+      content: expo pricing, eas update pricing, expo update pricing, expo ota pricing, expo pricing vs cresc, react native ota pricing
 ---
 
 import Footer from "../components/Footer";
-import JsonLd from "../components/seo/JsonLd";
-import { expoPricingSchema } from "../lib/schema";
 
-<JsonLd data={expoPricingSchema} />
+# Expo pricing (EAS Update) vs Cresc for React Native OTA
 
-# Expo pricing vs Cresc for React Native OTA
+Expo's paid plans start at **$19/month (Starter)** and **$199/month (Production)**, plus usage. Over-the-air updates are billed on monthly active users (**$0.005 per extra MAU** up to 200,000) and bandwidth (**$0.10 per extra GiB**). Cresc charges a fixed monthly price by daily update checks, from **$19/month**, with CDN delivery included and no automatic overage.
 
-Short answer: **do not compare Expo MAUs directly with Cresc daily queries**. They are different meters. Compare the monthly scenario instead: base price, included capacity, and whether extra usage can create a surprise bill after that capacity is used.
-
-> Pricing snapshot checked against Expo official pricing and billing docs on **April 17, 2026**.
-
-## What is being compared?
-
-| Service | Meter | What counts |
-| --- | --- | --- |
-| Expo EAS Update | Update MAUs + global edge bandwidth | A unique installation counts as an update MAU only if it downloads at least one update during the billing period. |
-| Cresc | Daily update checks | A client request counts when the app asks Cresc whether an update is available, regardless of whether a new update exists. |
-
-That means the two products do not share one universal quota unit. A readable comparison has to use monthly scenarios, not raw tier names.
+> Checked against Expo's [pricing page](https://expo.dev/pricing) and [usage-based pricing docs](https://docs.expo.dev/billing/usage-based-pricing/) on **November 3, 2026**. Expo renamed EAS Update to **Expo Update**; the `eas` CLI and `eas.json` keep the old name, so this page uses both. Always confirm current numbers with Expo before budgeting.
 
 ## Expo pricing snapshot
 
-| Plan | Monthly price | Included EAS Update capacity |
-| --- | --- | --- |
-| Expo Free | $0/mo | 1K update MAUs |
-| Expo Starter | $19/mo + usage | 3K update MAUs, 100 GiB bandwidth |
-| Expo Production | $199/mo + usage | 50K update MAUs, 1 TiB bandwidth |
-| Expo Enterprise | Custom | Public pricing page does not publish a comparable monthly number |
+| Plan | Monthly price | Update MAUs included | Bandwidth included | Build credit |
+| --- | --- | --- | --- | --- |
+| Free | $0 | 1,000 (no overage available) | 100 GiB | None (15 Android and 15 iOS low-priority builds) |
+| Starter | $19 + usage | 3,000 | 100 GiB | $45 |
+| Production | $199 + usage | 50,000 | 1 TiB | $225 |
+| Enterprise | Custom | Billed from the first MAU at preferred rates | 40 TiB | $1,000 |
 
-Expo's official usage-based pricing for EAS Update adds:
+The Expo SDK itself is free and open source. These prices apply to Expo's cloud services, which also cover builds, store submission, and CI/CD workflows. Cresc covers OTA delivery only, so include any build credit you would use when comparing totals.
 
-- `$0.005` per additional updated user
-- `$0.10` per additional GiB of global edge bandwidth
+## EAS Update overage rates
+
+| Meter | Starter and Production rate |
+| --- | --- |
+| Update MAUs, up to 200,000 | $0.005 each |
+| Update MAUs, 200,001 to 500,000 | $0.00375 each |
+| Update MAUs, 500,001 to 1,000,000 | $0.0034 each |
+| Global edge bandwidth | $0.10 per GiB after the allowance |
+| Update storage | $0.05 per GiB after the allowance |
+
+Each MAU over the plan's allowance also adds 40 MiB to the bandwidth allowance. A device counts as one MAU only if it downloads at least one update in the billing period, however many it downloads.
 
 ## Cresc pricing snapshot
 
-| Plan | Monthly price | Included delivery scale |
-| --- | --- | --- |
-| Cresc Standard | $19/mo | 10K daily queries |
-| Cresc Premium | $39/mo | 100K daily queries |
-| Cresc Pro | $99/mo | 1M daily queries |
-| Cresc Max | $399/mo | 10M daily queries |
-| Cresc Ultra | $1,699/mo | 100M daily queries |
+| Plan | Monthly price | Daily update checks | Max bundle size |
+| --- | --- | --- | --- |
+| Free | $0 | 1K | 3 MB |
+| Standard | $19 | 10K | 15 MB |
+| Premium | $39 | 100K | 50 MB |
+| Pro | $99 | 1M | 200 MB |
+| Max | $399 | 10M | 200 MB |
+| Ultra | $1,699 | 100M | 200 MB |
 
-## Scenario comparison
+See [Cresc pricing](/pricing) for the full plan details.
 
-| Scenario | Expo | Cresc |
-| --- | --- | --- |
-| First paid tier | Starter is `$19/mo`, then usage-based billing after 3K update MAUs and 100 GiB. | Standard is `$19/mo` with 10K update checks per day, CDN delivery included, and no automatic overage bill. |
-| Production traffic | Production is `$199/mo`, then usage-based billing after 50K update MAUs and 1 TiB. | Pro is `$99/mo` (half the price!) with 1M update checks per day and included CDN bandwidth. |
-| Real-world 100K users | Expo Production ($199) + 50K overage MAUs ($250) + bandwidth overage (~$50+) = **~$500+/mo**. | Pro is **$99/mo flat** (or Premium at $39/mo), delivering **80%+ savings** with zero surprise bills. |
-| High volume | Enterprise pricing is custom with high sales minimums. | Max and Ultra are fixed public tiers at `$399/mo` and `$1,699/mo`, so capacity planning stays explicit. |
+## What does each one cost per month?
 
-The useful takeaway is predictability and massive savings. Cresc gives fixed public tiers and does not turn a traffic spike into an automatic overage invoice. Expo can add usage charges when either update MAUs ($0.005/user) or edge bandwidth ($0.10/GiB) cross the included limit.
+The two products use different meters. Expo counts unique devices that download an update each month, while Cresc counts update checks per day, whether or not a new version exists. These examples assume every monthly user downloads at least one update, Expo bandwidth stays inside the allowance, and devices average the checks per day shown.
 
-When a Cresc tier is no longer enough, upgrading does not make the buyer forfeit the unused portion of the current plan. The higher tier takes effect after payment, the old subscription is cancelled, and the current plan's remaining value is converted into extra days on the new tier.
+| Monthly users | Expo | Cresc | Difference |
+| --- | --- | --- | --- |
+| 10,000 | Starter: $19 + 7,000 × $0.005 = **$54** | Premium: **$39** (up to 10 checks per user per day) | 28% lower |
+| 100,000 | Production: $199 + 50,000 × $0.005 = **$449** | Pro: **$99** (up to 10 checks per user per day) | 78% lower |
+| 500,000 | Production: $199 + 150,000 × $0.005 + 300,000 × $0.00375 = **$2,074** | Max: **$399** (up to 20 checks per user per day) | 81% lower |
 
-## Migrating from CodePush? Avoid the Expo pricing trap
-
-Teams moving off discontinued Microsoft CodePush often evaluate Expo EAS Update as the default successor. However, many engineering teams encounter severe bill shock: what used to be zero-cost on CodePush turns into recurring per-user monthly bills ($0.005/user) and edge bandwidth bills ($0.10/GiB) that compound as the app grows.
-
-Cresc provides the true spiritual and operational successor to CodePush:
-- **Transparent flat pricing**: starting at $19/mo (Standard) or $99/mo (Pro covering 1M checks/day), with zero per-user overage charges.
-- **Micro delta updates (3.4 KB for a one-line fix)**: Hermes-optimized differential patches cut data transfer by 90%+ compared to Expo's full multi-megabyte bundles.
-- **Global CDN included**: Worldwide edge delivery is included in the plan price.
+Bandwidth can add to the Expo column. At 100,000 users on Production the allowance is about 2,977 GiB (1 TiB plus 50,000 × 40 MiB), and anything above that costs $0.10 per GiB. Patch size decides how quickly you reach it: Expo Update supports bsdiff bundle diffing (opt-in from SDK 55, default from SDK 56), and Cresc patches measured 3.4 KB to about 98 KB in our [reproducible Hermes benchmark](https://github.com/sunnylqm/hbc-diff-benchmark).
 
 ## Expo's own usage example
 
-Expo's official billing documentation gives this example for the Starter plan:
+Expo's billing documentation works through a Starter plan example: 20 updates of 5 MiB each, sent to 10,000 users.
 
-- 20 updates
-- 5 MiB each
-- 10,000 updated users
+- 7,000 extra MAUs × $0.005 = $35.00
+- 603.13 GiB of extra bandwidth × $0.10 = $60.31
+- Extra usage: **$95.31**, or **$114.31** including the $19 plan fee (our sum)
 
-Their documented **extra usage** comes to **$95.31** for that month. Adding the Starter subscription itself means the all-in monthly cost would be **$114.31**. That total is an inference from the official example plus the public Starter plan fee. On Cresc, that same workload is handled smoothly on the **$19/mo Standard** or **$39/mo Premium** tier with vastly smaller delta payloads (3.4 KB to ~98 KB each in our [reproducible Hermes benchmark](https://github.com/sunnylqm/hbc-diff-benchmark), instead of 5 MiB).
+The example assumes each update downloads in full. Bundle diffing would lower the bandwidth part. On Cresc the same audience fits **Standard at $19/month** with up to one check per user per day, or **Premium at $39/month** with up to 10.
 
-## How Cresc scales
+## How Cresc plan changes work
 
-Cresc is not metered as a continuously discounted usage product. Plans only move upward. Start with the tier that covers current release traffic. When a plan ceiling is no longer enough, upgrade to the next fixed tier with a larger daily update-check allowance:
-
-| Cresc plan | Monthly price | Included delivery scale |
-| --- | --- | --- |
-| Standard | $19/mo | 10K daily queries |
-| Premium | $39/mo | 100K daily queries |
-| Pro | $99/mo | 1M daily queries |
-| Max | $399/mo | 10M daily queries |
-| Ultra | $1,699/mo | 100M daily queries |
-
-Upgrading changes the allowance, not the app integration or release flow. The unused value is preserved with this conversion:
+Cresc plans have fixed public ceilings, and extra traffic does not create an automatic overage invoice. When you need more capacity, you upgrade to the next tier. The integration and release flow stay the same, and the unused value of your current plan becomes extra days on the new one:
 
 ```text
 extraDays = floor(currentRemainingDays * currentPlanMonthlyPrice / newPlanMonthlyPrice)
 newExpiry = now + 30 days + extraDays
 ```
 
-That is the economic story worth emphasizing: **fixed public ceilings, intentional upgrades, massive cost savings, and preserved unused value instead of a usage bill that can grow across multiple meters**.
+## Migrating from CodePush
+
+Microsoft's CodePush had no per-user fee, so teams moving to EAS Update should budget for MAU and bandwidth billing as the app grows. Cresc keeps OTA as a fixed monthly cost and offers a [CodePush migration checklist](/codepush-migration-checklist) and [API migration guide](/codepush-api-migration).
 
 ## Which pricing model is easier to budget?
 
-- Choose **Expo** if you are already locked into Expo services and are comfortable budgeting around fluctuating update MAU plus bandwidth overages.
-- Choose **Cresc** if you want to slash OTA costs by up to 80%+, keep OTA pricing as a fixed predictable infrastructure cost, and eliminate surprise overage bills.
+- Choose **Expo** if you also use its builds, submission, and workflows, and the included credit offsets part of the bill.
+- Choose **Cresc** if OTA is the main thing you need and you want a fixed monthly price with no automatic overage.
+
+## FAQ
+
+### How much does Expo cost?
+
+The Expo SDK is free and open source. Expo's cloud services have a Free plan at $0, Starter at $19 per month plus usage, Production at $199 per month plus usage, and custom Enterprise pricing.
+
+### How much does EAS Update cost?
+
+EAS Update, now called Expo Update, is included in every Expo plan up to an allowance: 1,000 MAUs on Free, 3,000 on Starter, and 50,000 on Production. Paid plans then bill $0.005 per extra MAU up to 200,000, with lower rates above that, and $0.10 per GiB of bandwidth beyond the allowance.
+
+### What counts as an EAS Update MAU?
+
+A unique installation of your app that downloads at least one update during the billing period. It counts once, however many updates it downloads. Devices that download no updates that month are not counted.
+
+### How does Cresc compare with Expo at the entry tier?
+
+Expo Starter and Cresc Standard both cost $19 per month but use different meters. Starter includes 3,000 update MAUs and 100 GiB, then bills usage. Standard includes 10,000 update checks per day with CDN delivery and no automatic overage. Expo Starter also includes $45 of build credit, which Cresc does not offer.
 
 ## Related pages
 
 - [Expo Updates vs Cresc](/expo-updates-vs-cresc)
+- [Self-hosted Expo Updates vs Cresc](/expo-updates-self-hosted-vs-cresc)
 - [CodePush & Expo Updates alternative](/codepush-alternative)
 - [CodePush & Expo Updates migration checklist](/codepush-migration-checklist)
 - [Pricing](/pricing)
