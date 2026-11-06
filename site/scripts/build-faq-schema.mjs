@@ -39,6 +39,12 @@ function questionsIn(md, wholePage) {
   let inFaq = wholePage;
   let current;
   for (const line of md.split('\n')) {
+    // <Footer /> renders h3 column headers starting with "### Contact Us".
+    if (line === '### Contact Us') {
+      inFaq = false;
+      current = undefined;
+      break;
+    }
     if (line.startsWith('### ') && inFaq) {
       current = { name: line.slice(4).trim(), body: [] };
       questions.push(current);

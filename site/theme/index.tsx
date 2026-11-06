@@ -55,8 +55,10 @@ function SeoHead() {
   const addMeta = (key: 'name' | 'property', id: string, content: string) => {
     if (!declared.has(id)) meta.push({ [key]: id, content });
   };
+  addMeta('property', 'og:title', ogTitle);
+  if (description) addMeta('property', 'og:description', description);
   addMeta('property', 'og:url', url);
-  if (isDoc) addMeta('property', 'og:type', 'article');
+  addMeta('property', 'og:type', isDoc ? 'article' : 'website');
   addMeta('property', 'og:image', image);
   addMeta('property', 'og:image:width', '1200');
   addMeta('property', 'og:image:height', '630');
@@ -71,26 +73,51 @@ function SeoHead() {
     '@type': 'BreadcrumbList',
     itemListElement: trail.map(([name, item], i) => ({ '@type': 'ListItem', position: i + 1, name, item })),
   });
+  const publisher = {
+    '@type': 'Organization',
+    name: 'Cresc',
+    url: `${SITE_URL}/`,
+    logo: {
+      '@type': 'ImageObject',
+      url: `${SITE_URL}/images/logo-512.png`,
+      width: 512,
+      height: 512,
+    },
+  };
+  const pageWithDates = page as typeof page & { lastModified?: string; firstPublished?: string };
+  const techArticle = () => ({
+    '@context': 'https://schema.org',
+    '@type': 'TechArticle',
+    headline: ogTitle.replace(/\s+[-|]\s+Cresc$/i, ''),
+    description,
+    url,
+    inLanguage: 'en',
+    image,
+    ...(pageWithDates.firstPublished ? { datePublished: pageWithDates.firstPublished } : {}),
+    ...(pageWithDates.lastModified ? { dateModified: pageWithDates.lastModified } : {}),
+    author: { '@type': 'Organization', name: 'Cresc', url: `${SITE_URL}/` },
+    publisher,
+  });
   const isLanding = !isDoc && routePath !== '/' && pageType !== '404';
+  const isArticleLanding = isLanding && routePath !== '/pricing';
 
   const script = isLanding
-    ? [{ type: 'application/ld+json', innerHTML: JSON.stringify(breadcrumb([['Cresc', `${SITE_URL}/`], [page.title, url]])) }]
+    ? [
+        {
+          type: 'application/ld+json',
+          innerHTML: JSON.stringify(
+            isArticleLanding
+              ? [techArticle(), breadcrumb([['Cresc', `${SITE_URL}/`], [page.title, url]])]
+              : breadcrumb([['Cresc', `${SITE_URL}/`], [page.title, url]]),
+          ),
+        },
+      ]
     : isDoc
     ? [
         {
           type: 'application/ld+json',
           innerHTML: JSON.stringify([
-            {
-              '@context': 'https://schema.org',
-              '@type': 'TechArticle',
-              headline: page.title,
-              description,
-              url,
-              inLanguage: 'en',
-              image,
-              ...(page.lastModified ? { dateModified: page.lastModified } : {}),
-              publisher: { '@type': 'Organization', name: 'Cresc', url: `${SITE_URL}/` },
-            },
+            techArticle(),
             breadcrumb([
               ['Cresc', `${SITE_URL}/`],
               ['Documentation', `${SITE_URL}/docs/intro`],

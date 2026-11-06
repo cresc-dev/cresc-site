@@ -25,6 +25,7 @@ function Footer() {
         { text: "CodePush & Expo Updates Alternative", href: "/codepush-alternative" },
         { text: "CodePush & Expo Migration", href: "/codepush-migration-checklist" },
         { text: "CodePush API Migration", href: "/codepush-api-migration" },
+        { text: "Expo Updates Migration", href: "/expo-updates-migration" },
         { text: "App Center Retirement Guide", href: "/app-center-codepush-retirement" },
         {
           text: "GitHub Issues",
@@ -48,6 +49,7 @@ function Footer() {
       title: "Links",
       links: [
         { text: "React Native OTA Guide", href: "/react-native-ota-updates" },
+        { text: "Hermes Bytecode Diffs", href: "/react-native-hermes-ota" },
         { text: "Publish Hot Updates", href: "/docs/publish" },
         { text: "CLI Reference", href: "/docs/cli" },
         { text: "Release Analytics", href: "/docs/analytics" },

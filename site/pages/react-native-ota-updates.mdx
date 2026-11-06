@@ -1,92 +1,117 @@
 ---
 title: React Native OTA updates with Cresc
-description: Learn how React Native OTA updates work, what can be updated safely, what still needs a native release, and how Cresc handles delta delivery and rollback.
+seoTitle: "React Native OTA Updates: How Hot Updates, Diffs & Rollback Work"
+description: "How React Native over-the-air (OTA) updates work: what you can ship without app store review, App Store & Google Play rules, 3.4 KB Hermes diffs, and rollback."
 pageType: doc-wide
 sidebar: false
 footer: false
 head:
-  - - link
-    - rel: canonical
-      href: https://cresc.dev/react-native-ota-updates
-  - - meta
-    - property: og:url
-      content: https://cresc.dev/react-native-ota-updates
-  - - meta
-    - property: og:title
-      content: React Native OTA updates with Cresc
-  - - meta
-    - property: og:description
-      content: Learn how React Native OTA updates work, what can be updated safely, what still needs a native release, and how Cresc handles delta delivery and rollback.
   - - meta
     - name: keywords
-      content: react native ota updates, react native hot update, react native delta patch, react native rollback update
+      content: react native ota updates, react native over the air updates, react native hot update, react native ota app store guidelines, react native delta patch, react native rollback update
 ---
 
 import Footer from "../components/Footer";
-import JsonLd from "../components/seo/JsonLd";
-import { reactNativeOtaSchema } from "../lib/schema";
-
-<JsonLd data={reactNativeOtaSchema} />
 
 # React Native OTA updates with Cresc
 
-React Native OTA updates let teams ship JavaScript and bundled asset changes without waiting for a full app-store release every time. Cresc adds a release workflow around that model with delta patch delivery, rollback protection, and CI-friendly publishing.
+A React Native over-the-air (OTA) update ships JavaScript and bundled assets directly to installed apps, without waiting for an App Store or Google Play review cycle on every bug fix. Native binaries still go through the stores; OTA handles the JavaScript and asset changes in between.
 
-## What an OTA update can change
+Cresc pairs an open-source client SDK ([`react-native-update`](https://github.com/reactnativecn/react-native-update), MIT) and CLI with a managed delivery service built around [Hermes bytecode-aware delta patches](/react-native-hermes-ota), staged rollouts, automatic crash rollback, and [source-mapped JS error monitoring](/docs/errors).
 
-- JavaScript business logic.
-- UI logic implemented in JavaScript.
-- Assets bundled through JavaScript imports or `require`.
+## How React Native OTA updates work at runtime
 
-## What still needs a native release
+Every React Native release build embeds a JavaScript bundle (compiled to Hermes bytecode by default) and static assets inside the `.ipa`, `.apk`, or `.aab`. At launch, the native host asks a bundle URL provider which bundle file to load:
 
-- Any file or behavior changed under `ios/` or `android/`.
-- Native module additions, removals, or upgrades.
-- App capabilities that only exist after recompilation.
+1. **First launch after a store install:** no OTA update is stored on disk yet, so the SDK returns the embedded bundle shipped inside the app binary.
+2. **Checking for updates:** the client sends its `appKey`, native package version, build timestamp, and current bundle hash to the update server (on cold start, on app resume, or when your code calls `checkUpdate()`).
+3. **Delta download and patching:** when a newer version is bound to that native build, the client downloads only the binary diff against the bundle it already has on disk, verifies integrity by checksum and SHA-256, and reconstructs the target bundle locally.
+4. **Activation and health check:** depending on your [update strategy](/docs/integration), the app switches immediately (`switchVersion()`) or on the next cold start (`switchVersionLater()`). If the new bundle crashes before startup completes, the native layer rolls back to the previous working bundle automatically.
 
-## How Cresc handles OTA delivery
+On [React Native's New Architecture](/react-native-new-architecture-ota) (mandatory from React Native 0.82+), this hook runs through `UpdateContext.getBundleUrl(this)` on Android's `ReactHost` and `RCTPushy.bundleURL()` on iOS (`AppDelegate` through RN 0.87, `SceneDelegate` from RN 0.88). On Expo SDK 50+, `npx expo prebuild` wires both platforms automatically.
 
-1. Your native app build becomes the baseline package.
-2. Cresc compares later updates against that baseline.
-3. Users download the smaller delta patch instead of a full repeated bundle.
-4. If the release fails, rollback remains available.
+## What OTA can change vs what needs a store build
 
-## Why teams choose Cresc for OTA
+The boundary is simple: anything compiled into native machine code or declared in native manifests requires a store release; everything bundled by Metro into JavaScript and assets can ship over the air.
 
-- Smaller update payloads through delta patches.
-- Faster release loops for JavaScript fixes.
-- Rollback support when something goes wrong after release.
-- CLI and dashboard workflows that fit engineering teams instead of marketing sites.
-- A clear, cost-effective migration story for CodePush and Expo Updates users (saving up to 80%+ on OTA bills).
+| Change | Can ship via OTA? | Why |
+| --- | --- | --- |
+| TypeScript / JavaScript screens, hooks, state and business logic | **Yes** | Compiled into the JS/Hermes bundle |
+| Pure-JS npm packages (UI helpers, validation, date libraries, API clients) | **Yes** | Bundled by Metro with no native code |
+| Styling and layout changes | **Yes** | Evaluated in JS |
+| Images, JSON, and fonts imported via `require()` or `import` | **Yes** | Packaged with the update archive and served from local `file://` storage |
+| Adding, upgrading, or removing a native module (Pods, Gradle, TurboModules, HAR) | **No** | Native binaries are compiled and signed at build time |
+| Editing files under `ios/`, `android/`, or `harmony/` | **No** | Requires Xcode, Gradle, or DevEco Studio compilation |
+| Changing `Info.plist`, `AndroidManifest.xml`, entitlements, permissions, or app icons | **No** | OS reads native manifests from the signed store package |
+| Upgrading the React Native minor version | **No** | Changes native C++/ObjC/Kotlin runtime code |
 
-## Best practices
+Whenever a change crosses into native code, bump the native version (`CFBundleShortVersionString` / `versionName`), submit a new store build, and upload that build to Cresc with `cresc uploadIpa`, `cresc uploadApk`, or `cresc uploadAab` so later OTA updates diff cleanly against the new baseline.
 
-- Keep a copy of the exact APK or IPA you upload as the baseline.
-- Treat native changes and JavaScript changes as two separate release decisions.
-- Test rollback behavior before relying on OTA for urgent fixes.
-- Use CI/CD to make baseline upload and patch publishing repeatable.
+## App Store and Google Play compliance
 
-## Next steps
+Both Apple and Google permit JavaScript OTA updates within clear boundaries:
 
-- [Install Cresc](/docs/getting-started)
-- [Integrate the SDK](/docs/integration)
-- [Publish an update](/docs/publish)
-- [Compare pricing](/pricing)
-- [CodePush & Expo Updates alternative](/codepush-alternative)
-- [Expo pricing vs Cresc](/expo-pricing-vs-cresc)
+- **Apple App Store Review Guideline 3.3.2 (formerly 3.3.2 / 2.5.2):** apps using interpreted code (JavaScriptCore or Hermes bytecode interpreted by the shipped runtime) may download scripts and code as long as those updates **do not change the primary purpose of the app**, do not bypass store review to introduce undocumented features, and do not add store-like code distribution.
+- **Google Play Device and Network Abuse policy:** apps loaded from Google Play may not modify, replace, or update their own APK binary code using any method other than Google Play's update mechanism, **except for JavaScript bundles running inside a virtual machine/interpreter** that obey Play policies.
+
+Practical rules that keep reviews smooth:
+
+1. **Use OTA for bug fixes, copy tweaks, and incremental UI improvements** aligned with what reviewers saw.
+2. **Do not push OTA updates to the exact native version currently in App Review**, and avoid showing modal "Download update" blocking dialogs to reviewers.
+3. **Never ship self-updating APK downloaders inside a Google Play build.** Cresc's optional `downloadAndInstallApk` helper is intended only for direct-distribution enterprise or regional channels outside Google Play.
+
+## Why patch size matters on Hermes
+
+Modern React Native compiles JavaScript ahead of time into Hermes bytecode (`.hbc`). Because Hermes re-sorts its string table by frequency on every build and uses absolute offset tables throughout the binary, a one-line JS edit scatters byte differences across the whole file. Plain `bsdiff` against default Hermes output produces a **93.7 KB** patch for a single-line change.
+
+Cresc solves both causes at build time — pinning string IDs with Hermes delta mode, stripping embedded debug info into an archived source map, and applying a reversible offset-table transform before diffing. Measured on real release bundles of a React Native 0.86 app ([reproducible benchmark](https://github.com/sunnylqm/hbc-diff-benchmark)):
+
+| Release scenario | Full bundle (gzip) | Plain bsdiff | Cresc Hermes-aware diff |
+| --- | --- | --- | --- |
+| One-line text fix | 1,544.6 KB | 93.7 KB | **3.4 KB** (28× smaller) |
+| Small feature (~60 LOC) | 1,555.8 KB | 411.6 KB | **50.2 KB** (8.2× smaller) |
+| Medium feature (~300 LOC) | 1,604.7 KB | 551.6 KB | **97.8 KB** (5.6× smaller) |
+
+Read the full breakdown in [Reducing Hermes OTA Update Size](/react-native-hermes-ota). Crucially, Cresc diffs against **every bound native baseline package**, so even the very first hotfix after a fresh store release downloads as a tiny delta patch rather than a full multi-megabyte bundle.
+
+## Production safety: rollouts, rollback, and brick recovery
+
+Shipping fast is only safe when bad releases stop themselves:
+
+- **Staged percentage rollouts:** publish with `--rollout 5` or `--rollout 20`. Devices are bucketed deterministically by UUID, so raising a rollout from 10% to 50% includes the original 10% without re-shuffling cohorts.
+- **Automatic launch-crash rollback:** when a newly activated OTA bundle crashes before startup succeeds, the native layer catches the failure and reverts to the last working bundle on the next launch automatically.
+- **Cold-start brick rescue (Force Boot):** if a release passes initial startup but breaks your JS update-check UI, a native C++ cold-start check runs independently of JavaScript so you can still push a rescue update from the console. See [Publishing & Force Boot](/docs/publish#force-boot-brick-rescue).
+- **Release analytics & JS error symbolication:** [Analytics](/docs/analytics) tracks the `served → downloaded → activated → rolled back` funnel per native version, and [JS Error Monitoring](/docs/errors) restores minified Hermes stack traces to your exact TypeScript lines using the source map archived at publish time — included free on every plan.
 
 ## FAQ
 
 ### What is a React Native OTA update?
 
-It is an update to JavaScript and supported assets that the app can fetch after installation, without requiring a full native store submission for every change.
+A React Native over-the-air (OTA) update delivers updated JavaScript bytecode and bundled assets directly to installed iOS, Android, or HarmonyOS apps so bug fixes and UI changes go live in minutes without a full app-store resubmission.
 
-### Can OTA replace native releases forever?
+### Are React Native OTA updates allowed by Apple's App Store and Google Play?
 
-No. Native code and native dependency changes still require a normal build and distribution cycle.
+Yes, when used for interpreted JavaScript and bundled assets that do not alter the app's primary purpose or violate store policies (Apple App Store Guideline 3.3.2 and Google Play's Device and Network Abuse exception for JavaScript virtual machines). Native code changes must still go through store review.
 
-### Why use Cresc instead of rolling my own?
+### Can OTA updates add a new native dependency or permission?
 
-Cresc gives you the release workflow around OTA updates: baseline upload, delta patch generation, rollout control, rollback behavior, and CI-friendly tooling.
+No. Native modules (CocoaPods, Gradle dependencies, TurboModules, HarmonyOS HARs) and OS manifest files (`Info.plist`, `AndroidManifest.xml`) are compiled into the signed binary. Ship a new store build, upload it as a new baseline package, and bind subsequent OTA updates to that native version.
+
+### How small are Cresc OTA patches on Hermes?
+
+In an open benchmark on a React Native 0.86 Hermes app (~1.5 MB gzipped full bundle), a one-line hotfix is **3.4 KB** with Cresc's Hermes bytecode-aware diff (versus 93.7 KB with plain bsdiff), a ~60-line feature is **50.2 KB**, and a ~300-line feature is **97.8 KB**.
+
+### What happens if an OTA update crashes on launch?
+
+If a new OTA version crashes before startup completes, Cresc's native runtime automatically rolls back to the previous working bundle on the next launch and reports the rollback event to [Analytics](/docs/analytics). If JavaScript itself can no longer run your update check, native Force Boot can still fetch a fixed release on cold start.
+
+## Next steps
+
+- [Install Cresc on iOS & Android](/docs/getting-started) or [HarmonyOS NEXT](/docs/harmony)
+- [Set up in one prompt with the AI Skill](/docs/skills)
+- [Integrate `UpdateProvider` and `useUpdate`](/docs/integration)
+- [Publish your first baseline and hot update](/docs/publish)
+- [Compare CodePush & Expo Updates alternatives](/codepush-alternative)
+- [Check flat-rate monthly pricing](/pricing)
 
 <Footer />

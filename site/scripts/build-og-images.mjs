@@ -162,11 +162,11 @@ for (const file of htmlFiles(OUT_DIR)) {
   if (!html.includes('og:url')) continue;
 
   const route = `/${rel.replace(/\.html$/, '')}`;
-  // Docs titles carry a " - Cresc" suffix; the card already shows the brand.
+  // Page titles may carry a "- Cresc" / "| Cresc" suffix; the card already shows the brand.
   const title = (
     attr(html, /<meta property="og:title" content="([^"]*)"/) ||
     attr(html, /<title>([^<]*)<\/title>/)
-  ).replace(/\s+-\s+Cresc$/, '');
+  ).replace(/\s+[-|]\s+Cresc$/i, '');
   const description = attr(html, /<meta name="description" content="([^"]*)"/);
   const section = route.startsWith('/docs/') ? 'Cresc documentation' : 'React Native OTA updates';
 

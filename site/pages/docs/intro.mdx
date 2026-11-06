@@ -29,11 +29,11 @@ If you use an AI coding tool that supports Skills, start with [Install & Use Ski
 - **🎯 Ultra-small update packages**: Incremental updates based on bsdiff/hdiff keep a typical release to **tens to hundreds of KB**, and an **exclusive Hermes-bytecode optimization** takes a one-line hotfix all the way down to **3.4 KB** — 99.8% less bandwidth than a full update (see benchmark below).
 - **⚡️ Lightning Fast Distribution**: Global CDN delivery and incremental patch transport keep updates fast and reliable with a **99.9%+** success rate.
 - **🛡️ Secure and Reliable**: Built-in crash rollback mechanism automatically reverts failing patches, guaranteeing stability.
-- **🌐 Full Platform Support**: Flawless support for <span style={{whiteSpace: 'nowrap'}}><AppleOutlined style={{fontSize: '16px', color: '#555', marginRight: '6px'}} /> **iOS**</span> and <span style={{whiteSpace: 'nowrap'}}><AndroidOutlined style={{fontSize: '16px', color: '#3DDC84', marginRight: '6px'}} /> **Android**</span>.
+- **🌐 Full Platform Support**: Flawless support for <span style={{whiteSpace: 'nowrap'}}><AppleOutlined style={{fontSize: '16px', color: '#555', marginRight: '6px'}} /> **iOS**</span>, <span style={{whiteSpace: 'nowrap'}}><AndroidOutlined style={{fontSize: '16px', color: '#3DDC84', marginRight: '6px'}} /> **Android**</span>, and **[HarmonyOS NEXT](/docs/harmony)**.
 - **🔍 Deep React Native Integration**:
-  - ✅ **Expo** - Seamless integration
-  - ✅ **New Architecture** - Immediate support
-  - ✅ **Hermes** - Full bytecode translation
+  - ✅ **Expo** - Seamless integration ([migration guide](/expo-updates-migration))
+  - ✅ **New Architecture** - Immediate support ([0.82+ bridgeless guide](/react-native-new-architecture-ota))
+  - ✅ **Hermes** - Full bytecode-aware diffing ([3.4 KB benchmark deep dive](/react-native-hermes-ota))
 - **📖 Open Source Ecosystem**: The client SDK, CLI tools, and admin UI are [fully open source on GitHub](https://github.com/reactnativecn/react-native-update). Transparent and auditable logic means you can host your own servers without vendor lock-in.
 - **🐞 Free built-in crash reporting**: JavaScript errors from your OTA versions are collected, grouped by fingerprint, and **symbolicated back to your original source** with the source map archived at publish time — the Sentry-style workflow, **included free on every plan** with no extra service, event quota, or SDK to install. See [JS Error Monitoring](/docs/errors).
 - **📊 Full Release Visibility**: The dashboard ships with **built-in analytics, percentage-based staged rollouts, and release health monitoring** — see every release's adoption and stability at a glance, no extra data pipeline needed.
@@ -79,7 +79,7 @@ Compared to other alternatives, Cresc is far more cost-efficient, faster, and pr
 | **Rollback Safety** | **Automated rollback** on boot crash | Automatic for fatal errors before first render, plus manual rollback | Manual |
 
 :::warning
-**Migrating from CodePush or Expo Updates**: CodePush officially reached end-of-life on March 31, 2025, and Expo EAS Update imposes costly per-update-MAU and bandwidth overages. Whether you are replacing sunset CodePush or slashing your Expo update bills, Cresc provides a seamless drop-in migration with true delta updates and transparent pricing! See our [CodePush & Expo Updates Alternative guide](/codepush-alternative), the [CodePush API migration guide](/codepush-api-migration) for line-by-line code changes, and [Expo pricing vs Cresc](/expo-pricing-vs-cresc) for a cost comparison.
+**Migrating from CodePush or Expo Updates**: CodePush officially reached end-of-life on March 31, 2025, and Expo EAS Update imposes costly per-update-MAU and bandwidth overages. Whether you are replacing sunset CodePush or slashing your Expo update bills, Cresc provides a seamless drop-in migration with true delta updates and transparent pricing! See our [CodePush & Expo Updates Alternative guide](/codepush-alternative), the [CodePush API migration guide](/codepush-api-migration), the [Expo Updates migration guide](/expo-updates-migration), and [Expo pricing vs Cresc](/expo-pricing-vs-cresc) for a cost comparison.
 :::  
 
 With Cresc, your team gains:

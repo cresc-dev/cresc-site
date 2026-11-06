@@ -79,124 +79,47 @@ export const pricingSchema = {
   })),
 };
 
-export const codepushFaqSchema = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: [
-    {
-      "@type": "Question",
-      name: "Is Cresc a replacement for CodePush and Expo Updates?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Yes. Cresc covers the same core React Native OTA workflow while offering massive price savings over Expo EAS Update, delta patches (3.4 KB for a one-line fix), rollback safety, and CI/CD publishing.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "What changes still require a native release?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Changes under ios/ or android/, native dependency upgrades, and anything that requires recompilation still needs a new store build. JavaScript logic and bundled assets can be shipped through OTA.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Can teams migrate gradually?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Yes. Teams can integrate Cresc, upload their current baseline build, and move their next OTA release onto Cresc without redesigning the rest of the release process.",
-      },
-    },
-  ],
-};
-
-export const expoComparisonSchema = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: [
-    {
-      "@type": "Question",
-      name: "When should I choose Cresc over Expo Updates?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Choose Cresc when price advantage (avoiding high EAS Update MAU and edge bandwidth overages), delta patch size, self-hosting flexibility, or migration from CodePush matters more than staying entirely inside the Expo service model.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Can Cresc still work with Expo-based apps?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Yes. Cresc documents an Expo integration path and is a fit for teams using Expo who want a different OTA workflow.",
-      },
-    },
-  ],
-};
-
-export const reactNativeOtaSchema = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: [
-    {
-      "@type": "Question",
-      name: "What is a React Native OTA update?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "A React Native OTA update ships JavaScript and supported assets to users without requiring a full app-store resubmission for every change.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "What cannot be changed with OTA?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Native code, native dependency changes, and any modification that requires recompilation still needs a new build distributed through the store or other native release channels.",
-      },
-    },
-  ],
-};
-
 export const codepushChecklistSchema = {
   "@context": "https://schema.org",
   "@type": "HowTo",
   name: "CodePush & Expo Updates migration checklist for Cresc",
+  description:
+    "Step-by-step checklist for migrating a React Native app from retired App Center CodePush or Expo EAS Update to Cresc.",
   step: [
-    { "@type": "HowToStep", name: "Audit your current CodePush or Expo Updates usage" },
-    { "@type": "HowToStep", name: "Integrate Cresc in the app" },
-    { "@type": "HowToStep", name: "Upload the exact production baseline build" },
-    { "@type": "HowToStep", name: "Connect the release workflow" },
-    { "@type": "HowToStep", name: "Run a staged OTA release" },
-    { "@type": "HowToStep", name: "Validate rollback and monitoring" },
-  ],
-};
-
-export const codepushApiFaqSchema = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: [
     {
-      "@type": "Question",
-      name: "Do I have to rewrite my app to leave CodePush?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "No. You swap the native bundle URL, replace the codePush() wrapper with UpdateProvider, and port any manual checkForUpdate code. Components and business logic stay the same.",
-      },
+      "@type": "HowToStep",
+      name: "Audit your current OTA workflow and costs",
+      text: "Inventory apps, channels, release cadence, CI jobs, and current EAS Update MAU or bandwidth bills.",
     },
     {
-      "@type": "Question",
-      name: "Can users on a CodePush build receive Cresc updates?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Not until they install a store build that includes react-native-update. Ship one native release with Cresc integrated, upload that build to Cresc, and publish OTA updates against it from then on.",
-      },
+      "@type": "HowToStep",
+      name: "Integrate Cresc in the app",
+      text: "Remove react-native-code-push or expo-updates, install react-native-update, configure the native bundle URL (automatic on Expo SDK 50+), and wrap the root component with UpdateProvider.",
     },
     {
-      "@type": "Question",
-      name: "What replaces codePush.notifyAppReady()?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Nothing, by default. Cresc marks a version successful automatically after it starts. Set autoMarkSuccess: false and call markSuccess() yourself only if you want to confirm a version later.",
-      },
+      "@type": "HowToStep",
+      name: "Upload the exact production baseline build",
+      text: "Ship a native build with Cresc integrated and upload that exact IPA, APK, or AAB with cresc uploadIpa, uploadApk, or uploadAab.",
+    },
+    {
+      "@type": "HowToStep",
+      name: "Recreate the release workflow in CI",
+      text: "Configure CRESC_API_TOKEN in CI and publish updates with cresc bundle targeting matching native package versions.",
+    },
+    {
+      "@type": "HowToStep",
+      name: "Test a real OTA release end to end",
+      text: "Verify QR test previews or staged rollouts, delta patch download, version switching, and automatic rollback on failure.",
+    },
+    {
+      "@type": "HowToStep",
+      name: "Watch the first production rollout closely",
+      text: "Monitor delivery, activation funnel, rollback rate, and symbolicated JS errors in the Cresc console.",
+    },
+    {
+      "@type": "HowToStep",
+      name: "Remove the old operational dependency",
+      text: "Retire legacy CodePush or EAS Update keys, scripts, and subscriptions once production adoption is verified.",
     },
   ],
 };

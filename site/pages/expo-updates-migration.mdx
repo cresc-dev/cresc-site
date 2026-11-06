@@ -1,0 +1,224 @@
+---
+title: expo-updates (EAS Update) to Cresc migration guide
+seoTitle: "Migrate from expo-updates (EAS Update) to Cresc: API & CLI Guide"
+description: "Replace expo-updates and EAS Update with Cresc in Expo SDK 50+ apps: map Updates APIs, useUpdates(), runtimeVersion, and eas update CLI commands step by step."
+pageType: doc-wide
+sidebar: false
+footer: false
+head:
+  - - meta
+    - name: keywords
+      content: expo-updates migration, eas update migration, replace expo-updates, Updates.checkForUpdateAsync alternative, eas update alternative, expo prebuild ota
+---
+
+import Footer from "../components/Footer";
+
+# expo-updates (EAS Update) to Cresc migration guide
+
+If your Expo app's monthly EAS Update bill is climbing with updated MAUs (`$0.005/MAU`) and edge bandwidth (`$0.10/GiB`), you can keep your Expo workflow (Expo SDK, Expo Router, `expo prebuild`, and even EAS Build if you want it) while switching OTA delivery to Cresc ([`react-native-update`](https://www.npmjs.com/package/react-native-update)).
+
+This guide maps `expo-updates` configuration, JavaScript APIs, hooks, `runtimeVersion`, and `eas update` CLI commands directly to their Cresc equivalents for **Expo SDK 50 and later** (through SDK 57). For a side-by-side cost breakdown first, see [Expo pricing vs Cresc](/expo-pricing-vs-cresc).
+
+## 1. Swap `expo-updates` for `react-native-update`
+
+Do not leave `expo-updates` installed alongside `react-native-update` — both hook into native startup bundle resolution and will conflict.
+
+```bash
+# 1. Remove expo-updates
+npx expo uninstall expo-updates
+
+# 2. Install the Cresc SDK and global CLI
+npm i react-native-update
+npm i -g react-native-update-cli
+```
+
+Clean `app.json` / `app.config.ts` by removing the `"updates"` block (`url`, `checkAutomatically`, `fallbackToCacheTimeout`) and `"expo-updates"` plugin entry if present. You can also remove `"runtimeVersion"` if nothing else in your tooling reads it.
+
+Then regenerate native projects:
+
+```bash
+npx expo prebuild
+cd ios && pod install
+```
+
+On **Expo SDK 50+** with `react-native-update` >= 10.28.2, `expo prebuild` configures the native bundle URL on both iOS and Android automatically — you do not need to edit `AppDelegate`, `SceneDelegate`, or `MainApplication` by hand. (Using [New Architecture](/react-native-new-architecture-ota)? Prefer Expo SDK 51 or newer.)
+
+Create your iOS and Android apps in Cresc so `update.json` is written in your project root:
+
+```bash
+cresc login
+cresc createApp --platform ios
+cresc createApp --platform android
+```
+
+## 2. Replace automatic update config (`app.json` → `Cresc` client)
+
+`expo-updates` configured automatic check timing in `app.json`; Cresc configures it in JavaScript when constructing the client and wrapping your root layout (for example `app/_layout.tsx` in Expo Router or `App.tsx`):
+
+```tsx
+// app/_layout.tsx (Expo Router) or App.tsx
+import { Platform } from "react-native";
+import { Cresc, UpdateProvider } from "react-native-update";
+import updateConfig from "../update.json";
+
+const { appKey } = updateConfig[Platform.OS as "ios" | "android"];
+
+const crescClient = new Cresc({
+  appKey,
+  checkStrategy: "both",          // "both" | "onAppStart" | "onAppResume" | null
+  updateStrategy: "silentAndLater", // download in background, apply on next launch
+});
+
+export default function RootLayout() {
+  return (
+    <UpdateProvider client={crescClient}>
+      {/* Existing Expo Router <Stack /> or root app tree */}
+    </UpdateProvider>
+  );
+}
+```
+
+### Configuration mapping
+
+| `expo-updates` (`app.json`) | Cresc (`new Cresc({ ... })`) |
+| --- | --- |
+| `updates.url` + project ID | `appKey` per platform (from `update.json`) |
+| `checkAutomatically: "ON_LOAD"` (default) | `checkStrategy: "both"` (or `"onAppStart"`) + `updateStrategy: "silentAndLater"` |
+| `checkAutomatically: "NEVER"` | `checkStrategy: null`, then call `checkUpdate()` manually |
+| `checkAutomatically: "ON_ERROR_RECOVERY"` | Built-in native cold-start rollback & [Force Boot](/docs/publish#force-boot-brick-rescue) |
+| Native prompt dialog (custom code in Expo) | `updateStrategy: "alwaysAlert"` or `"alertUpdateAndIgnoreError"` out of the box |
+
+## 3. Map `Updates.*` methods and `useUpdates()`
+
+If your app builds a custom "Check for updates" screen or update banner using `import * as Updates from "expo-updates"`, set `updateStrategy: null` on `new Cresc(...)` and use `useUpdate()`:
+
+| `expo-updates` API | Cresc (`useUpdate()`) |
+| --- | --- |
+| `await Updates.checkForUpdateAsync()` | `await checkUpdate()`, then read `updateInfo?.update` |
+| `update.isAvailable` / `useUpdates().isUpdateAvailable` | `Boolean(updateInfo?.update)` |
+| `await Updates.fetchUpdateAsync()` | `await downloadUpdate()` (resolves `true` when ready) |
+| `useUpdates().downloadProgress` | `progress` (`{ received, total }`) or `useUpdateProgress()` |
+| `await Updates.reloadAsync()` | `await switchVersion()` (reloads immediately) |
+| (wait for next cold launch after fetch) | `switchVersionLater()` |
+| `Updates.currentlyRunning` / `Updates.updateId` | `currentVersionInfo` and `currentHash` |
+| `Updates.isEmbeddedLaunch` | `!currentHash` (empty when running the embedded store bundle) |
+| `manifest.extra` / custom metadata | `updateInfo?.description` and `updateInfo?.metaInfo` (JSON string) |
+
+### Before and after: manual check & reload button
+
+```tsx
+// Before: expo-updates
+import * as Updates from "expo-updates";
+
+async function onCheckUpdate() {
+  const update = await Updates.checkForUpdateAsync();
+  if (update.isAvailable) {
+    await Updates.fetchUpdateAsync();
+    await Updates.reloadAsync();
+  }
+}
+```
+
+```tsx
+// After: react-native-update (inside <UpdateProvider>)
+import { useUpdate } from "react-native-update";
+
+function UpdateButton() {
+  const { checkUpdate, downloadUpdate, switchVersion, updateInfo } = useUpdate();
+
+  return (
+    <Button
+      title={updateInfo?.update ? `Install ${updateInfo.name}` : "Check for updates"}
+      onPress={async () => {
+        if (!updateInfo?.update) {
+          await checkUpdate();
+          return;
+        }
+        if (await downloadUpdate()) {
+          await switchVersion();
+        }
+      }}
+    />
+  );
+}
+```
+
+Full hook and client options are documented in the [JavaScript API Reference](/docs/api).
+
+## 4. Replace `runtimeVersion` with native baseline uploads
+
+In EAS Update, `runtimeVersion` is a string contract ensuring JS updates only land on compatible native binaries. Cresc goes one step further: you upload each compiled store binary (`.ipa`, `.apk`, or `.aab`), and Cresc records **both** its native version (`CFBundleShortVersionString` / `versionName`) and its exact embedded Hermes bundle so every OTA version bound to it ships as a [3.4 KB–98 KB binary diff](/react-native-hermes-ota) — including the first hotfix right after a store release.
+
+```bash
+# Upload your native release build (from local build or EAS Build artifact)
+cresc uploadIpa build/app.ipa
+cresc uploadAab app-release.aab
+```
+
+Yes — **you can keep using EAS Build** (`eas build --platform ios`) if you like! Just download the finished `.ipa` / `.aab` artifact in CI (or build locally / on GitHub Actions) and pass it to `cresc uploadIpa` / `cresc uploadAab` before submitting to the stores.
+
+## 5. Map `eas update` CLI and Expo Router entry point
+
+:::info Expo Router projects without `index.js`
+Modern Expo Router projects set `"main": "expo-router/entry"` in `package.json` without a root `index.js` file. Create a one-line `index.js` at the project root so `cresc bundle` always resolves the entry cleanly:
+
+```js
+import "expo-router/entry";
+```
+:::
+
+### CLI command mapping
+
+| EAS CLI | Cresc CLI |
+| --- | --- |
+| `eas login` / `EXPO_TOKEN` | `cresc login` / `CRESC_API_TOKEN` ([API Key](/docs/api-token)) |
+| (managed via `runtimeVersion`) | `cresc uploadIpa <ipa>` / `cresc uploadApk <apk>` / `cresc uploadAab <aab>` |
+| `eas update --channel production --message "Fix"` | `cresc bundle --platform <ios\|android> --name "1.2.1" --description "Fix" --packageVersion 1.2.0` |
+| Target multiple compatible native versions | `--packageVersionRange ">=1.2.0 <1.3.0"` |
+| `eas update` rollout percentage | `--rollout 10` (then raise with `cresc update --versionId <id> --rollout 100`) |
+| `eas update:rollback` | Pause or re-bind in the console, or `cresc update` to a healthy `versionId` |
+| Preview channel builds for QA | Dashboard **test QR codes** ([Testing & Rollbacks](/docs/bestpractice#testing-and-rollbacks)) |
+
+In GitHub Actions, publishing to both platforms looks like:
+
+```yaml
+- name: Publish OTA update to Cresc
+  env:
+    CRESC_API_TOKEN: ${{ secrets.CRESC_API_TOKEN }}
+  run: |
+    cresc bundle --platform ios --name "${GITHUB_SHA::7}" \
+      --description "OTA ${GITHUB_SHA::7}" --packageVersionRange ">=1.2.0 <1.3.0" --rollout 20
+    cresc bundle --platform android --name "${GITHUB_SHA::7}" \
+      --description "OTA ${GITHUB_SHA::7}" --packageVersionRange ">=1.2.0 <1.3.0" --rollout 20
+```
+
+See [CLI Tools](/docs/cli) and [Publishing Hot Updates](/docs/publish) for every flag.
+
+## FAQ
+
+### Can I use Cresc in an Expo app without ejecting?
+
+Yes, with **Continuous Native Generation (`npx expo prebuild`)** or development builds (`npx expo run:ios` / `npx expo run:android`) on Expo SDK 50 and later. You keep `app.json`, config plugins, and Expo SDK packages. Only **Expo Go** is unsupported, because custom native modules cannot run inside the generic Expo Go sandbox.
+
+### Can I keep EAS Build and EAS Submit while switching OTA updates to Cresc?
+
+Yes. Cresc only replaces `expo-updates` (EAS Update). Many teams continue building signed binaries on EAS Build (using the build credit included in their plan or free/CI runners), upload the resulting `.ipa` and `.aab` artifacts to Cresc as baselines, and run all OTA traffic through Cresc's flat-rate CDN tiers.
+
+### Why must I uninstall `expo-updates` before building?
+
+Both `expo-updates` and `react-native-update` register native hooks to supply the JavaScript bundle URL at app launch. Leaving both installed causes startup conflicts where updates download but never activate.
+
+### How much smaller and cheaper are updates after switching from EAS Update?
+
+Cresc's Pro plan is **$99/month flat** for 1,000,000 daily update checks with global CDN delivery included and zero MAU or bandwidth overage fees (compared with $449+/month at 100,000 updated MAUs on Expo Production). On payload size, Cresc's [Hermes-aware diff](/react-native-hermes-ota) ships a one-line fix in **3.4 KB** versus **93.7 KB** with plain `bsdiff`.
+
+## Related pages
+
+- [Expo pricing (EAS Update) vs Cresc](/expo-pricing-vs-cresc)
+- [Expo Updates vs Cresc comparison](/expo-updates-vs-cresc)
+- [Self-hosted Expo Updates server vs Cresc](/expo-updates-self-hosted-vs-cresc)
+- [CodePush & Expo Updates migration checklist](/codepush-migration-checklist)
+- [Installation & Config](/docs/getting-started)
+- [Pricing](/pricing)
+
+<Footer />

@@ -36,7 +36,7 @@ This will output multiple APK files in the build directory. For distribution and
 
 ### Hot Update Package Optimization (ppk)
 
-The primary content of a hot update package is the JS bundle and its referenced static assets (mostly images).
+The primary content of a hot update package is the JS bundle and its referenced static assets (mostly images). Note that `.ppk` size is your storage archive size — end users download [Hermes bytecode-aware incremental diffs](/react-native-hermes-ota) (typically 3.4–98 KB) generated against your [uploaded native baseline](/docs/publish).
 
 - **JS Bundle Analysis**: You can use third-party tools (like [react-native-bundle-visualizer](https://github.com/IjzerenHein/react-native-bundle-visualizer)) to analyze which modules consume the most space in your JS files, and see if they can be replaced with lighter alternatives (e.g., replacing `moment` with `dayjs`, or `lodash` with `lodash-es`).
 - **Image Optimization**:
@@ -161,4 +161,11 @@ if (metaInfo.silent) {
 }
 ```
 
-As another example, a specific version might include major announcements, so you could insert an `announcement` field in the payload to render. How you use meta info is entirely constrained.
+As another example, a specific version might include major announcements, so you could insert an `announcement` field in the payload to render. How you use meta info is entirely up to your application.
+
+## Related guides
+
+- [Publishing Hot Updates](/docs/publish) — uploading baselines, binding ranges, and staged rollouts
+- [CLI Tools](/docs/cli) — automating `uploadApk`, `uploadAab`, `uploadIpa`, and `bundle`
+- [Analytics](/docs/analytics) and [JS Error Monitoring](/docs/errors) — tracking rollout health after release
+- [FAQ](/docs/faq) — build timestamp mismatches, quotas, and App Store review tips

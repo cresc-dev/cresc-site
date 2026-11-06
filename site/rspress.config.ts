@@ -149,14 +149,21 @@ export default defineConfig({
     rspressPluginMermaid(),
     {
       // lastUpdatedTime is a locale string for display; structured data
-      // needs ISO 8601, so record the page's last commit date separately.
+      // needs ISO 8601, so record the page's first and last commit dates.
       name: 'cresc-last-modified',
       extendPageData(pageData) {
         try {
-          const iso = execFileSync('git', ['log', '-1', '--format=%cI', '--', pageData._filepath], {
+          const last = execFileSync('git', ['log', '-1', '--format=%cI', '--', pageData._filepath], {
             encoding: 'utf8',
           }).trim();
-          if (iso) pageData.lastModified = iso;
+          if (last) pageData.lastModified = last;
+          const first = execFileSync(
+            'git',
+            ['log', '--diff-filter=A', '--follow', '--format=%cI', '-1', '--', pageData._filepath],
+            { encoding: 'utf8' },
+          ).trim();
+          if (first) pageData.firstPublished = first;
+          else if (last) pageData.firstPublished = last;
         } catch {}
       },
     },

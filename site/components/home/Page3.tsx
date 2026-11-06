@@ -27,6 +27,20 @@ const landingCards = [
     href: "/docs/mcp",
     cta: "See MCP Server",
   },
+  {
+    eyebrow: "Performance",
+    title: "3.4 KB Hermes bytecode diffs",
+    desc: "Learn why plain bsdiff bloats Hermes patches to 94 KB and how Cresc's bytecode-aware diff shrinks hotfixes by 28×.",
+    href: "/react-native-hermes-ota",
+    cta: "Read Deep Dive",
+  },
+  {
+    eyebrow: "Expo SDK 50+",
+    title: "Migrating from expo-updates",
+    desc: "Keep Expo prebuild, Expo Router, and EAS Build while mapping Updates APIs and eas update commands to flat-rate Cresc.",
+    href: "/expo-updates-migration",
+    cta: "View API Mapping",
+  },
 ];
 
 function Page3() {

@@ -1,22 +1,11 @@
 ---
 title: CodePush & Expo Updates migration checklist for Cresc
-description: Use this practical checklist to migrate from CodePush or Expo Updates to Cresc without losing your React Native OTA workflow, and slash your update costs.
+seoTitle: "CodePush & Expo Updates Migration Checklist - Cresc"
+description: "Step-by-step production checklist to migrate a React Native app from retired CodePush or metered Expo EAS Update to Cresc without breaking releases."
 pageType: doc-wide
 sidebar: false
 footer: false
 head:
-  - - link
-    - rel: canonical
-      href: https://cresc.dev/codepush-migration-checklist
-  - - meta
-    - property: og:url
-      content: https://cresc.dev/codepush-migration-checklist
-  - - meta
-    - property: og:title
-      content: CodePush & Expo Updates migration checklist for Cresc
-  - - meta
-    - property: og:description
-      content: Use this practical checklist to migrate from CodePush or Expo Updates to Cresc without losing your React Native OTA workflow, and slash your update costs.
   - - meta
     - name: keywords
       content: codepush migration checklist, expo updates migration, eas update alternative, codepush to cresc, expo to cresc
@@ -30,72 +19,130 @@ import { codepushChecklistSchema } from "../lib/schema";
 
 # CodePush & Expo Updates migration checklist for Cresc
 
-Use this checklist if your React Native team is moving away from deprecated CodePush or migrating from Expo Updates (EAS Update) to dramatically cut OTA delivery costs, eliminate surprise overage bills, and adopt high-speed delta patches.
+Use this production runbook to move a React Native app off retired Microsoft App Center CodePush or metered Expo Updates (EAS Update) onto Cresc — keeping staged rollouts, CI publishing, and automatic rollback while cutting OTA payloads to kilobytes and locking in flat monthly pricing.
+
+Need line-by-line code changes? Pair this checklist with the [CodePush API migration guide](/codepush-api-migration) or the [Expo Updates migration guide](/expo-updates-migration).
+
+## Concept mapping at a glance
+
+| Concept | CodePush | Expo Updates (EAS Update) | Cresc |
+| --- | --- | --- | --- |
+| Client package | `react-native-code-push` | `expo-updates` | `react-native-update` |
+| App identifier | Deployment key per environment | Project ID + channel in `app.json` | One `appKey` per platform in `update.json` |
+| Native compatibility | `--targetBinaryVersion` | `runtimeVersion` | Uploaded baseline binary + `--packageVersionRange` |
+| Staging vs production | Separate Staging / Production keys | Separate channels & branches | `--rollout <1-100>` cohorts + dashboard QR test codes |
+| Publish command | `appcenter codepush release-react` | `eas update --channel ...` | `cresc bundle --platform <ios\|android> ...` |
+| Billing meter | Retired March 31, 2025 | Updated MAUs + GiB bandwidth | Fixed daily check tiers, CDN included, $0 overage |
 
 ## 1. Audit your current OTA workflow and costs
 
-Write down:
+Before touching code, write down:
 
-- which apps still use CodePush or Expo Updates (EAS Update)
-- current OTA costs and overage risks (if using Expo EAS Update, note your monthly update MAUs and bandwidth overage charges—Cresc can slash this by 70–90% with predictable flat tiers)
-- which channels or rollout groups exist
-- how often you publish JavaScript updates
-- which CI jobs publish or promote releases today
+- **Platforms and apps:** every iOS, Android, or HarmonyOS app that currently ships OTA updates.
+- **React Native & architecture version:** apps upgrading to [React Native 0.82+ (New Architecture only)](/react-native-new-architecture-ota) must remove `react-native-code-push` before upgrading.
+- **Current billing baseline:** if on Expo EAS Update, note your monthly updated MAUs and edge bandwidth usage against [Expo pricing vs Cresc](/expo-pricing-vs-cresc).
+- **CI pipelines:** which GitHub Actions, GitLab CI, Bitrise, or Fastlane workflows build native binaries and publish JS updates.
 
 ## 2. Integrate Cresc in the app
 
-- install the SDK (`npm i react-native-update`)
-- wire the native bundle URL (or use Expo auto integration)
-- confirm a release build boots cleanly with Cresc enabled
+1. **Remove the old client SDK** (`npm uninstall react-native-code-push` or `npx expo uninstall expo-updates`) so two native bundle loaders never compete at startup.
+2. **Install Cresc:**
+   ```bash
+   npm i -g react-native-update-cli
+   npm i react-native-update
+   ```
+3. **Create your Cresc apps** (`cresc login` then `cresc createApp --platform ios` and `cresc createApp --platform android`), which writes `update.json` in your repo root.
+4. **Wire the native bundle URL:**
+   - **Expo SDK 50+:** run `npx expo prebuild` — `react-native-update` configures iOS and Android bundle URLs automatically.
+   - **Bare React Native:** set `RCTPushy.bundleURL()` on iOS and `UpdateContext.getBundleUrl(this)` on Android ([Installation & Config](/docs/getting-started)).
+5. **Wrap your root component** with `<UpdateProvider client={crescClient}>` ([Code Integration](/docs/integration)).
 
-Start here: [Installation & Config](/docs/getting-started). Porting `react-native-code-push` code? Use the [CodePush API migration guide](/codepush-api-migration).
+:::tip One-prompt setup
+Using Claude Code, Cursor, or Codex? Install the official [AI Agent Skill](/docs/skills) (`npx skills add reactnativecn/react-native-update-skill --skill react-native-update -a '*'`) to automate SDK removal and wrapper wiring, then review the diff against steps 2–5.
+:::
 
-## 3. Upload the exact baseline build
+## 3. Build and upload the exact production baseline
 
-Before publishing OTA patches, upload the exact APK or IPA that matches the build users actually install. Cresc uses that build as the baseline for later HDiff differential comparisons, which keeps patches tiny: 3.4 KB for a one-line fix in our [Hermes benchmark](https://github.com/sunnylqm/hbc-diff-benchmark).
+Cresc computes [Hermes bytecode-aware binary diffs](/react-native-hermes-ota) against the exact native binary users install from the store — which is why even the first hotfix after a store release ships in a few kilobytes:
 
-## 4. Recreate the release workflow
+```bash
+# iOS: archive and export your release IPA, then upload
+cresc uploadIpa build/MyApp.ipa
 
-Move your publishing path onto Cresc (compatible with React Native CLI, bare React Native, or Expo workflows):
+# Android: upload the exact APK or Play Store AAB you distribute
+cresc uploadAab android/app/build/outputs/bundle/release/app-release.aab
+```
 
-- CLI login or API Key
-- build artifact upload
-- OTA package build
-- release or promote step in CI
+If you distribute **both** an AAB (Google Play) and an APK (direct / regional stores) for the same Android `versionName`, build them in a single Gradle invocation (`./gradlew clean assembleRelease bundleRelease`) so their embedded bundle build timestamps match. See [Best Practices](/docs/bestpractice#supporting-the-aab-format).
 
-See: [Publishing Hot Updates](/docs/publish) and [API Key](/docs/api-token)
+## 4. Recreate the release workflow in CI
+
+1. Create a scoped [API Key](/docs/api-token) in the Cresc console and store it as `CRESC_API_TOKEN` in your CI secrets.
+2. Commit `update.json` (it contains only public per-platform `appKey`s, never account credentials).
+3. Publish updates non-interactively with explicit version binding and staged rollout:
+
+```bash
+CRESC_API_TOKEN="$CRESC_API_TOKEN" cresc bundle \
+  --platform ios \
+  --name "$GIT_SHA" \
+  --description "Fix checkout validation" \
+  --packageVersionRange ">=2.4.0 <2.5.0" \
+  --rollout 10 \
+  --no-interactive
+```
+
+:::warning Don't omit binding flags in CI
+Without a terminal, `cresc bundle` skips interactive prompts. Always pass `--name` (to publish) and a target flag such as `--packageVersionRange` or `--packageVersion` (to bind), otherwise the bundle builds locally or uploads unbound.
+:::
 
 ## 5. Test a real OTA release end to end
 
-- publish a small JavaScript-only change
-- verify the update prompt or silent download strategy
-- verify the switch version behavior
-- verify rollback on failure
+Before shipping to production users, verify on a release build (TestFlight, Play Internal Testing, or signed APK):
+
+- **QR test preview:** scan a version's test QR code from the dashboard to verify an unbound bundle on a test device ([Testing & Rollbacks](/docs/bestpractice#testing-and-rollbacks)).
+- **Delta download:** publish a one-line text change bound to your test native version and confirm the client downloads a ~3–5 KB patch and switches cleanly.
+- **Automatic rollback:** verify that a deliberate startup throw reverts cleanly to the baseline bundle on the next cold start.
 
 ## 6. Watch the first production rollout closely
 
-Track:
+Start your first production hotfix at `--rollout 10`, inspect the [Analytics](/docs/analytics) version funnel (`served → downloaded → activated → rolled back`) and [JS Error Monitoring](/docs/errors), then promote to 100%:
 
-- update adoption speed
-- automated rollback events
-- app-open check behavior
-- package size and release cadence (notice the massive bandwidth drop from delta patches)
+```bash
+cresc update --platform ios --versionId <id> --rollout 100
+```
 
 ## 7. Remove the old operational dependency
 
-Once Cresc is verified in production:
+Once users have adopted the store release carrying `react-native-update`:
 
-- cancel expensive Expo EAS Update tiers or remove sunset CodePush dependencies
-- remove legacy OTA credentials and keys from CI
-- document the new workflow for your team
-- point engineers to the Cresc dashboard and docs
+- Downgrade or cancel metered EAS Update plans, or archive remaining CodePush server infrastructure.
+- Delete retired `APPCENTER_ACCESS_TOKEN` or `EXPO_TOKEN` OTA steps from CI.
+- Connect the read-only [Cresc MCP Server](/docs/mcp) to your IDE or Claude Desktop for instant release diagnostics.
 
-## Quick links
+## FAQ
 
-- [CodePush & Expo Updates alternative](/codepush-alternative)
-- [CodePush API migration guide](/codepush-api-migration)
+### Can devices on an old CodePush or Expo Updates store build receive Cresc updates?
+
+No. Because the native bundle loader changes (`RCTPushy.bundleURL()` / `UpdateContext.getBundleUrl()`), devices begin receiving Cresc OTA updates once they update to your first store release built with `react-native-update`.
+
+### Should I keep `expo-updates` or `react-native-code-push` installed during migration?
+
+No. Remove the old OTA library before building your Cresc store binary. Keeping two OTA native modules in the same binary causes them to compete over the startup JS bundle URL.
+
+### Why did my CI job publish a version that no devices received?
+
+In non-interactive CI environments, `cresc bundle` requires both `--name` (to publish the `.ppk`) and a binding flag such as `--packageVersionRange` or `--packageVersion` (to attach the version to your uploaded native baseline). Also verify that the store binary distributed to users was uploaded with `cresc uploadIpa`, `uploadApk`, or `uploadAab`.
+
+### How do I replace CodePush Staging or EAS Preview channels?
+
+Use dashboard **test QR codes** for internal QA on unbound versions, and `--rollout <percentage>` on production native packages to stage a release to 5% or 10% of devices before promoting to 100%.
+
+## Related guides
+
+- [react-native-code-push to Cresc API migration](/codepush-api-migration)
+- [expo-updates to Cresc migration guide](/expo-updates-migration)
+- [App Center & CodePush retirement guide](/app-center-codepush-retirement)
 - [Expo pricing vs Cresc](/expo-pricing-vs-cresc)
-- [Expo Updates vs Cresc](/expo-updates-vs-cresc)
-- [React Native OTA updates](/react-native-ota-updates)
+- [Pricing](/pricing)
 
 <Footer />

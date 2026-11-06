@@ -1,0 +1,118 @@
+---
+title: How to shrink React Native Hermes OTA updates to 3.4 KB
+seoTitle: "Hermes Bytecode Diffing: 3.4 KB React Native OTA Updates - Cresc"
+description: "Why Hermes bytecode breaks plain bsdiff (93.7 KB for a 1-line edit) and how Cresc shrinks React Native OTA patches to 3.4 KB with bytecode-aware diffing."
+pageType: doc-wide
+sidebar: false
+footer: false
+head:
+  - - meta
+    - name: keywords
+      content: react native hermes ota, hermes bytecode diff, reduce react native ota size, bsdiff hermes, hbc diff benchmark, react native delta update
+---
+
+import Footer from "../components/Footer";
+
+# How to shrink React Native Hermes OTA updates to 3.4 KB
+
+If you ship over-the-air updates for a React Native app running on Hermes, generic binary diffing (`bsdiff`) produces surprisingly large patches: **93.7 KB for a one-line text change** on a typical release bundle. Plain JavaScript text diffs are tiny, so teams often assume a bytecode diff will be tiny too — until they inspect what users actually download.
+
+This page explains why compiled Hermes bytecode (`.hbc`) defeats off-the-shelf binary diff algorithms, and how [`react-native-update`](https://github.com/reactnativecn/react-native-update) (the open-source SDK behind Cresc) combines three build-time layers to get that same one-line hotfix down to **3.4 KB** — **28× smaller than plain bsdiff** and **454× smaller than a full gzipped bundle**.
+
+## Benchmark: full bundle vs plain bsdiff vs Hermes-aware diff
+
+Measured on real release bundles of a React Native 0.86 production-style app (Hermes HBC v98, ~3.5 MB raw bytecode / ~1.5 MB gzipped, including common libraries such as React Native Paper, SVG, Sentry, and CameraKit). The harness, bundles, and scripts are open source at [`sunnylqm/hbc-diff-benchmark`](https://github.com/sunnylqm/hbc-diff-benchmark):
+
+| Release scenario | Full bundle (gzip) | Classic `bsdiff` on default `.hbc` | Cresc Hermes-aware diff | Reduction vs `bsdiff` |
+| --- | --- | --- | --- | --- |
+| One-line text change | 1,544.6 KB | 93.7 KB | **3.4 KB** | **28× smaller** |
+| Small feature (+1 component, ~60 LOC) | 1,555.8 KB | 411.6 KB | **50.2 KB** | **8.2× smaller** |
+| Medium feature (+2 screens, ~300 LOC) | 1,604.7 KB | 551.6 KB | **97.8 KB** | **5.6× smaller** |
+
+Every patch in the benchmark is verified by a bit-exact round trip back to the target bytecode. The smaller the source edit, the larger the relative win — which matches real mobile release engineering, where urgent one-line and ten-line hotfixes are the updates shipped under the tightest time and cellular-bandwidth constraints.
+
+## Why plain `bsdiff` struggles on Hermes bytecode
+
+Two structural properties of Hermes `.hbc` files turn a one-line JavaScript edit into scattered binary mutations across megabytes of bytecode:
+
+### 1. Frequency-sorted string tables renumber IDs globally
+
+Hermes stores every identifier and string literal in a central string table and references entries by numeric ID inside bytecode instructions. On a normal compile, `hermesc` **sorts the string table by usage frequency** so hot identifiers get compact indices.
+
+Adding or changing a single line of JavaScript nudges those frequency counts. Dozens or hundreds of unrelated strings swap positions in the table, and **every instruction across the entire bundle that references one of those shifted string IDs changes its operand bytes**. To a generic byte-level diff tool like `bsdiff` or `zstd --patch-from`, two nearly identical builds appear to differ at thousands of offsets.
+
+### 2. Absolute offset tables cascade every byte insertion
+
+Hermes bytecode headers and lookup tables store **absolute byte offsets** — function headers, string storage slices, exception handlers, and buffer pointers. Inserting 20 bytes inside one function near the front of the file increments every absolute offset after that point. Again, a localized edit ripples across the rest of the binary.
+
+## How Cresc shrinks Hermes patches in three stacking layers
+
+Cresc eliminates both amplification sources before computing a streaming `HDIFF13` binary patch, and removes dead weight that never needed to travel to user devices at all.
+
+### Layer 1: Pin string IDs with Hermes delta compilation
+
+Hermes includes a delta compilation flag (`hermesc -base-bytecode=<base>`). When `cresc bundle` builds an OTA update, the CLI fetches and caches the baseline bytecode from your uploaded native package (keyed by SHA-256) and compiles the new bundle against that root bytecode. Existing string IDs stay pinned in place; only newly introduced strings append to the table, so unchanged functions produce byte-identical instruction streams.
+
+### Layer 2: Strip embedded debug info (~21% smaller before diffing)
+
+By default, Hermes embeds source-location debug info directly inside the `.hbc` binary. Compiling with `-output-source-map` moves debug positions into a separate `.map` file, shrinking both full bytecode bundles and patches built from them by roughly **21%** immediately.
+
+You do not lose crash visibility: `cresc bundle` compresses and archives that source map server-side at publish time (stripping `node_modules` sources first), and [JS Error Monitoring](/docs/errors) uses it to symbolicate production Hermes stack traces back to your original TypeScript lines — without ever shipping source maps to user devices.
+
+### Layer 3: Reversible structure-aware offset transform (another 9–36% off)
+
+Before diffing two `.hbc` files, Cresc parses the Hermes header and table layout and applies a **reversible delta-encoding transform** (wrapping subtraction) across offset fields. A global +20-byte shift across thousands of table entries collapses into a single delta change at the insertion site.
+
+On the client, the native C++ patcher applies the binary diff and runs the inverse transform to produce the exact target `.hbc` file. Stacking this transform on top of Layers 1 and 2 cuts final patch size by a further **9% to 36%**.
+
+## Safety guarantees: why bytecode transforms never brick a release
+
+Transforming compiled VM bytecode requires strict verification so a compiler quirk can never ship a corrupt bundle:
+
+1. **Bit-exact round-trip verification:** at publish time, every generated patch must satisfy `inverseTransform(patch(transform(old))) === new` byte for byte, verified by SHA-256.
+2. **Instruction-level disassembly check:** delta-mode `hermesc` output is disassembled and compared instruction by instruction against a clean, non-delta compile of the same bundle. If any instruction or jump table diverges, the CLI discards the delta build automatically and falls back to the standard bytecode.
+3. **Version-agnostic client patcher:** Hermes bytecode format versions advance with React Native (for example HBC v98 in RN 0.86 and HBC v99 in RN 0.88). Cresc embeds table layout descriptors inside the patch metadata rather than hardcoding Hermes version tables in the mobile SDK — so supporting a new Hermes release is a CLI update with zero native app rebuild required.
+4. **Native launch-crash rollback:** if an update ever throws at startup for application-level reasons, the native runtime reverts to the previous working bundle automatically.
+
+## Patching the store binary itself (the "first hotfix" advantage)
+
+Several OTA services diff between consecutive OTA bundles, **but cannot diff against the bundle embedded inside the original App Store or Google Play binary** — forcing every user's first post-release hotfix to download a full multi-megabyte bundle.
+
+Because you register each store build with `cresc uploadIpa`, `cresc uploadApk`, or `cresc uploadAab` ([Publishing](/docs/publish)), Cresc extracts and indexes the exact `.hbc` embedded in every native version you ship. Your very first emergency one-line fix after a store release downloads as a **3.4 KB** patch too.
+
+## How to enable it in your app
+
+If you use `react-native-update` **v10.48.0+** on the client and `react-native-update-cli` **v2.22.0+** (v2.29.x+ for React Native 0.88 / HBC v99), all three layers run automatically during `cresc bundle` — there are no extra Babel plugins, Metro serializers, or client flags to maintain.
+
+1. Follow [Installation & Config](/docs/getting-started) (or run the [AI Skill](/docs/skills)) to add `react-native-update`.
+2. Upload your release `.ipa`, `.apk`, or `.aab` baseline.
+3. Publish updates with `cresc bundle --platform <ios|android>`.
+
+## FAQ
+
+### How can I reduce OTA update size in a Hermes React Native app?
+
+Three techniques make the biggest difference: 1) strip embedded debug info out of the `.hbc` bundle with `-output-source-map` (~21% smaller), 2) compile updates with Hermes delta mode (`hermesc -base-bytecode`) so frequency sorting does not renumber string IDs across the whole bundle, and 3) use a structure-aware diff tool like Cresc (`react-native-update`) that delta-encodes Hermes offset tables before binary diffing, bringing a one-line fix down to 3.4 KB.
+
+### Why is a plain `bsdiff` patch of a Hermes bundle ~94 KB for a one-line change?
+
+Hermes sorts its string table by identifier frequency on every build and stores absolute byte offsets in function and string tables. A one-line edit shifts string frequencies (renumbering operand IDs across unrelated functions) and shifts every absolute offset after an insertion, creating thousands of scattered byte changes that `bsdiff` must encode.
+
+### Does Hermes bytecode diffing require upgrading the mobile SDK for new React Native versions?
+
+No, once your app ships with `react-native-update` v10.48.0 or newer. Hermes table layout descriptors travel inside the patch metadata generated by the CLI, so new Hermes bytecode versions (such as HBC v98 and v99 in React Native 0.86–0.88) are supported by updating `react-native-update-cli` in CI without rebuilding your native app.
+
+### How does Cresc compare with EAS Update and hot-updater on patch size?
+
+EAS Update (from Expo SDK 55) and `hot-updater` apply plain `bsdiff` to Hermes bundles. In the open [`hbc-diff-benchmark`](https://github.com/sunnylqm/hbc-diff-benchmark), plain `bsdiff` produced a 93.7 KB patch for a one-line fix and 411.6 KB for a ~60-line feature, compared with **3.4 KB** and **50.2 KB** using Cresc's Hermes-aware diff. Cresc also includes global CDN bandwidth on every flat-rate plan with no per-GiB overage.
+
+## Related pages
+
+- [React Native OTA updates guide](/react-native-ota-updates)
+- [React Native New Architecture OTA updates](/react-native-new-architecture-ota)
+- [Expo Updates vs Cresc](/expo-updates-vs-cresc)
+- [hot-updater vs Cresc](/hot-updater-vs-cresc)
+- [Stallion vs Cresc](/stallion-vs-cresc)
+- [Publishing Hot Updates](/docs/publish)
+
+<Footer />

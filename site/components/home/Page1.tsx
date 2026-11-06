@@ -803,6 +803,13 @@ function Page1() {
           v98, ~3.5 MB bytecode). Every patch verified by a round-trip.
           react-native-update is the open-source SDK behind Cresc.{" "}
           <a
+            href="/react-native-hermes-ota"
+            className="font-medium text-[#b45309] underline-offset-2 hover:underline"
+          >
+            How Hermes diffing works →
+          </a>{" "}
+          ·{" "}
+          <a
             href="https://github.com/sunnylqm/hbc-diff-benchmark"
             target="_blank"
             rel="noreferrer"

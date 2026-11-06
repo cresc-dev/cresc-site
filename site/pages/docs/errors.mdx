@@ -107,3 +107,9 @@ The console then receives no JS errors from that client. This switch is independ
 **The error list is empty**: check that the app is running an OTA version (the baseline bundle does not report) and that the client SDK is at least v10.55.0. Error data is kept for 31 days; older records are pruned.
 
 **Fewer frames mapped than the total**: this is normal. Engine-internal frames like `at map (native)` have no source position at all. If many of *your* frames fail to map, the archived source map and the shipped bundle usually come from different builds.
+
+## Related
+
+- [Analytics](/docs/analytics) — follow delivery, activation funnels, and rollback rates per OTA version
+- [MCP Server](/docs/mcp) — inspect symbolicated JS errors and version health directly from Claude or Cursor
+- [Publishing Hot Updates](/docs/publish) — how `cresc bundle` archives source maps automatically

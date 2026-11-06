@@ -280,7 +280,7 @@ const crescModelRows = [
   {
     title: "Pro",
     price: "$99/mo",
-    included: "1M daily queries · Most Popular",
+    included: "1M daily queries · CDN included",
   },
 ];
 
@@ -305,9 +305,9 @@ const comparisonRows = [
   },
   {
     scenario: "Bandwidth & Payload",
-    badge: "90%+ bandwidth saved",
-    expo: "Full multi-MB bundle downloads trigger expensive $0.10/GiB edge bandwidth overages.",
-    cresc: "Hermes-optimized delta updates (3.4 KB for a one-line fix vs full MBs). CDN bandwidth included on every tier.",
+    badge: "28× smaller hotfixes",
+    expo: "Plain bsdiff patches from SDK 55 (93.7 KB for a 1-line fix; full bundle until generated) plus $0.10/GiB edge bandwidth overages.",
+    cresc: "Hermes-aware delta updates (3.4 KB for a one-line fix). Global CDN bandwidth included on every tier.",
   },
   {
     scenario: "High volume fleets",
@@ -542,13 +542,13 @@ function Pricing() {
               Up to 80%+ savings. Fixed tiers, zero runaway bills.
             </h2>
             <p className="mt-4 text-base leading-7 text-[#57534e]">
-              Expo EAS Update bills on complex, volatile consumption meters:
-              update MAUs ($0.005 per extra updated user) plus edge bandwidth
-              ($0.10/GiB). Cresc uses fixed, predictable monthly tiers with
-              worldwide CDN delivery included and zero surprise overage
-              penalties. Coupled with delta updates (3.4 KB for a one-line fix vs multi-MB
-              full bundles), Cresc saves most production teams 70% to 90% on
-              their monthly OTA bills.
+              Expo EAS Update bills on metered consumption: update MAUs ($0.005
+              per extra updated user up to 200K) plus edge bandwidth ($0.10/GiB).
+              Cresc uses fixed, predictable monthly tiers with worldwide CDN
+              delivery included and zero surprise overage penalties. Coupled
+              with Hermes-aware delta updates (3.4 KB for a one-line fix vs
+              93.7 KB with plain bsdiff), Cresc saves most production teams 70%
+              to 90% on their monthly OTA bills.
             </p>
           </div>
 
@@ -567,7 +567,7 @@ function Pricing() {
                     </span>
                   </div>
                   <span className="text-xs font-medium text-[#a8a29e]">
-                    Checked 2026-04-17
+                    Checked 2026-11-03
                   </span>
                 </div>
 

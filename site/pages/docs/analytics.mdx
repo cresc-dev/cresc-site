@@ -92,3 +92,9 @@ For JavaScript exceptions, continue to [JS Error Monitoring](/docs/errors) under
 - Device metrics depend on uuid reporting; client events depend on SDK telemetry. Missing telemetry is not evidence of zero failures. Distinct-device counts are approximate.
 
 Start with traffic and outcomes, identify the affected release and native packages in the funnel, then use failure reasons and OS comparisons to focus your investigation. Together, the views help distinguish an update that was never served, one that failed to download, and one that downloaded but has not activated.
+
+## Related
+
+- [JS Error Monitoring](/docs/errors) — symbolicated stack traces grouped by OTA version
+- [MCP Server](/docs/mcp) — query release funnels and replay update decisions from your AI client
+- [Publishing Hot Updates](/docs/publish) — staged rollouts and Force Boot recovery
