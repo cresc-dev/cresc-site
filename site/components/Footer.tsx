@@ -50,6 +50,8 @@ function Footer() {
       links: [
         { text: "React Native OTA Guide", href: "/react-native-ota-updates" },
         { text: "Hermes Bytecode Diffs", href: "/react-native-hermes-ota" },
+        { text: "OTA Rollback & Recovery", href: "/react-native-ota-rollback" },
+        { text: "CI/CD OTA Automation", href: "/react-native-ota-ci-cd" },
         { text: "Publish Hot Updates", href: "/docs/publish" },
         { text: "CLI Reference", href: "/docs/cli" },
         { text: "Release Analytics", href: "/docs/analytics" },

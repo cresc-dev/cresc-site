@@ -224,7 +224,7 @@ Since `react-native-update` 10.52.1, the client runs an independent background c
 
 ### Usage
 
-1. Log in to the [Cresc console](https://cresc.dev)
+1. Log in to the [Cresc console](https://admin.cresc.dev)
 2. Find the fixed version and publish it with "Full + force boot (rescue)", or for an already-bound version, choose "Force boot (rescue)" from the package menu
 3. Review the semantics in the confirmation dialog and publish
 
@@ -260,3 +260,10 @@ First-launch crash protection rolls back automatically if the activated version 
 ### Can I publish hot updates from CI/CD?
 
 Yes. Create an [API key](/docs/api-token), expose it as `CRESC_API_TOKEN`, and pass `--name` plus a binding option such as `--packageVersionRange` to `cresc bundle`. CI runs without prompts, so a version with no binding option is published but reaches no users.
+
+## Related
+
+- [Automating React Native OTA Updates in CI/CD](/react-native-ota-ci-cd) — copy-paste pipelines for GitHub Actions, Fastlane, and GitLab CI
+- [OTA Rollback, Crash Protection & Brick Recovery](/react-native-ota-rollback) — how `autoMarkSuccess`, Force Boot, and canary rollouts work together
+- [Reducing Hermes OTA Update Size](/react-native-hermes-ota) — why uploading exact native baselines keeps diffs down to 3.4 KB
+- [JS Error Monitoring](/docs/errors) — zero-config stack trace symbolication from archived source maps

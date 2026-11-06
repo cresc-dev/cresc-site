@@ -1,0 +1,125 @@
+---
+title: React Native OTA rollback, crash protection and brick recovery
+seoTitle: "React Native OTA Rollback, Crash Protection & Brick Recovery - Cresc"
+description: "How Cresc prevents bad React Native OTA updates from bricking apps: automatic launch-crash rollback, native Force Boot cold-start rescue, and canary rollouts."
+pageType: doc-wide
+sidebar: false
+footer: false
+head:
+  - - meta
+    - name: keywords
+      content: react native ota rollback, codepush notifyAppReady alternative, react native hot update crash recovery, ota white screen recovery, force boot react native
+---
+
+import Footer from "../components/Footer";
+
+# React Native OTA rollback, crash protection and brick recovery
+
+The hardest question in mobile release engineering is not how fast an over-the-air update reaches devices — it is **what happens when a bad bundle slips through**. If an OTA update crashes on launch or renders a blank screen before JavaScript can check for a fix, a naive updater leaves those devices stuck until the next App Store release.
+
+Cresc (`react-native-update`) defends against bad releases at three independent layers: **first-launch automatic rollback**, **native C++ cold-start brick rescue (Force Boot)**, and **deterministic canary rollouts with source-mapped crash observability**.
+
+## The three failure modes of an OTA release
+
+Different bugs break apps at different points in the lifecycle, and each requires a different recovery mechanism:
+
+| Failure mode | What happens on the device | How Cresc recovers |
+| --- | --- | --- |
+| **1. Launch crash** | Bundle throws a fatal error before startup completes | **Automatic local rollback** on the very next launch — no network needed |
+| **2. Post-mount "white screen" brick** | App mounts without throwing immediately, marks startup complete, but breaks navigation or kills JS before `checkUpdate()` can run | **Native cold-start check + Force Boot** pulls and activates a rescue build from native code with zero JS involvement |
+| **3. Feature-level regression** | Checkout or a specific OS cohort throws uncaught JS errors | **Canary bucketing (`--rollout 10`)** limits blast radius while [JS Error Monitoring](/docs/errors) symbolicates the stack; re-bind the previous version in one click |
+
+## Layer 1: Automatic launch-crash rollback (`autoMarkSuccess`)
+
+When a newly downloaded OTA bundle boots for the first time, Cresc marks it as **pending verification** on disk.
+
+- **Default behavior (`autoMarkSuccess: true`):** once the root `<UpdateProvider>` mounts cleanly without crashing, the SDK marks the bundle verified. If the JavaScript bundle throws a fatal error at startup or native initialization aborts before verification, the next cold start **automatically reverts to the previous known-good bundle** (or the store baseline) and reports a `rollback` event to [Analytics](/docs/analytics).
+- **Custom verification gate (`autoMarkSuccess: false`):** if your app isn't truly healthy until critical async startup work finishes (such as restoring auth state, loading remote config, or rendering the home screen), disable automatic marking and call `markSuccess()` yourself:
+
+```tsx
+import { Platform } from "react-native";
+import { Cresc, UpdateProvider, useUpdate } from "react-native-update";
+import updateConfig from "./update.json";
+
+const crescClient = new Cresc({
+  appKey: updateConfig[Platform.OS].appKey,
+  autoMarkSuccess: false, // Wait until critical screen confirms health
+});
+
+function HomeScreen() {
+  const { markSuccess } = useUpdate();
+
+  useEffect(() => {
+    // Confirm the update only once the home screen has mounted cleanly
+    markSuccess();
+  }, [markSuccess]);
+
+  return <Dashboard />;
+}
+```
+
+If you are migrating from CodePush, `autoMarkSuccess: true` replaces manual `codePush.notifyAppReady()` boilerplate out of the box, while `autoMarkSuccess: false` + `markSuccess()` gives you the exact explicit gate when you want one. See the [CodePush API migration guide](/codepush-api-migration).
+
+## Layer 2: Native cold-start rescue (Force Boot)
+
+First-launch rollback catches immediate startup crashes. But what if an update mounts `<UpdateProvider>`, passes verification, and *then* breaks your router or state store so badly that JavaScript never reaches your `useUpdate()` flow again? In pure-JS OTA clients, that device is bricked until a store update.
+
+Since `react-native-update` **v10.52.1**, the native runtime runs an **independent background check from native C++/platform code** a few seconds after every cold start — completely outside the JavaScript VM:
+
+1. Build and verify a fixed OTA bundle (for example via QR code preview on a test device).
+2. In the [Cresc console](https://admin.cresc.dev), publish or bind the fixed version using **"Full + force boot (rescue)"** (see [Force Boot docs](/docs/publish#force-boot-brick-rescue)).
+3. On the bricked user's next cold start, the native background check downloads the rescue patch, verifies its SHA-256 and CRC checksums, and activates it directly — overriding any broken JS update strategy.
+4. Safety guards remain active: if the rescue build itself were to crash on first boot, Layer 1's local rollback guard still takes precedence so devices never enter a crash loop.
+
+:::tip Keep `disableNativeCheck` at its default (`false`)
+The `disableNativeCheck` client option exists for specialized native-owned configurations, but leaving it `false` (the default) is what keeps the Force Boot rescue channel available in emergencies.
+:::
+
+## Layer 3: Staged rollouts, health flags, and AI diagnostics
+
+Preventing 100% of users from seeing a bad release is always better than rolling 100% back:
+
+- **Deterministic canary rollouts:** bind new versions at `--rollout 5` or `--rollout 10`. Cresc hashes each device's persistent UUID, so the same 10% stay in the canary across repeated checks, while the remaining 90% stay on your current full release. Raising `--rollout` to `100` promotes the canary to full release.
+- **Automatic Watch & Critical health badges:** in [Analytics](/docs/analytics#version-funnel-follow-delivery-through-activation), once a version has at least 10 startup samples, a rollback rate of **1%+** flags the release as **Watch**, and **5%+** flags it as **Critical**, broken down by native package, OS version, and network.
+- **Zero-config source-mapped stack traces:** [JS Error Monitoring](/docs/errors) groups uncaught exceptions by OTA version and restores minified Hermes bytecode offsets to exact TypeScript lines using the source map archived by `cresc bundle` — included free on every plan.
+- **Investigate from Claude or Cursor via MCP:** connect the read-only [Cresc MCP Server](/docs/mcp) (`https://api.cresc.dev/mcp`) and ask *"Did yesterday's rollout roll back anywhere, and which line threw?"* to correlate rollout funnels and symbolicated stacks in seconds.
+
+## Emergency rollback playbook (Console & CLI)
+
+When a live release misbehaves:
+
+1. **Halt further delivery immediately:** set the native package (or app) update status to **Paused** in the console so no additional devices download the bad version.
+2. **Re-bind the last healthy version:** point the native package back to the previous known-good `versionId` in the console or via CLI:
+   ```bash
+   cresc update --platform ios --versionId <healthy-version-id> --packageVersion 2.4.0 --rollout 100
+   ```
+3. **Or roll forward with a tiny patch:** revert the offending commit in git and run `cresc bundle` from [CI](/react-native-ota-ci-cd) — a one-line revert ships as a ~3.4 KB diff.
+4. **If JS update checks are broken on affected devices:** enable **Force Boot (rescue)** on the fixed binding in the console so native cold-start checks recover affected clients automatically.
+
+## FAQ
+
+### Does Cresc roll back crashing OTA updates automatically?
+
+Yes. Every newly activated OTA bundle starts in an unverified state. If the app crashes before startup completes, Cresc's native runtime reverts to the previous working bundle on the next launch automatically and logs a rollback event in Analytics.
+
+### What if an OTA update breaks JavaScript after startup so `checkUpdate()` never runs?
+
+On `react-native-update` v10.52.1 and later, native code runs an independent background update check on cold start without relying on JavaScript. Publishing a verified fix with the **Force Boot** flag tells that native channel to download and activate the rescue version on the next launch.
+
+### What replaces CodePush's `codePush.notifyAppReady()` in Cresc?
+
+Nothing is required by default: `UpdateProvider` marks an update successful automatically (`autoMarkSuccess: true`). If you want to delay confirmation until after async initialization or a specific screen render, pass `autoMarkSuccess: false` to `new Cresc(...)` and call `markSuccess()` manually.
+
+### Can I roll back only one native app version without affecting others?
+
+Yes. Version bindings in Cresc are scoped per native package (`packageVersion` or `packageVersionRange`), and each native package can maintain one canary (`<100%`) and one full (`100%`) binding independently.
+
+## Related guides
+
+- [Publishing Hot Updates & Force Boot](/docs/publish#force-boot-brick-rescue)
+- [JS Error Monitoring](/docs/errors)
+- [Release Analytics & Version Funnels](/docs/analytics)
+- [Automating OTA in CI/CD](/react-native-ota-ci-cd)
+- [MCP Server for AI release debugging](/docs/mcp)
+
+<Footer />

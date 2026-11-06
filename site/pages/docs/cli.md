@@ -316,3 +316,10 @@ Create an [API key](/docs/api-token), set it as the `CRESC_API_TOKEN` environmen
 ### How do I preview which native packages an update will bind to?
 
 Add `--dryRun` to `cresc update`. It lists the matching native packages without changing any bindings. This requires CLI v1.45.4 or later.
+
+## Related
+
+- [Automating React Native OTA Updates in CI/CD](/react-native-ota-ci-cd) — end-to-end GitHub Actions, Fastlane, and GitLab CI workflows
+- [API Key](/docs/api-token) — creating scoped `CRESC_API_TOKEN` secrets for CI runners
+- [Publishing Hot Updates](/docs/publish) — native baselines, canary rollouts, and Force Boot
+- [OTA Rollback & Brick Recovery](/react-native-ota-rollback) — emergency CLI rollback and Force Boot playbook

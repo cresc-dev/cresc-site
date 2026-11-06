@@ -1,0 +1,226 @@
+---
+title: Automating React Native OTA updates in CI/CD
+seoTitle: "React Native OTA Updates in CI/CD: GitHub Actions, Fastlane & GitLab"
+description: "Automate React Native OTA updates in GitHub Actions, Fastlane and GitLab CI: native vs JS path filters, baseline IPA/AAB uploads, staged rollouts and API keys."
+pageType: doc-wide
+sidebar: false
+footer: false
+head:
+  - - meta
+    - name: keywords
+      content: github actions react native ota, react native ota ci cd, fastlane codepush alternative, gitlab ci react native hot update, automate cresc bundle
+---
+
+import Footer from "../components/Footer";
+
+# Automating React Native OTA updates in CI/CD
+
+Manual laptop releases work for a first test, but production React Native teams need repeatable pipelines: native store builds register their baseline binary automatically, and JavaScript merges ship staged delta patches without human copy-paste errors.
+
+This guide covers end-to-end CI/CD setups for **GitHub Actions**, **Fastlane**, and **GitLab CI** using [`react-native-update-cli`](/docs/cli) and scoped [Cresc API Keys](/docs/api-token).
+
+## Golden rule: separate native changes from JS OTA jobs
+
+An over-the-air update can ship JavaScript, TypeScript, styling, pure-JS npm packages, and Metro-bundled assets — **never** changes to `ios/`, `android/`, `harmony/`, CocoaPods, or Gradle dependencies ([full boundary table](/react-native-ota-updates#what-ota-can-change-vs-what-needs-a-store-build)).
+
+Structure your CI around two distinct workflows:
+
+1. **Native store pipeline** (triggered on release tags like `v2.4.0` or native directory changes): compiles the signed `.ipa` and `.aab`/`.apk`, uploads that exact binary to Cresc (`cresc uploadIpa` / `uploadAab`) as the diff baseline, and submits to App Store Connect / Google Play.
+2. **OTA hotfix pipeline** (triggered on `ota/*` tags, `workflow_dispatch`, or JS-only commits): bundles JavaScript, publishes a [Hermes-aware delta update](/react-native-hermes-ota), and binds it to compatible native versions at a safe initial rollout percentage (for example `--rollout 10`).
+
+## Prerequisites for any CI runner
+
+1. **Commit `update.json` to git.** Created by `cresc createApp`, it holds your public per-platform `appKey`s so CI knows which iOS and Android apps to target.
+2. **Create a Write-scoped [API Key](/docs/api-token)** in the [Cresc console](https://admin.cresc.dev) and store it in your CI secret manager as `CRESC_API_TOKEN`.
+3. **Pass explicit publish and bind flags.** When no interactive TTY is attached, `cresc bundle` never prompts:
+   - Without `--name`, it builds the `.ppk` locally and exits without uploading.
+   - Without a target flag (`--packageVersionRange`, `--packageVersion`, `--packageId`, `--minPackageVersion`, or `--maxPackageVersion`), it uploads the version unbound so zero devices receive it.
+
+## GitHub Actions: JS path guard + staged OTA rollout
+
+This workflow runs on manual dispatch or pushes to `release/ota`, blocks accidental OTA deploys when native directories changed since the last native tag, and publishes to both iOS and Android at a configurable canary percentage:
+
+```yaml
+# .github/workflows/cresc-ota.yml
+name: Publish React Native OTA Update
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_range:
+        description: "Semver range of native builds to target"
+        required: true
+        default: ">=2.4.0 <2.5.0"
+      rollout:
+        description: "Initial rollout percentage (1-100)"
+        required: true
+        default: "10"
+      description:
+        description: "Release notes / changelog"
+        required: false
+        default: "Production hotfix"
+
+jobs:
+  guard-native-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Fail if native directories changed since baseline tag
+        run: |
+          LAST_NATIVE_TAG=$(git describe --tags --match "v[0-9]*" --abbrev=0)
+          echo "Checking native changes against $LAST_NATIVE_TAG..."
+          if ! git diff --quiet "$LAST_NATIVE_TAG"..HEAD -- ios/ android/ harmony/ ; then
+            echo "::error::Native files changed since $LAST_NATIVE_TAG. Ship a new store build instead of an OTA update."
+            exit 1
+          fi
+
+  publish-ota:
+    needs: guard-native-diff
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ios, android]
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies and Cresc CLI
+        run: |
+          npm ci
+          npm install -g react-native-update-cli
+
+      - name: Bundle, publish, and bind (${{ matrix.platform }})
+        env:
+          CRESC_API_TOKEN: ${{ secrets.CRESC_API_TOKEN }}
+        run: |
+          cresc bundle \
+            --platform ${{ matrix.platform }} \
+            --name "${GITHUB_SHA::7}" \
+            --description "${{ inputs.description }} (${GITHUB_SHA::7})" \
+            --packageVersionRange "${{ inputs.package_range }}" \
+            --rollout "${{ inputs.rollout }}" \
+            --no-interactive
+```
+
+Notice that publishing an OTA update **does not require macOS runners or Xcode** — `ubuntu-latest` bundles both iOS and Android JavaScript and Hermes bytecode in under two minutes.
+
+## Fastlane: upload native baselines automatically on store builds
+
+Every time Fastlane archives a new store release, upload the exact `.ipa` or `.aab` artifact to Cresc in the same lane so nobody forgets to register the baseline:
+
+```ruby
+# fastlane/Fastfile
+platform :ios do
+  desc "Build, register Cresc baseline, and upload to TestFlight"
+  lane :release do
+    build_app(
+      scheme: "MyApp",
+      export_method: "app-store",
+      output_directory: "./build",
+      output_name: "MyApp.ipa"
+    )
+
+    # Register exact IPA baseline with Cresc (reads CRESC_API_TOKEN from env)
+    sh("npx --yes react-native-update-cli uploadIpa ../build/MyApp.ipa")
+
+    upload_to_testflight(ipa: "./build/MyApp.ipa")
+  end
+end
+
+platform :android do
+  desc "Build Play Store AAB, register Cresc baseline, and upload"
+  lane :release do
+    gradle(
+      project_dir: "android",
+      tasks: ["clean", "bundleRelease"]
+    )
+
+    aab_path = lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]
+    sh("npx --yes react-native-update-cli uploadAab #{aab_path}")
+
+    upload_to_play_store(track: "internal", aab: aab_path)
+  end
+end
+```
+
+:::warning Distributing both AAB and APK for the same Android version?
+Run `assembleRelease` and `bundleRelease` in **one** Gradle command (`tasks: ["clean", "assembleRelease", "bundleRelease"]`), not two separate `gradle(...)` calls. Separate invocations inject different build timestamps, reducing diff reuse across channels. See [Best Practices](/docs/bestpractice#supporting-the-aab-format).
+:::
+
+## GitLab CI example
+
+```yaml
+# .gitlab-ci.yml
+stages:
+  - ota
+
+publish_ota:
+  stage: ota
+  image: node:22-bookworm
+  parallel:
+    matrix:
+      - PLATFORM: [ios, android]
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^ota-/
+  script:
+    - npm ci
+    - npm install -g react-native-update-cli
+    - >
+      cresc bundle
+      --platform "$PLATFORM"
+      --name "$CI_COMMIT_TAG"
+      --description "GitLab OTA $CI_COMMIT_SHORT_SHA"
+      --packageVersionRange "$TARGET_NATIVE_RANGE"
+      --rollout "${ROLLOUT_PERCENT:-20}"
+      --no-interactive
+```
+
+## Promoting a staged rollout or rolling back from CI
+
+Once [Analytics](/docs/analytics) and [JS Error Monitoring](/docs/errors) confirm healthy adoption and zero regressions on your 10% canary, promote that `versionId` to 100% without rebuilding the bundle:
+
+```bash
+# Promote existing version to 100% full release
+CRESC_API_TOKEN="$CRESC_API_TOKEN" cresc update \
+  --platform ios \
+  --versionId "$VERSION_ID" \
+  --packageVersionRange ">=2.4.0 <2.5.0" \
+  --rollout 100
+```
+
+If an incident surfaces instead, follow the [OTA rollback & recovery playbook](/react-native-ota-rollback) to pause or re-bind the previous known-good `versionId` immediately.
+
+## FAQ
+
+### Does publishing an iOS OTA update in CI require a macOS runner?
+
+No. `cresc bundle --platform ios` runs Metro and the Hermes bytecode compiler (`hermesc`), both of which ship cross-platform binaries for Linux. Standard Linux runners (`ubuntu-latest` or `node:22-bookworm`) can bundle and publish both iOS and Android OTA updates. You only need macOS when archiving a new native `.ipa`.
+
+### Why did `cresc bundle` succeed in CI without delivering the update to users?
+
+In non-interactive CI environments, `cresc bundle` only builds locally unless `--name` is provided, and only binds to devices when a target flag (`--packageVersion`, `--packageVersionRange`, `--packageId`, `--minPackageVersion`, or `--maxPackageVersion`) is passed alongside `--name`.
+
+### How do I prevent engineers from shipping native changes through the OTA pipeline?
+
+Add a `git diff` guard step comparing `HEAD` against your last native release tag on `ios/`, `android/`, `harmony/`, and native lockfiles, failing the OTA workflow whenever native files have changed.
+
+### Are source maps uploaded automatically during CI builds?
+
+Yes. With `react-native-update-cli` v2.23.0+, `--sourcemap` is enabled by default. The CLI strips `node_modules` sources, compresses the map, and archives it server-side so [JS Error Monitoring](/docs/errors) can symbolicate production crashes without shipping source maps to client devices.
+
+## Related guides
+
+- [API Keys for CI/CD](/docs/api-token)
+- [CLI Tools reference](/docs/cli)
+- [OTA Rollback, Crash Protection & Brick Recovery](/react-native-ota-rollback)
+- [CodePush CLI migration](/codepush-api-migration#5-cli-mapping)
+- [Expo Updates CLI migration](/expo-updates-migration#5-map-eas-update-cli-and-expo-router-entry-point)
+
+<Footer />

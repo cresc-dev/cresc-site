@@ -87,6 +87,14 @@ export default defineConfig({
           },
         },
         {
+          tag: 'link',
+          attrs: {
+            rel: 'apple-touch-icon',
+            sizes: '512x512',
+            href: '/images/logo-512.png',
+          },
+        },
+        {
           tag: 'meta',
           attrs: {
             name: 'theme-color',

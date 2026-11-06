@@ -80,7 +80,7 @@ Shipping fast is only safe when bad releases stop themselves:
 
 - **Staged percentage rollouts:** publish with `--rollout 5` or `--rollout 20`. Devices are bucketed deterministically by UUID, so raising a rollout from 10% to 50% includes the original 10% without re-shuffling cohorts.
 - **Automatic launch-crash rollback:** when a newly activated OTA bundle crashes before startup succeeds, the native layer catches the failure and reverts to the last working bundle on the next launch automatically.
-- **Cold-start brick rescue (Force Boot):** if a release passes initial startup but breaks your JS update-check UI, a native C++ cold-start check runs independently of JavaScript so you can still push a rescue update from the console. See [Publishing & Force Boot](/docs/publish#force-boot-brick-rescue).
+- **Cold-start brick rescue (Force Boot):** if a release passes initial startup but breaks your JS update-check UI, a native C++ cold-start check runs independently of JavaScript so you can still push a rescue update from the console. See [OTA Rollback & Brick Recovery](/react-native-ota-rollback) and [Publishing & Force Boot](/docs/publish#force-boot-brick-rescue).
 - **Release analytics & JS error symbolication:** [Analytics](/docs/analytics) tracks the `served → downloaded → activated → rolled back` funnel per native version, and [JS Error Monitoring](/docs/errors) restores minified Hermes stack traces to your exact TypeScript lines using the source map archived at publish time — included free on every plan.
 
 ## FAQ
@@ -111,6 +111,8 @@ If a new OTA version crashes before startup completes, Cresc's native runtime au
 - [Set up in one prompt with the AI Skill](/docs/skills)
 - [Integrate `UpdateProvider` and `useUpdate`](/docs/integration)
 - [Publish your first baseline and hot update](/docs/publish)
+- [Automate OTA deployments in GitHub Actions, Fastlane & GitLab CI](/react-native-ota-ci-cd)
+- [Understand 3-layer rollback, crash protection & Force Boot](/react-native-ota-rollback)
 - [Compare CodePush & Expo Updates alternatives](/codepush-alternative)
 - [Check flat-rate monthly pricing](/pricing)
 

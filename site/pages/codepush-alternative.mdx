@@ -21,7 +21,7 @@ If your React Native team is moving away from discontinued CodePush or seeking a
 
 - **CodePush reached end-of-life** and is no longer maintained. Teams need a future-proof, actively developed home for React Native hot updates.
 - **Expo Updates (EAS Update) is costly at scale**: Metered billing ($0.005 per additional update MAU and $0.10/GiB edge bandwidth) creates unpredictable, runaway monthly invoices for high-traffic apps.
-- **Full-bundle downloads waste bandwidth**: Re-downloading a whole multi-megabyte JavaScript bundle for a small bugfix wastes end-user data and battery, so patch size matters when you compare OTA tools.
+- **Naive bundle updates waste bandwidth**: Re-downloading a multi-megabyte bundle — or even a ~94 KB plain `bsdiff` patch on Hermes bytecode — wastes end-user data and slows adoption compared with a **3.4 KB** [Hermes-aware diff](/react-native-hermes-ota).
 - **Teams still need rapid release cycles**: Shipping critical bug fixes and improvements in seconds without waiting for app store review delays remains essential.
 - **Release engineers demand predictability**: Engineering teams need transparent flat pricing, CI-friendly publishing, automated rollback protection, and full release auditability.
 
@@ -45,11 +45,29 @@ If your React Native team is moving away from discontinued CodePush or seeking a
 | **Overage penalties** | **None (zero surprise bills)** | N/A | **$0.005/user + $0.10/GiB bandwidth** |
 | **Typical update size** | **3.4–98 KB (benchmarked delta patch)** | Multi-megabytes | bsdiff patches from SDK 55 (full bundle until a patch is ready) |
 | **Global CDN bandwidth** | **Included on every plan** | Discontinued | Costly edge bandwidth overages |
-| **Automated rollback** | **Yes (automatic crash detection)** | Yes | Limited |
+| **Automated rollback** | **Yes ([3-layer crash & brick recovery](/react-native-ota-rollback))** | Yes | Limited |
 | **Source-mapped crash reporting** | **Yes, included free** | No | Requires separate paid service (Sentry) |
 | **Active maintenance & updates** | **Active & continually evolving** | Discontinued (March 2025) | Active |
 | **HarmonyOS OTA support** | **Yes** | No | No |
 | **Self-hosting support** | **Yes** | Community forks only | Complex EAS lock-in |
+
+## 2026 CodePush replacement landscape: all 6 options compared
+
+When evaluating a CodePush replacement in 2026, React Native teams typically weigh six paths — four managed services and two self-hosted options. Pricing and feature notes below reflect each vendor's public documentation as of late 2026:
+
+| Option | Hosting | Billing & entry paid tier | RN 0.82+ (New Arch) | Hermes diff method | Platforms |
+| --- | --- | --- | --- | --- | --- |
+| **Cresc** (`react-native-update`) | Managed + CDN (self-host plan available) | Daily checks, CDN included, **$0 overages**; Free (1K/day), **$19/mo** (10K/day), **$99/mo** Pro (1M/day) | Legacy & New Arch | **Hermes bytecode-aware diff** vs store baseline (**3.4 KB** 1-line fix) | iOS, Android, **HarmonyOS**, tvOS |
+| **[Expo EAS Update](/expo-updates-vs-cresc)** | Managed (or [custom server](/expo-updates-self-hosted-vs-cresc)) | Updated MAU + bandwidth; $19/mo (3K MAU), $199/mo (50K MAU) + overages | Yes (New Arch only from SDK 55) | Plain `bsdiff` from SDK 55+ (~93.7 KB 1-line fix; full bundle until patch is ready) | iOS, Android, tvOS |
+| **[Revopush](/revopush-vs-cresc)** | Managed (enterprise cloud option) | MAU + egress; $25/mo (50K MAU, 100 GB), $100/mo (300K MAU, 1 TB) + overages | Yes (RN 0.76+ CodePush fork) | Byte-level bundle diff (needs base release per binary) | iOS, Android |
+| **[Stallion](/stallion-vs-cresc)** | Managed (paid on-prem tier) | MAU + bandwidth; Free (10K MAU), Pro $64/mo (100K MAU, 2 TB) | Yes (RN 0.76+) | Binary diff between Stallion bundles (store binary bundle downloads in full first) | iOS, Android |
+| **[`hot-updater`](/hot-updater-vs-cresc)** | Self-hosted in your cloud (AWS, CF, Supabase, etc.) | Open source; you pay cloud storage, compute & CDN egress | Yes | Plain `bsdiff` on Hermes (~93.7 KB 1-line fix) | iOS, Android |
+| **[`code-push-server`](/app-center-codepush-retirement)** | Self-hosted (archived, unmaintained) | MIT (archived); you run API, DB, storage & CDN | **No** (stuck on RN ≤ 0.81) | File-level zip diff (full JS bundle inside archive) | iOS, Android (RN ≤ 0.81) |
+
+- Pick **[Revopush](/revopush-vs-cresc)** if zero JS call-site changes (`codePush.sync()`) matters most and you are on RN 0.76+.
+- Pick **[`hot-updater`](/hot-updater-vs-cresc)** if you want to deploy and operate an open-source OTA backend inside your own cloud account.
+- Pick **[Expo EAS Update](/expo-updates-vs-cresc)** if your MAU count fits cleanly inside your existing EAS plan and you already rely on EAS Build workflows.
+- Pick **Cresc** if you want predictable flat pricing with CDN included, 3.4 KB Hermes-aware diffs from the very first post-store hotfix, [native Force Boot brick rescue](/react-native-ota-rollback), built-in source-mapped JS crash reporting, or HarmonyOS NEXT / Legacy + New Architecture support.
 
 ## Migration path in four steps
 
@@ -109,6 +127,8 @@ Visit [Getting Started](/docs/getting-started) to install the SDK, or check our 
 - [expo-updates (EAS Update) to Cresc migration](/expo-updates-migration)
 - [Expo pricing vs Cresc](/expo-pricing-vs-cresc)
 - [How Hermes bytecode diffing shrinks patches to 3.4 KB](/react-native-hermes-ota)
+- [OTA Rollback, Crash Protection & Brick Recovery](/react-native-ota-rollback)
+- [Automating React Native OTA Updates in CI/CD](/react-native-ota-ci-cd)
 - [Pricing](/pricing)
 
 <Footer />
