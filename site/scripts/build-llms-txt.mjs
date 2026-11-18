@@ -26,6 +26,7 @@ const GROUPS = [
       '/react-native-ota-updates',
       '/react-native-hermes-ota',
       '/react-native-new-architecture-ota',
+      '/react-native-harmonyos',
       '/react-native-ota-rollback',
       '/react-native-ota-ci-cd',
       '/pricing',

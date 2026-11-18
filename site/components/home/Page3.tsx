@@ -35,6 +35,27 @@ const landingCards = [
     cta: "Read Deep Dive",
   },
   {
+    eyebrow: "Cost",
+    title: "Expo pricing, plan by plan",
+    desc: "Free, Starter and Production plans, EAS Update MAU and bandwidth overage rates, EAS Build prices, and worked monthly costs next to Cresc.",
+    href: "/expo-pricing-vs-cresc",
+    cta: "See The Numbers",
+  },
+  {
+    eyebrow: "HarmonyOS NEXT",
+    title: "React Native on HarmonyOS",
+    desc: "How RNOH runs React Native on HarmonyOS NEXT, what code you share with iOS and Android, and how OTA updates reach all three.",
+    href: "/react-native-harmonyos",
+    cta: "Read The Guide",
+  },
+  {
+    eyebrow: "Safety",
+    title: "Rollback & brick recovery",
+    desc: "How launch-crash rollback, native Force Boot and canary rollouts keep a bad OTA update from locking users out of the app.",
+    href: "/react-native-ota-rollback",
+    cta: "See How It Works",
+  },
+  {
     eyebrow: "Expo SDK 50+",
     title: "Migrating from expo-updates",
     desc: "Keep Expo prebuild, Expo Router, and EAS Build while mapping Updates APIs and eas update commands to flat-rate Cresc.",

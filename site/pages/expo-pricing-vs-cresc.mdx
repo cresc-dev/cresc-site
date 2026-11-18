@@ -1,7 +1,7 @@
 ---
 title: Expo pricing vs Cresc for React Native OTA
-seoTitle: "Expo & EAS Update Pricing 2026: Plans, Overages vs Cresc"
-description: "Expo and EAS Update pricing for 2026: Free, Starter, Production and Enterprise plans, MAU and bandwidth overage rates, worked monthly costs, and how Cresc compares."
+seoTitle: "Expo Pricing 2026: Free, Starter & Production Plans, EAS Costs"
+description: "Expo pricing in 2026: Free ($0), Starter ($19/mo) and Production ($199/mo) plans, EAS Build and EAS Update overage rates, worked monthly costs, and how Cresc compares."
 pageType: doc-wide
 sidebar: false
 footer: false
@@ -14,22 +14,22 @@ head:
       content: https://cresc.dev/expo-pricing-vs-cresc
   - - meta
     - property: og:title
-      content: "Expo & EAS Update Pricing 2026: Plans, Overages vs Cresc"
+      content: "Expo Pricing 2026: Free, Starter & Production Plans, EAS Costs"
   - - meta
     - property: og:description
-      content: "Expo and EAS Update pricing for 2026: Free, Starter, Production and Enterprise plans, MAU and bandwidth overage rates, worked monthly costs, and how Cresc compares."
+      content: "Expo pricing in 2026: Free ($0), Starter ($19/mo) and Production ($199/mo) plans, EAS Build and EAS Update overage rates, worked monthly costs, and how Cresc compares."
   - - meta
     - name: keywords
-      content: expo pricing, eas update pricing, expo update pricing, expo ota pricing, expo pricing vs cresc, react native ota pricing
+      content: expo pricing, eas pricing, eas update pricing, eas build pricing, expo free plan, expo ota pricing, expo pricing vs cresc, react native ota pricing
 ---
 
 import Footer from "../components/Footer";
 
-# Expo pricing (EAS Update) vs Cresc for React Native OTA
+# Expo pricing in 2026: plans, EAS Update and EAS Build costs, and how Cresc compares
 
-Expo's paid plans start at **$19/month (Starter)** and **$199/month (Production)**, plus usage. Over-the-air updates are billed on monthly active users (**$0.005 per extra MAU** up to 200,000) and bandwidth (**$0.10 per extra GiB**). Cresc charges a fixed monthly price by daily update checks, from **$19/month**, with CDN delivery included and no automatic overage.
+Expo has a **Free plan at $0**, and its paid plans start at **$19/month (Starter)** and **$199/month (Production)**, plus usage. Over-the-air updates are billed on monthly active users (**$0.005 per extra MAU** up to 200,000) and bandwidth (**$0.10 per extra GiB**). Cresc charges a fixed monthly price by daily update checks, from **$19/month**, with CDN delivery included and no automatic overage.
 
-> Checked against Expo's [pricing page](https://expo.dev/pricing) and [usage-based pricing docs](https://docs.expo.dev/billing/usage-based-pricing/) on **November 3, 2026**. Expo renamed EAS Update to **Expo Update**; the `eas` CLI and `eas.json` keep the old name, so this page uses both. Always confirm current numbers with Expo before budgeting.
+> Checked against Expo's [pricing page](https://expo.dev/pricing) and [usage-based pricing docs](https://docs.expo.dev/billing/usage-based-pricing/) on **November 18, 2026**. Expo dropped the EAS prefix from its services (EAS Update is now **Expo Update**, EAS Build is now **Expo Build**); the `eas` CLI and `eas.json` keep the old name, so this page uses both. Always confirm current numbers with Expo before budgeting.
 
 ## Expo pricing snapshot
 
@@ -42,6 +42,17 @@ Expo's paid plans start at **$19/month (Starter)** and **$199/month (Production)
 
 The Expo SDK itself is free and open source. These prices apply to Expo's cloud services, which also cover builds, store submission, and CI/CD workflows. Cresc covers OTA delivery only, so include any build credit you would use when comparing totals.
 
+## Is Expo free?
+
+Yes, for small projects. The Expo SDK, Expo CLI and Expo Go are free and open source, and the Free plan of Expo's cloud services costs $0 with these monthly limits:
+
+- 15 Android and 15 iOS builds on the low-priority queue, with a 45-minute build timeout
+- Over-the-air updates to 1,000 monthly active users, with 100 GiB of bandwidth and 20 GiB of storage
+- 60 minutes of CI/CD Workflows
+- App store submission, and up to 25 projects with unlimited members
+
+The Free plan cannot incur overage charges. When the build quota is used up, new builds wait until it resets on the first day of the next calendar month. To go past the limits you move to Starter, which is the cheapest plan that allows usage-based billing.
+
 ## EAS Update overage rates
 
 | Meter | Starter and Production rate |
@@ -53,6 +64,29 @@ The Expo SDK itself is free and open source. These prices apply to Expo's cloud 
 | Update storage | $0.05 per GiB after the allowance |
 
 Each MAU over the plan's allowance also adds 40 MiB to the bandwidth allowance. A device counts as one MAU only if it downloads at least one update in the billing period, however many it downloads.
+
+## EAS Build pricing
+
+Builds are charged at a flat rate per build, by platform and worker size. Paid plans include monthly build credit that offsets these charges; unused credit expires at the end of the billing period.
+
+| Build | Medium worker | Large worker |
+| --- | --- | --- |
+| Android | $1 | $2 |
+| iOS | $2 | $4 |
+
+Starter's $45 credit covers, for example, 45 medium Android builds or 22 medium iOS builds a month (our arithmetic). Production's $225 credit covers 225 medium Android builds or 112 medium iOS builds. Extra concurrencies cost $50 each.
+
+## Other Expo service rates
+
+| Service | Included | Usage rate on paid plans |
+| --- | --- | --- |
+| CI/CD Workflows | 60 minutes on Free | $0.018 to $0.040 per minute on Linux, $0.075 to $0.150 on macOS |
+| Maestro end-to-end test jobs | Not on Free | $0.05 per job, plus CI/CD minutes |
+| Hosting | 100,000 requests a month | $2 per 1M requests |
+| Observe | 100K events on Free, 500K on paid plans | $5.00 per 1M events up to 50M |
+| Simulators | 60 minutes a month until 2027 on paid plans | $0.10 per minute |
+
+Cresc has no equivalent for these services. It delivers OTA updates only, so they stay on your bill whichever OTA provider you choose.
 
 ## Cresc pricing snapshot
 
@@ -112,6 +146,18 @@ Microsoft's CodePush had no per-user fee, so teams moving to EAS Update should b
 ### How much does Expo cost?
 
 The Expo SDK is free and open source. Expo's cloud services have a Free plan at $0, Starter at $19 per month plus usage, Production at $199 per month plus usage, and custom Enterprise pricing.
+
+### Is Expo free?
+
+The Expo SDK and tools are free and open source. Expo's cloud services have a Free plan at $0 that includes 15 Android and 15 iOS low-priority builds, updates to 1,000 monthly active users, and 60 minutes of CI/CD Workflows each month. It has no overage billing, so usage stops at those limits until the monthly reset.
+
+### What does the Expo Starter plan include?
+
+Starter costs $19 per month plus usage. It includes $45 of build credit, the high-priority build queue, large workers, updates to 3,000 monthly active users, 100 GiB of bandwidth, and up to 50 projects.
+
+### How much does EAS Build cost?
+
+Expo Build, formerly EAS Build, charges a flat rate per build: $1 for a medium Android build, $2 for a large Android or medium iOS build, and $4 for a large iOS build. Starter includes $45 of build credit a month and Production includes $225.
 
 ### How much does EAS Update cost?
 

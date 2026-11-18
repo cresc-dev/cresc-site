@@ -1,0 +1,120 @@
+---
+title: React Native on HarmonyOS NEXT
+seoTitle: "React Native on HarmonyOS NEXT: RNOH, Shared Code & OTA Updates"
+description: "How React Native runs on HarmonyOS NEXT with RNOH: project layout, what code you can share with iOS and Android, AppGallery releases, and OTA updates with Cresc."
+pageType: doc-wide
+sidebar: false
+footer: false
+head:
+  - - meta
+    - name: keywords
+      content: react native harmonyos, react native harmonyos next, rnoh, react native openharmony, harmonyos ota update, harmonyos hot update, react native harmony codepush
+---
+
+import Footer from "../components/Footer";
+
+# React Native on HarmonyOS NEXT: RNOH, shared code and OTA updates
+
+React Native has no official HarmonyOS platform, but React Native apps do run on HarmonyOS NEXT through **RNOH (React Native for OpenHarmony)**, a community adaptation layer. One JavaScript codebase can target iOS, Android and HarmonyOS, and with Cresc all three receive over-the-air (OTA) updates from the same CLI and dashboard.
+
+This guide explains how React Native works on HarmonyOS, what you can share across platforms, and how OTA updates fit in. For step-by-step native setup, go to the [HarmonyOS setup guide](/docs/harmony).
+
+## Does React Native support HarmonyOS?
+
+Not in the core repository. HarmonyOS NEXT no longer runs Android apps, so an existing Android build of a React Native app can't be installed on it. Support comes from RNOH instead:
+
+- It is built on the React Native New Architecture (Fabric and TurboModules).
+- It renders React components as ArkUI components, the native UI framework of HarmonyOS.
+- Its npm packages follow React Native's version numbers. The `@react-native-oh/react-native-harmony` package publishes release lines such as 0.77 and 0.82 that match the React Native version they adapt.
+
+At runtime `Platform.OS` is `'harmony'`, so app code can branch on it the same way it does for `'ios'` and `'android'`.
+
+## What an RNOH project looks like
+
+An RNOH app has a JavaScript half and a native half, next to the `ios/` and `android/` directories you already have.
+
+| Part | Where it lives | What it does |
+| --- | --- | --- |
+| JavaScript packages | `@react-native-oh/react-native-harmony` and `@react-native-oh/react-native-harmony-cli` in `package.json` | The HarmonyOS implementation of React Native, plus the `react-native bundle-harmony` command |
+| Native project | `harmony/` at the repository root | An ArkTS project built with DevEco Studio and hvigor, depending on the ohpm package `@rnoh/react-native-openharmony` |
+| JS bundle | `harmony/entry/src/main/resources/rawfile/bundle.harmony.js` | The bundle built into the native package and loaded at startup |
+| Native libraries | ohpm `har` packages | The HarmonyOS equivalent of CocoaPods pods and Gradle dependencies |
+
+The native `RNApp` component decides where the JS bundle is loaded from through a `jsBundleProvider`. That is the hook an OTA library uses.
+
+## What you can share with iOS and Android
+
+| Code | Shared? | Notes |
+| --- | --- | --- |
+| App logic, state, navigation written in JS or TypeScript | Yes | One codebase for all three platforms |
+| Pure-JS libraries | Yes | No native code to port |
+| Images and assets imported from JS | Yes | Bundled per platform |
+| Libraries with native code | Only with a HarmonyOS implementation | Each needs an ArkTS or C++ port shipped as a `har` |
+| Platform configuration, permissions, signing | No | Lives under `harmony/` and `AppScope/app.json5` |
+
+Branch on `Platform.OS` wherever a native module exists on some platforms only.
+
+## Releasing on AppGallery
+
+A HarmonyOS native package has to be signed, built in release mode and reviewed by AppGallery before users can install it, and users then update manually. That is the same shape as App Store and Google Play releases, with a third review queue added. A JS fix that is ready on all three platforms ships at the speed of the slowest review unless you deliver it over the air.
+
+## OTA updates on HarmonyOS
+
+App logic and images in a React Native app live in the JS bundle, and that bundle can be replaced without a new native package. On HarmonyOS, Cresc (npm package `react-native-update`) does this as a first-party platform:
+
+- **Native support ships in the npm package.** The `pushy.har` library, an hvigor plugin and the C++ TurboModule glue are all inside `react-native-update`'s `harmony/` directory. There is nothing else to download.
+- **A bundle provider loads the update.** `PushyFileJSBundleProvider` goes in the `jsBundleProvider` list ahead of the built-in bundle. When an update is active it loads; otherwise the built-in `bundle.harmony.js` does.
+- **Delta patches.** Patches are computed against the bundle inside the native package on the user's device, so users download what changed, not the whole bundle.
+- **The same safety controls as iOS and Android.** [Gradual rollout, automatic crash rollback and force boot](/react-native-ota-rollback) work on HarmonyOS too.
+
+The release flow uses the same CLI with a different platform flag:
+
+```bash
+# once per native release: build the bundle, build the .app in release mode, upload it
+cresc bundle --platform harmony --no-interactive
+cresc uploadApp harmony/build/outputs/default/harmony-default-unsigned.app
+
+# for every JS change afterwards
+cresc bundle --platform harmony --name "1.0.1" --description "Fix home screen" --packageVersion "1.0.0"
+```
+
+iOS, Android and HarmonyOS are separate apps in Cresc, each with its own app key, native versions and OTA versions. You publish per platform, so a fix can go to all three in the same CI run. See [OTA updates in CI/CD](/react-native-ota-ci-cd) for the pipeline.
+
+The minimum compatible SDK of `pushy.har` is `5.0.0(12)` (API 12). The HarmonyOS example in the SDK repository, [harmony_use_pushy](https://github.com/reactnativecn/react-native-update/tree/master/Example/harmony_use_pushy), uses React Native 0.82.1.
+
+## What about CodePush and Expo Updates?
+
+`react-native-code-push` and `expo-updates` ship native code for iOS and Android. Neither includes a HarmonyOS implementation, so a team that adds HarmonyOS to an existing app needs a different OTA library for that platform, or one library that covers all three. Moving the whole app is covered in the [CodePush migration checklist](/codepush-migration-checklist) and the [Expo Updates migration guide](/expo-updates-migration).
+
+## FAQ
+
+### Can React Native apps run on HarmonyOS NEXT?
+
+Yes, through RNOH (React Native for OpenHarmony). It is a community adaptation layer built on the New Architecture that renders React components as ArkUI components. React Native itself has no official HarmonyOS platform.
+
+### Can one React Native codebase target iOS, Android and HarmonyOS?
+
+Yes. JavaScript code, pure-JS libraries and assets are shared. Libraries with native code need a HarmonyOS implementation, and each platform keeps its own native project, signing and store release.
+
+### Can HarmonyOS apps receive OTA updates?
+
+Yes. A React Native app on HarmonyOS loads its JS bundle through a bundle provider, and Cresc adds one that loads a downloaded update when it exists. JS code and assets can be updated over the air; anything under `harmony/` needs a new native build.
+
+### What can't be updated over the air on HarmonyOS?
+
+ArkTS and C++ code, `oh-package.json5` dependencies, permissions, `app.json5`, and upgrades of any library with native code, including RNOH itself. Those need a new native package uploaded to Cresc and released through AppGallery.
+
+### Which HarmonyOS version does Cresc need?
+
+The `pushy.har` library inside `react-native-update` has a minimum compatible SDK of 5.0.0(12), which is API 12.
+
+## Related pages
+
+- [HarmonyOS setup guide: native configuration, uploading the .app, troubleshooting](/docs/harmony)
+- [React Native OTA updates: how they work](/react-native-ota-updates)
+- [OTA updates for the React Native New Architecture](/react-native-new-architecture-ota)
+- [OTA rollback, crash protection and force boot](/react-native-ota-rollback)
+- [CodePush & Expo Updates alternative](/codepush-alternative)
+- [Pricing](/pricing)
+
+<Footer />
