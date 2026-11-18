@@ -74,9 +74,9 @@ Transforming compiled VM bytecode requires strict verification so a compiler qui
 3. **Version-agnostic client patcher:** Hermes bytecode format versions advance with React Native (for example HBC v98 in RN 0.86 and HBC v99 in RN 0.88). Cresc embeds table layout descriptors inside the patch metadata rather than hardcoding Hermes version tables in the mobile SDK — so supporting a new Hermes release is a CLI update with zero native app rebuild required.
 4. **Native launch-crash rollback:** if an update ever throws at startup for application-level reasons, the native runtime reverts to the previous working bundle automatically.
 
-## Patching the store binary itself (the "first hotfix" advantage)
+## Patching the store binary itself (the first hotfix)
 
-Several OTA services diff between consecutive OTA bundles, **but cannot diff against the bundle embedded inside the original App Store or Google Play binary** — forcing every user's first post-release hotfix to download a full multi-megabyte bundle.
+An OTA service that only diffs between consecutive OTA bundles **can't diff against the bundle embedded inside the original App Store or Google Play binary**, so every user's first post-release hotfix downloads a full multi-megabyte bundle. Expo Update closed this gap in SDK 58, where Expo Build uploads the embedded bundle by default (it is an experimental opt-in on SDK 57 and earlier); its patches are still plain `bsdiff`.
 
 Because you register each store build with `cresc uploadIpa`, `cresc uploadApk`, or `cresc uploadAab` ([Publishing](/docs/publish)), Cresc extracts and indexes the exact `.hbc` embedded in every native version you ship. Your very first emergency one-line fix after a store release downloads as a **3.4 KB** patch too.
 

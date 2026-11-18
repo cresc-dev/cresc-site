@@ -111,7 +111,7 @@ The two products use different meters. Expo counts unique devices that download 
 | 100,000 | Production: $199 + 50,000 × $0.005 = **$449** | Pro: **$99** (up to 10 checks per user per day) | 78% lower |
 | 500,000 | Production: $199 + 150,000 × $0.005 + 300,000 × $0.00375 = **$2,074** | Max: **$399** (up to 20 checks per user per day) | 81% lower |
 
-Bandwidth can add to the Expo column. At 100,000 users on Production the allowance is about 2,977 GiB (1 TiB plus 50,000 × 40 MiB), and anything above that costs $0.10 per GiB. Patch size decides how quickly you reach it: Expo Update supports bsdiff bundle diffing (opt-in from SDK 55, default from SDK 56), and Cresc patches measured 3.4 KB to about 98 KB in our [reproducible Hermes benchmark](https://github.com/sunnylqm/hbc-diff-benchmark).
+Bandwidth can add to the Expo column. At 100,000 users on Production the allowance is about 2,977 GiB (1 TiB plus 50,000 × 40 MiB), and anything above that costs $0.10 per GiB. Patch size decides how quickly you reach it: Expo Update supports bsdiff bundle diffing (between updates: opt-in from SDK 55, default from SDK 56; against the store build's bundle: default from SDK 58), and Cresc patches measured 3.4 KB to about 98 KB in our [reproducible Hermes benchmark](https://github.com/sunnylqm/hbc-diff-benchmark).
 
 ## Expo's own usage example
 

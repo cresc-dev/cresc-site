@@ -29,7 +29,7 @@ Expo Updates and Cresc both help React Native teams ship JavaScript changes outs
 | OTA updates for React Native | Yes | Yes |
 | **Pricing & Cost Efficiency** | **Metered: $0.005/extra MAU + $0.10/GiB** | **Predictable flat tiers, zero overages (70–90% savings)** |
 | **Production Plan Pricing** | **$199/mo (capped at 50K MAUs)** | **$99/mo (covers 1,000,000 daily checks)** |
-| **Update payload size** | bsdiff patch from SDK 55 (opt-in) / SDK 56 (default); full bundle until a patch is generated | **3.4–98 KB (benchmarked delta patch)** |
+| **Update payload size** | Plain bsdiff patches between updates from SDK 55 (opt-in) / SDK 56 (default); patches against the store build's bundle by default from SDK 58 (experimental opt-in before that) | **3.4–98 KB (benchmarked delta patch)** |
 | **CDN Bandwidth** | Metered edge bandwidth ($$$) | **Included on every plan** |
 | Expo-oriented workflow | Strong default fit | Supported (CLI, bare, prebuild) |
 | Delta patch delivery | Newest-previous patch precomputed, other bases on demand | Hermes bytecode-aware diff for every bound native package |
